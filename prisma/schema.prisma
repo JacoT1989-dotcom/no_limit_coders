@@ -1,0 +1,60 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  username      String    @unique
+  firstName     String
+  lastName      String
+  displayName   String
+  email         String    @unique
+  passwordHash  String
+  phoneNumber   String    @default("")
+  streetAddress String
+  suburb        String?
+  townCity      String
+  postcode      String
+  country       String
+  avatarUrl     String?
+  backgroundUrl String?
+  agreeTerms    Boolean   @default(false)
+  role          UserRole  @default(USER)
+  Session       Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Product {
+  id          String @id @default(uuid())
+  name        String
+  price       Float
+  imageUrl    String
+  description String
+
+  @@map("products")
+}
+
+enum UserRole {
+  USER
+  CUSTOMER
+  PROCUSTOMER
+  EDITOR
+  ADMIN
+  SUPERADMIN
+}
