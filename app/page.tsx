@@ -1,9 +1,12 @@
-import WelcomePage from "./Welcome";
+import React from "react";
+import Landing from "./(public)/_components/Landing";
 
-export default function Home() {
+const LandingPage = () => {
   return (
     <div>
-      <WelcomePage />
+      <Landing />
     </div>
   );
-}
+};
+
+export default LandingPage;

@@ -1,6 +1,8 @@
+// app/layout.tsx
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "react-hot-toast";
+import { Navbar } from "./(public)/_components/Navbar";
 
 export default function RootLayout({
   children,
@@ -16,7 +18,8 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <Navbar />
+          <main className="pt-16">{children}</main>
           <Toaster />
         </ThemeProvider>
       </body>
