@@ -40,16 +40,6 @@ model Session {
   @@map("sessions")
 }
 
-model Product {
-  id          String @id @default(uuid())
-  name        String
-  price       Float
-  imageUrl    String
-  description String
-
-  @@map("products")
-}
-
 enum UserRole {
   USER
   CUSTOMER
