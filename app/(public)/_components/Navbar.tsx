@@ -9,6 +9,7 @@ import eagleLogo from "@/assets/eagle.jpg";
 
 const navItems = [
   { label: "HOME", href: "/" },
+  { label: "ABOUT", href: "/about" },
   { label: "SERVICES", href: "/services" },
   { label: "TECH STACK", href: "/tech-stack" },
   { label: "OUR TEAM", href: "/our-team" },
