@@ -1,0 +1,48 @@
+export const packages = [
+  {
+    title: "Startup Team",
+    price: 7750,
+    description: "Perfect for startups and small projects",
+    features: [
+      "1 x Junior Full Stack Developer (2+ years)",
+      "1 x UI/UX Engineer or DevOps Engineer",
+      "40 hours per week",
+      "Code Reviews",
+      "Weekly Progress Reports",
+      "Direct Communication Channel",
+    ],
+    isPopular: false,
+  },
+  {
+    title: "Professional Team",
+    price: 9750,
+    description: "Ideal for growing businesses",
+    features: [
+      "1 x Junior Full Stack Developer (2+ years)",
+      "1 x Senior Full Stack Lead (5+ years)",
+      "1 x UI/UX Engineer or DevOps Engineer",
+      "40 hours per week",
+      "Priority Support",
+      "Technical Architecture Design",
+      "Comprehensive Documentation",
+    ],
+    isPopular: true,
+  },
+  {
+    title: "Enterprise Team",
+    price: 12750,
+    description: "For large-scale enterprise projects",
+    features: [
+      "1 x Junior Full Stack Developer (2+ years)",
+      "1 x Senior Full Stack Lead (5+ years)",
+      "1 x UI/UX Engineer",
+      "1 x DevOps Engineer or Project Manager",
+      "40 hours per week",
+      "24/7 Priority Support",
+      "Custom Integration Solutions",
+      "Technical Architecture Design",
+      "Comprehensive Documentation",
+    ],
+    isPopular: false,
+  },
+];

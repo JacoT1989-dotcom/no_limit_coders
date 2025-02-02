@@ -48,3 +48,12 @@ enum UserRole {
   ADMIN
   SUPERADMIN
 }
+
+enum KavanProcess {
+  PENDING
+  PROCESSING
+  REVIEWING
+  FINALIZING
+  COMPLETED
+  REJECTED
+}
