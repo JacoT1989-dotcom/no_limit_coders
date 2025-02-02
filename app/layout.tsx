@@ -1,7 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 
 export default function RootLayout({
   children,

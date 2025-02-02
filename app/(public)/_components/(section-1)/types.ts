@@ -1,8 +1,6 @@
-export const packages = [
-  { value: "starter", label: "Starter Team" },
-  { value: "professional", label: "Professional Team" },
-  { value: "enterprise", label: "Enterprise Team" },
-];
+//types
+import { z } from "zod";
+import { messageSchema } from "./validations";
 
 export const countries = [
   { value: "af", label: "Afghanistan" },
@@ -199,4 +197,7 @@ export const countries = [
   { value: "ye", label: "Yemen" },
   { value: "zm", label: "Zambia" },
   { value: "zw", label: "Zimbabwe" },
-];
+] as const;
+
+export type CountryCode = (typeof countries)[number]["value"];
+export type MessageFormValues = z.infer<typeof messageSchema>;

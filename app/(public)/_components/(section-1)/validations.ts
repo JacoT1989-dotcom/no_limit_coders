@@ -1,10 +1,16 @@
+// validations.ts
 import { z } from "zod";
+import { countries } from "./types";
 
-export const formSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
+export const messageSchema = z.object({
+  fullName: z.string().min(1, "Full name is required"),
   email: z.string().email("Invalid email address"),
-  mobile: z.string().min(10, "Invalid phone number"),
-  country: z.string().min(1, "Please select a country"),
-  package: z.string().min(1, "Please select a package"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  mobile: z.string().min(1, "Mobile number is required"),
+  country: z
+    .string()
+    .min(1, "Country is required")
+    .refine((val) => countries.some((country) => country.value === val), {
+      message: "Please select a valid country code",
+    }),
+  message: z.string().min(1, "Message is required"),
 });

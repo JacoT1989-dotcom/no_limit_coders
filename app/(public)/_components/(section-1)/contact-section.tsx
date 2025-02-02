@@ -1,9 +1,11 @@
+// contact-section.tsx
 "use client";
 
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { toast } from "sonner";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -12,9 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -22,24 +21,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formSchema } from "./validations";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { MessageFormValues, countries } from "./types";
+import { submitMessage } from "./actions";
+import { messageSchema } from "./validations";
+
+function CountrySelect({ field }: { field: any }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredCountries = countries.filter((country) =>
+    country.label.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  return (
+    <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <SelectTrigger className="bg-background">
+        <SelectValue placeholder="Select a country" />
+      </SelectTrigger>
+      <SelectContent className="max-h-[200px]">
+        <div className="flex items-center px-3 pb-2">
+          <Input
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            placeholder="Search country..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="max-h-[200px] overflow-auto">
+          {filteredCountries.map((country) => (
+            <SelectItem key={country.value} value={country.value}>
+              {country.label}
+            </SelectItem>
+          ))}
+        </div>
+      </SelectContent>
+    </Select>
+  );
+}
 
 export function ContactSection() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<MessageFormValues>({
+    resolver: zodResolver(messageSchema),
     defaultValues: {
       fullName: "",
       email: "",
       mobile: "",
       country: "",
-      package: "",
       message: "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would typically send the form data to your backend
+  async function onSubmit(values: MessageFormValues) {
+    console.log("Form submitted with values:", values);
+    try {
+      const result = await submitMessage(values);
+      console.log("Server response:", result);
+
+      if (result.error) {
+        console.error("Submission error:", result.error);
+        toast.error(result.error);
+      } else {
+        toast.success("Message sent successfully");
+        form.reset();
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      toast.error("Failed to send message. Please try again.");
+    }
   }
 
   return (
@@ -129,11 +178,7 @@ export function ContactSection() {
                       <FormItem>
                         <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="United States"
-                            {...field}
-                            className="bg-background"
-                          />
+                          <CountrySelect field={field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
