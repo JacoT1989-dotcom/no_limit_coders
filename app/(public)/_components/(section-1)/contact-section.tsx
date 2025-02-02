@@ -1,11 +1,10 @@
-// contact-section.tsx
 "use client";
 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -27,25 +26,51 @@ import { Button } from "@/components/ui/button";
 import { MessageFormValues, countries } from "./types";
 import { submitMessage } from "./actions";
 import { messageSchema } from "./validations";
+import { Loader2 } from "lucide-react";
 
-function CountrySelect({ field }: { field: any }) {
-  const [searchQuery, setSearchQuery] = useState("");
+function CountrySelect({
+  field,
+  searchQuery,
+  setSearchQuery,
+}: {
+  field: any;
+  searchQuery: string;
+  setSearchQuery: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
   const filteredCountries = countries.filter((country) =>
     country.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
-    <Select onValueChange={field.onChange} defaultValue={field.value}>
+    <Select
+      open={open}
+      onOpenChange={setOpen}
+      onValueChange={(value) => {
+        field.onChange(value);
+        setSearchQuery("");
+        setOpen(false);
+      }}
+      value={field.value}
+    >
       <SelectTrigger className="bg-background">
         <SelectValue placeholder="Select a country" />
       </SelectTrigger>
-      <SelectContent className="max-h-[200px]">
-        <div className="flex items-center px-3 pb-2">
+      <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
+        <div className="sticky top-0 bg-background px-3 pb-2">
           <Input
             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             placeholder="Search country..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSearchQuery(e.target.value);
+            }}
+            autoFocus
           />
         </div>
         <div className="max-h-[200px] overflow-auto">
@@ -61,6 +86,9 @@ function CountrySelect({ field }: { field: any }) {
 }
 
 export function ContactSection() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   const form = useForm<MessageFormValues>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
@@ -73,10 +101,9 @@ export function ContactSection() {
   });
 
   async function onSubmit(values: MessageFormValues) {
-    console.log("Form submitted with values:", values);
+    setIsSubmitting(true);
     try {
       const result = await submitMessage(values);
-      console.log("Server response:", result);
 
       if (result.error) {
         console.error("Submission error:", result.error);
@@ -84,10 +111,13 @@ export function ContactSection() {
       } else {
         toast.success("Message sent successfully");
         form.reset();
+        setSearchQuery(""); // Clear the search query
       }
     } catch (error) {
       console.error("Form submission error:", error);
       toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -178,7 +208,11 @@ export function ContactSection() {
                       <FormItem>
                         <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <CountrySelect field={field} />
+                          <CountrySelect
+                            field={field}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -209,9 +243,17 @@ export function ContactSection() {
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={isSubmitting}
                     className="w-full md:w-auto bg-red-700 text-white hover:bg-black"
                   >
-                    Send Message
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Message"
+                    )}
                   </Button>
                 </div>
               </form>
