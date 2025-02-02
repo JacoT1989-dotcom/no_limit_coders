@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,10 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { registerSchema, type RegisterFormValues } from "./validation";
 import { signUp } from "./actions";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 
 const RegisterForm = () => {
-  const router = useRouter(); // this state that we init is to navigate the user somewhere else
+  const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
 
   const form = useForm<RegisterFormValues>({
@@ -71,302 +68,283 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/")}
-          className="flex items-center text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Create an Account
+        </h2>
+        <p className="text-gray-600">
+          Please complete all required fields to register
+        </p>
       </div>
 
-      <div className="w-full max-w-2xl space-y-6 bg-card p-8 rounded-lg shadow-lg border border-border">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Create an Account
-          </h1>
-          <p className="text-muted-foreground">
-            Please complete all required fields to register
-          </p>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="johndoe"
-                        {...field}
-                        autoComplete="username"
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="john@example.com"
-                        type="email"
-                        {...field}
-                        autoComplete="email"
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Display Name*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="John Doe"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="John"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Doe"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="streetAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Street Address*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="123 Main St"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="townCity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Town/City*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="New York"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="postcode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Postcode*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="12345"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country*</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="United States"
-                        {...field}
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password*</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        autoComplete="new-password"
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password*</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        {...field}
-                        autoComplete="new-password"
-                        disabled={isPending}
-                        className="bg-background"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="agreeTerms"
+              name="username"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem>
+                  <FormLabel className="text-gray-700">Username*</FormLabel>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                    <Input
+                      placeholder="johndoe"
+                      {...field}
+                      autoComplete="username"
                       disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel className="text-muted-foreground">
-                      I agree to the{" "}
-                      <Link
-                        href="/terms"
-                        className="text-primary hover:text-primary/90 underline"
-                      >
-                        terms and conditions
-                      </Link>
-                      *
-                    </FormLabel>
-                  </div>
+                  <FormMessage className="text-red-600" />
                 </FormItem>
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isPending}
-            >
-              {isPending ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Creating Account...
-                </div>
-              ) : (
-                "Create Account"
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Email*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="john@example.com"
+                      type="email"
+                      {...field}
+                      autoComplete="email"
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
               )}
-            </Button>
+            />
 
-            <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="text-primary hover:text-primary/90 font-medium"
-              >
-                Sign in
-              </Link>
-            </div>
-          </form>
-        </Form>
-      </div>
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Display Name*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="John Doe"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">First Name*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="John"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Last Name*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Doe"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="streetAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">
+                    Street Address*
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="123 Main St"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="townCity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Town/City*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="New York"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="postcode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Postcode*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="12345"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Country*</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="United States"
+                      {...field}
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Password*</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      autoComplete="new-password"
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">
+                    Confirm Password*
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      {...field}
+                      autoComplete="new-password"
+                      disabled={isPending}
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="agreeTerms"
+            render={({ field }) => (
+              <FormItem className="flex items-start space-x-2">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isPending}
+                    className="border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm text-gray-600">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      className="text-red-600 hover:text-red-500 underline"
+                    >
+                      terms and conditions
+                    </Link>
+                    *
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Creating Account...
+              </div>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 };

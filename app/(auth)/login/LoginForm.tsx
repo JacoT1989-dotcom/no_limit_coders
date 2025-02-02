@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoginFormValues, loginSchema } from "./validation";
 import { toast } from "sonner";
-import { ArrowLeft, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { login } from "./actions";
 import {
   Tooltip,
@@ -68,47 +68,36 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/")}
-          className="flex items-center text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
+    <div className="space-y-6">
+      <div className="space-y-2 text-center">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Welcome to Genius Humans
+        </h2>
+        <p className="text-gray-600">
+          Please sign in with your account credentials
+        </p>
       </div>
 
-      <div className="w-full max-w-md space-y-6 bg-card p-8 rounded-lg shadow-lg border border-border">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Welcome to CatchTrack! 👋
-          </h1>
-          <p className="text-muted-foreground">
-            Please sign in to your account to continue
-          </p>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-gray-700">Email*</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="nazmie@catchtrack.co.za"
+                      placeholder="your.name@geniushumans.com"
                       {...field}
                       disabled={isPending}
                       autoComplete="email"
                       type="email"
-                      className="bg-background"
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-600" />
                 </FormItem>
               )}
             />
@@ -119,13 +108,13 @@ const LoginForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-gray-700">Password*</FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <Info className="h-4 w-4 text-gray-400" />
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="bg-white text-gray-700 border-gray-200">
                           <p>Password must contain:</p>
                           <p>- At least 8 characters</p>
                           <p>- One uppercase letter</p>
@@ -142,70 +131,71 @@ const LoginForm = () => {
                       {...field}
                       disabled={isPending}
                       autoComplete="current-password"
-                      className="bg-background"
+                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-600" />
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="flex items-center justify-between">
             <FormField
               control={form.control}
               name="remember"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-sm text-muted-foreground">
+                <FormItem className="flex items-start space-x-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isPending}
+                      className="border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm text-gray-600">
                       Remember me
                     </FormLabel>
                   </div>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-primary hover:text-primary/90 font-medium"
-                  >
-                    Forgot password?
-                  </Link>
                 </FormItem>
               )}
             />
-
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isPending}
+            <Link
+              href="/forgot-password"
+              className="text-sm text-red-600 hover:text-red-500 font-medium"
             >
-              {isPending ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  Signing in...
-                </div>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
+              Forgot password?
+            </Link>
+          </div>
 
-            <div className="text-center space-y-4">
-              <div className="text-sm text-muted-foreground">
-                New on our platform?{" "}
-                <Link
-                  href="/register"
-                  className="text-primary hover:text-primary/90 font-medium underline"
-                >
-                  Create an account
-                </Link>
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Signing in...
               </div>
-            </div>
-          </form>
-        </Form>
-      </div>
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+
+          <div className="text-center text-sm text-gray-600">
+            Not registered yet?{" "}
+            <Link
+              href="/register"
+              className="text-red-600 hover:text-red-500 font-medium underline"
+            >
+              Create an account
+            </Link>
+          </div>
+        </form>
+      </Form>
     </div>
   );
 };
