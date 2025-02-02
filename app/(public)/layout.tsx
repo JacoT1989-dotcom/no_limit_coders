@@ -10,7 +10,7 @@ export default async function CustomerLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow mt-20">{children}</main>
     </div>
   );
 }
