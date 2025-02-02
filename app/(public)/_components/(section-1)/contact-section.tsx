@@ -143,38 +143,6 @@ export function ContactSection() {
 
                 <FormField
                   control={form.control}
-                  name="package"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Package</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Select a package" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="starter">
-                            Startup Team ($7 750 per month)
-                          </SelectItem>
-                          <SelectItem value="professional">
-                            Professional Team ($9 750 per month)
-                          </SelectItem>
-                          <SelectItem value="enterprise">
-                            Enterprise Team ($12 750 per month)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
                   name="message"
                   render={({ field }) => (
                     <FormItem>

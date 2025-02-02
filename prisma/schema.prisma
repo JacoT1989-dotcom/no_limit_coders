@@ -27,6 +27,7 @@ model User {
   agreeTerms    Boolean   @default(false)
   role          UserRole  @default(USER)
   Session       Session[]
+  Booking       Booking[]
 
   @@map("users")
 }
@@ -38,6 +39,22 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model Booking {
+  id          String           @id @default(uuid())
+  fullName    String
+  email       String
+  mobile      String
+  country     String
+  package     PackageSelection @default(NONE)
+  message     String
+  submittedAt DateTime         @default(now())
+  status      KavanProcess     @default(PENDING)
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+
+  @@map("bookings")
 }
 
 enum UserRole {
@@ -56,4 +73,11 @@ enum KavanProcess {
   FINALIZING
   COMPLETED
   REJECTED
+}
+
+enum PackageSelection {
+  NONE
+  STARTUPTEAM
+  PROFESSIONALTEAM
+  ENTERPRISE
 }

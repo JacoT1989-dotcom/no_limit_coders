@@ -1,10 +1,10 @@
-const packages = [
+export const packages = [
   { value: "starter", label: "Starter Team" },
   { value: "professional", label: "Professional Team" },
   { value: "enterprise", label: "Enterprise Team" },
 ];
 
-const countries = [
+export const countries = [
   { value: "af", label: "Afghanistan" },
   { value: "al", label: "Albania" },
   { value: "dz", label: "Algeria" },

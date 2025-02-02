@@ -2,7 +2,6 @@
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "react-hot-toast";
-import { Navbar } from "./(public)/_components/Navbar";
 
 export default function RootLayout({
   children,
