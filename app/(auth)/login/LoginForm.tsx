@@ -184,16 +184,6 @@ const LoginForm = () => {
               "Sign In"
             )}
           </Button>
-
-          <div className="text-center text-sm text-gray-600">
-            Not registered yet?{" "}
-            <Link
-              href="/register"
-              className="text-red-600 hover:text-red-500 font-medium underline"
-            >
-              Create an account
-            </Link>
-          </div>
         </form>
       </Form>
     </div>
