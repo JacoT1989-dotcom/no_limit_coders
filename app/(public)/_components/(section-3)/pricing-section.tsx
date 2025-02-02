@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { PricingCard } from "./pricing-card";
 import { packages } from "./types";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function PricingSection() {
   return (
@@ -18,9 +20,17 @@ export function PricingSection() {
             <h2 className="text-5xl font-bold mb-4 text-foreground">
               Pricing Plans
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
               Choose the perfect team composition for your project
             </p>
+            <Link href="/book">
+              <Button
+                size="lg"
+                className="bg-red-700 text-white hover:bg-black"
+              >
+                Make Your Booking
+              </Button>
+            </Link>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -233,17 +233,26 @@ export function BookingSection() {
                   name="package"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Package</FormLabel>
+                      <div className="flex justify-between items-center">
+                        <FormLabel>Package</FormLabel>
+                        <a
+                          href="http://localhost:3000/#pricing"
+                          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          See pricing →
+                        </a>
+                      </div>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-background">
-                            <SelectValue placeholder="Select a package" />
+                            <SelectValue placeholder="Select your package type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="NONE">Select a package</SelectItem>
                           {packages.map((pkg) => (
                             <SelectItem key={pkg.value} value={pkg.value}>
                               {pkg.label}
