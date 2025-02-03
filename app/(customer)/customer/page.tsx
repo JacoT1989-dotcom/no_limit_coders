@@ -1,7 +1,9 @@
-import React from "react";
+// app/customer/page.tsx
 
-const page = () => {
-  return <div>Customer</div>;
+import WelcomePage from "./Welcome";
+
+const CustomerDashboardPage = () => {
+  return <WelcomePage />;
 };
 
-export default page;
+export default CustomerDashboardPage;

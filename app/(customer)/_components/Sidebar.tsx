@@ -40,7 +40,7 @@ const Sidebar = () => {
         {/* Logo/Name Section */}
         <div className="flex items-center px-3 h-16 border-b border-border">
           {isCollapsed ? (
-            <span className="mx-auto text-xl font-bold text-primary">A</span>
+            <span className="mx-auto text-xl font-bold text-primary">D</span>
           ) : (
             <Link href="/dashboard" className="flex items-center space-x-2">
               <span className="text-xl font-bold text-primary">
