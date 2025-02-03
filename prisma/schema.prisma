@@ -9,30 +9,34 @@ datasource db {
 }
 
 model User {
-  id            String           @id @default(uuid())
-  username      String           @unique
-  firstName     String
-  lastName      String
-  displayName   String
-  email         String           @unique
-  passwordHash  String
-  phoneNumber   String           @default("")
-  streetAddress String
-  suburb        String?
-  townCity      String
-  postcode      String
-  country       String
-  avatarUrl     String?
-  backgroundUrl String?
-  agreeTerms    Boolean          @default(false)
-  package       PackageSelection @default(NONE)
-  role          UserRole         @default(USER)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  Session       Session[]
-  Booking       Booking[]
-  UserMessage   UserMessage[]
-  Message       Message[]
+  id                String              @id @default(uuid())
+  username          String              @unique
+  firstName         String
+  lastName          String
+  displayName       String
+  email             String              @unique
+  passwordHash      String
+  phoneNumber       String              @default("")
+  streetAddress     String
+  suburb            String?
+  townCity          String
+  postcode          String
+  country           String
+  avatarUrl         String?
+  backgroundUrl     String?
+  agreeTerms        Boolean             @default(false)
+  package           PackageSelection    @default(NONE)
+  role              UserRole            @default(USER)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  Session           Session[]
+  Booking           Booking[]
+  UserMessage       UserMessage[]
+  Message           Message[]
+  Project           Project[]
+  ProjectTeamMember ProjectTeamMember[]
+  TaskComment       TaskComment[]
+  TaskAttachment    TaskAttachment[]
 
   @@map("users")
 }
@@ -115,4 +119,140 @@ enum PackageSelection {
   STARTUPTEAM
   PROFESSIONALTEAM
   ENTERPRISE
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      ProjectStatus @default(ACTIVE)
+  priority    Priority      @default(MEDIUM)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  customer    User                @relation(fields: [customerId], references: [id])
+  customerId  String
+  tasks       Task[]
+  taskColumns TaskColumn[]
+  team        ProjectTeamMember[]
+
+  @@map("projects")
+}
+
+model ProjectTeamMember {
+  id       String   @id @default(uuid())
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String
+  tasks     Task[]
+
+  @@unique([projectId, userId])
+  @@map("project_team_members")
+}
+
+model TaskColumn {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  tasks     Task[]
+
+  @@unique([projectId, order])
+  @@map("task_columns")
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?
+  order       Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  project     Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  column      TaskColumn          @relation(fields: [columnId], references: [id])
+  columnId    String
+  assignees   ProjectTeamMember[]
+  parent      Task?               @relation("TaskDependency", fields: [parentId], references: [id])
+  parentId    String?
+  subtasks    Task[]              @relation("TaskDependency")
+  comments    TaskComment[]
+  attachments TaskAttachment[]
+
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId   String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+
+  // Relations
+  task       Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId     String
+  uploader   User   @relation(fields: [uploaderId], references: [id])
+  uploaderId String
+
+  @@map("task_attachments")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+  ON_HOLD
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
 }

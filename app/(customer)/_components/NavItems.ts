@@ -30,7 +30,7 @@ export const navigation: NavItem[] = [
   {
     label: "Tasks",
     icon: Users,
-    href: "/customers/tasks",
+    href: "/customer/tasks",
   },
   {
     label: "Chat & Feeds",
