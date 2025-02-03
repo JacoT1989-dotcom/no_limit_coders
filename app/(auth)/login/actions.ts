@@ -57,23 +57,23 @@ export async function login(
       };
     }
 
-    ////////////////////// THIS IS THE PART WHERE THE FUNCTION IS IN A POSITIVE STATE//////////
+    // Only create session for roles higher than USER
+    if (existingUser.role !== UserRole.USER) {
+      const dbSession = await prisma.session.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: existingUser.id,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
 
-    // Create session in the database
-    const dbSession = await prisma.session.create({
-      data: {
-        id: crypto.randomUUID(),
-        userId: existingUser.id,
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days, 24 HOURS, 60 SEC, 60 MIN, 1000 MIL SEC
-      },
-    });
-
-    const sessionCookie = lucia.createSessionCookie(dbSession.id);
-    cookies().set(
-      sessionCookie.name,
-      sessionCookie.value,
-      sessionCookie.attributes,
-    );
+      const sessionCookie = lucia.createSessionCookie(dbSession.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes,
+      );
+    }
 
     const redirectPath = roleRoutes[existingUser.role];
     if (!redirectPath) {

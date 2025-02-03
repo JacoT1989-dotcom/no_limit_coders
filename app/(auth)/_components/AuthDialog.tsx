@@ -1,3 +1,4 @@
+// AuthDialog.tsx
 import { User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -27,7 +28,6 @@ export function AuthDialog() {
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-red-50 to-white">
           <div className="flex flex-col h-full">
-            {/* Close button container */}
             <div className="flex justify-end p-2">
               <Button
                 variant="ghost"
@@ -40,7 +40,6 @@ export function AuthDialog() {
               </Button>
             </div>
 
-            {/* Tabs container */}
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-white/50 p-1 gap-2">
                 <TabsTrigger
@@ -59,7 +58,7 @@ export function AuthDialog() {
 
               <TabsContent value="login" className="p-8 pt-6">
                 <div className="[&>div]:p-0 [&>div]:shadow-none [&>div]:border-0">
-                  <LoginForm />
+                  <LoginForm onClose={handleClose} />
                 </div>
               </TabsContent>
 

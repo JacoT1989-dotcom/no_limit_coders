@@ -1,3 +1,4 @@
+// LoginForm.tsx
 "use client";
 
 import React from "react";
@@ -27,7 +28,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const LoginForm = () => {
+interface LoginFormProps {
+  onClose: () => void;
+}
+
+const LoginForm = ({ onClose }: LoginFormProps) => {
   const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
 
@@ -45,6 +50,8 @@ const LoginForm = () => {
       setIsPending(true);
       const result = await login(data);
 
+      console.log("Login result:", result);
+
       if (result?.error) {
         toast.error(result.error);
         if (result.error.includes("Invalid email or password")) {
@@ -55,8 +62,12 @@ const LoginForm = () => {
       }
 
       if (result?.redirectTo) {
-        toast.success("Logged in successfully!");
+        if (result.redirectTo !== "/register-success") {
+          toast.success("Logged in successfully!");
+        }
+        onClose();
         router.push(result.redirectTo);
+        router.refresh();
         return;
       }
     } catch (error) {
