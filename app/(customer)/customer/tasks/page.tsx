@@ -1,10 +1,10 @@
 import React from "react";
-import TasksTable from "./TasksTable";
+import ProjectTasks from "./ProjectTasks";
 
 const TaksPage = () => {
   return (
     <div>
-      <TasksTable />
+      <ProjectTasks />
     </div>
   );
 };
