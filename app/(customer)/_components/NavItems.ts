@@ -2,7 +2,8 @@
 export type NavItem = {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
-  links: {
+  href?: string;
+  links?: {
     name: string;
     href: string;
   }[];
@@ -27,20 +28,16 @@ export const navigation: NavItem[] = [
     ],
   },
   {
-    label: "Kanbans",
+    label: "Tasks",
     icon: Users,
-    links: [
-      { name: "Calendar", href: "/customers/kanbans/calendar" },
-      { name: "Project Process", href: "/customers/project-process" },
-      { name: "Project Notes", href: "/customers/project-notes" },
-    ],
+    href: "/customers/tasks",
   },
   {
-    label: "Reports",
+    label: "Chat & Feeds",
     icon: FileText,
     links: [
       { name: "Notify tech Team", href: "/customers/notify-tech-team" },
-      { name: "Tech Team Project Feed", href: "/customers/tech-team-feed" },
+      { name: "Tech Team Feed", href: "/customers/tech-team-feed" },
       { name: "Upcoming Meetings", href: "/customers/schedule-meeting" },
     ],
   },

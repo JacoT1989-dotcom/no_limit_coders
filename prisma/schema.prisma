@@ -46,6 +46,7 @@ model Session {
   @@map("sessions")
 }
 
+///////////////////////////////// Public Models ////////////////////////////////
 model Booking {
   id        String           @id @default(uuid())
   fullName  String
@@ -77,6 +78,7 @@ model Message {
   @@map("messages")
 }
 
+//////////////////////////////// USER MODELS //////////////////////////////////
 model UserMessage {
   id        String   @id @default(uuid())
   message   String
@@ -88,6 +90,7 @@ model UserMessage {
   @@map("user_messages")
 }
 
+//////////////////////////////// ENUS /////////////////////////////////////////
 enum UserRole {
   USER
   CUSTOMER

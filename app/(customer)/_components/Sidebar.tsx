@@ -67,49 +67,82 @@ const Sidebar = () => {
           <div className="space-y-2 px-3">
             {navigation.map((item) => (
               <div key={item.label}>
-                <button
-                  onClick={() => toggleDropdown(item.label)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
-                    openDropdown === item.label
-                      ? "bg-secondary text-secondary-foreground"
-                      : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
-                  )}
-                >
-                  <div className="flex items-center space-x-3">
-                    {item.icon && (
-                      <item.icon
-                        className={cn("h-5 w-5", isCollapsed ? "mx-auto" : "")}
-                      />
+                {item.href ? (
+                  // Direct link item (like Tasks)
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                      pathname === item.href
+                        ? "bg-secondary text-secondary-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
                     )}
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </div>
-                  {!isCollapsed &&
-                    (openDropdown === item.label ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    ))}
-                </button>
-
-                {/* Dropdown Links */}
-                {openDropdown === item.label && !isCollapsed && (
-                  <div className="mt-1 space-y-1 px-3">
-                    {item.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn(
-                          "block rounded-md px-8 py-2 text-sm transition-colors",
-                          pathname === link.href
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
+                  >
+                    <div className="flex items-center space-x-3">
+                      {item.icon && (
+                        <item.icon
+                          className={cn(
+                            "h-5 w-5",
+                            isCollapsed ? "mx-auto" : "",
+                          )}
+                        />
+                      )}
+                      {!isCollapsed && <span>{item.label}</span>}
+                    </div>
+                  </Link>
+                ) : (
+                  // Dropdown item
+                  <>
+                    <button
+                      onClick={() => toggleDropdown(item.label)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                        openDropdown === item.label
+                          ? "bg-secondary text-secondary-foreground"
+                          : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
+                      )}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {item.icon && (
+                          <item.icon
+                            className={cn(
+                              "h-5 w-5",
+                              isCollapsed ? "mx-auto" : "",
+                            )}
+                          />
                         )}
-                      >
-                        {link.name}
-                      </Link>
-                    ))}
-                  </div>
+                        {!isCollapsed && <span>{item.label}</span>}
+                      </div>
+                      {!isCollapsed &&
+                        (openDropdown === item.label ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        ))}
+                    </button>
+
+                    {/* Dropdown Links */}
+                    {openDropdown === item.label &&
+                      !isCollapsed &&
+                      item.links && (
+                        <div className="mt-1 space-y-1 px-3">
+                          {item.links.map((link) => (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              className={cn(
+                                "block rounded-md px-8 py-2 text-sm transition-colors",
+                                pathname === link.href
+                                  ? "bg-primary/10 text-primary font-medium"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
+                              )}
+                            >
+                              {link.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                  </>
                 )}
               </div>
             ))}
