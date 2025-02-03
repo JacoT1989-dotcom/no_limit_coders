@@ -1,7 +1,8 @@
 import * as z from "zod";
-import { UserRole } from "@prisma/client";
+import { UserRole, PackageSelection } from "@prisma/client"; // Added PackageSelection
 
 export const userRoles = Object.values(UserRole);
+export const packageOptions = Object.values(PackageSelection);
 
 export const registerSchema = z
   .object({
@@ -57,6 +58,7 @@ export const registerSchema = z
       message: "You must agree to the terms and conditions",
     }),
     role: z.nativeEnum(UserRole).default(UserRole.USER),
+    package: z.nativeEnum(PackageSelection).default(PackageSelection.NONE), // Added package field
     avatarUrl: z.string().optional().nullable(),
     backgroundUrl: z.string().optional().nullable(),
   })

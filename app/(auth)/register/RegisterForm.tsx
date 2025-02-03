@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -17,10 +19,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { registerSchema, type RegisterFormValues } from "./validation";
 import { signUp } from "./actions";
 import { toast } from "sonner";
+import { CountrySelect } from "@/app/(public)/_components/(section-1)/CountrySelect";
+import { PackageSelect } from "@/app/(public)/_components/(section-1)/PackageSelect";
 
 const RegisterForm = () => {
   const router = useRouter();
-  const [isPending, setIsPending] = React.useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -37,6 +42,7 @@ const RegisterForm = () => {
       password: "",
       confirmPassword: "",
       role: "USER",
+      package: "NONE",
       agreeTerms: false,
       avatarUrl: null,
       backgroundUrl: null,
@@ -245,18 +251,38 @@ const RegisterForm = () => {
                 <FormItem>
                   <FormLabel className="text-gray-700">Country*</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="United States"
-                      {...field}
+                    <CountrySelect
+                      field={field}
+                      searchQuery={searchQuery}
+                      setSearchQuery={setSearchQuery}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
                     />
                   </FormControl>
                   <FormMessage className="text-red-600" />
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="package"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">
+                    Package Selection*
+                  </FormLabel>
+                  <FormControl>
+                    <PackageSelect field={field} disabled={isPending} />
+                  </FormControl>
+                  <FormMessage className="text-red-600" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="password"

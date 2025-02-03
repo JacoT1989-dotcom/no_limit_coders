@@ -5,7 +5,7 @@ import { hash } from "@node-rs/argon2";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { redirect } from "next/navigation";
 import { RegisterFormValues, registerSchema } from "./validation";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole, PackageSelection } from "@prisma/client";
 
 export async function signUp(
   formData: RegisterFormValues,
@@ -43,8 +43,6 @@ export async function signUp(
       };
     }
 
-    ////////////THIS IS THE PART OF THE FUNCTION WHERE ALL PARAMS HAVE PASSED THE CHECKS/////////////
-
     const passwordHash = await hash(validatedData.password, {
       memoryCost: 19456,
       timeCost: 2,
@@ -68,6 +66,7 @@ export async function signUp(
         backgroundUrl: validatedData.backgroundUrl,
         agreeTerms: validatedData.agreeTerms,
         role: validatedData.role as UserRole,
+        package: validatedData.package as PackageSelection, // Added package field
       },
     });
 
