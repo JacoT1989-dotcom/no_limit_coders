@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,6 +11,9 @@ import {
 import TasksTable from "./_components/TasksTable";
 import TasksKanban from "./_components/TasksKanban";
 import TasksCalendar from "./_components/TaskCalendar";
+import { getCustomerProjects } from "./actions";
+import { ProjectOption } from "./types";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 
 const ProjectTasks = () => {
   const [activeView, setActiveView] = useState("table");
@@ -18,6 +21,20 @@ const ProjectTasks = () => {
   const [selectedAssignee, setSelectedAssignee] = useState("all");
   const [selectedProject, setSelectedProject] = useState("all");
   const [selectedDueDate, setSelectedDueDate] = useState("all");
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const result = await getCustomerProjects();
+      if (result.error) {
+        setError(result.error);
+      } else if (result.projects) {
+        setProjects(result.projects);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   const renderView = () => {
     switch (activeView) {
@@ -63,15 +80,30 @@ const ProjectTasks = () => {
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col space-y-4">
-        <h1 className="text-2xl font-bold">My Tasks</h1>
-        <p className="text-muted-foreground">View all of your tasks here</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">My Tasks</h1>
+            <p className="text-muted-foreground">View all of your tasks here</p>
+          </div>
+          <CreateTaskDialog projectId={selectedProject} />
+        </div>
 
-        {/* Project Name */}
+        {/* Project Selection */}
         <div className="flex flex-col gap-2">
           <div>
-            <Button variant="secondary" className="bg-secondary">
-              Project Name
-            </Button>
+            <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Project" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Select a Project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* View Type Tabs */}
@@ -135,8 +167,11 @@ const ProjectTasks = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All projects</SelectItem>
-              <SelectItem value="mobile">Mobile App Development</SelectItem>
-              <SelectItem value="website">Website Redesign</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

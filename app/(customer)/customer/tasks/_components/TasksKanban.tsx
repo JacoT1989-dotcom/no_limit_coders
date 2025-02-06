@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -8,6 +8,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface Task {
+  id: number;
+  title: string;
+  project: string;
+  assignee: string;
+  dueDate: string;
+  status: string;
+}
+
+interface Column {
+  id: string;
+  title: string;
+  tasks: Task[];
+}
 
 interface TasksKanbanProps {
   status?: string;
@@ -22,79 +37,89 @@ const TasksKanban = ({
   project,
   dueDate,
 }: TasksKanbanProps) => {
-  const columns = [
-    {
-      id: "backlog",
-      title: "Backlog",
-      tasks: [
-        {
-          id: 1,
-          title: "Conduct usability testing",
-          project: "Mobile App Development",
-          assignee: "John",
-          dueDate: "October 15th, 2024",
-          status: "Backlog",
-        },
-      ],
-    },
-    {
-      id: "todo",
-      title: "Todo",
-      tasks: [
-        {
-          id: 2,
-          title: "Implement offline mode",
-          project: "Mobile App Development",
-          assignee: "Antonio",
-          dueDate: "October 14th, 2024",
-          status: "Todo",
-        },
-      ],
-    },
-    {
-      id: "in-progress",
-      title: "In Progress",
-      tasks: [
-        {
-          id: 3,
-          title: "Design UI components",
-          project: "Mobile App Development",
-          assignee: "Antonio",
-          dueDate: "October 10th, 2024",
-          status: "In Progress",
-        },
-      ],
-    },
-    {
-      id: "done",
-      title: "Done",
-      tasks: [
-        {
-          id: 4,
-          title: "Create app wireframes",
-          project: "Mobile App Development",
-          assignee: "John",
-          dueDate: "October 9th, 2024",
-          status: "Done",
-        },
-      ],
-    },
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!project || project === "all") {
+        setTasks([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/tasks?projectId=${project}`);
+        const data = await response.json();
+        setTasks(data);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+        setTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [project]);
+
+  const columns: Column[] = [
+    { id: "backlog", title: "Backlog", tasks: [] },
+    { id: "todo", title: "Todo", tasks: [] },
+    { id: "in-progress", title: "In Progress", tasks: [] },
+    { id: "done", title: "Done", tasks: [] },
   ];
 
+  // Filter and distribute tasks to columns
+  tasks.forEach((task) => {
+    const column = columns.find(
+      (col) => col.id === task.status.toLowerCase().replace(" ", "-"),
+    );
+    if (column) {
+      if (
+        (!status ||
+          status === "all" ||
+          task.status.toLowerCase() === status.toLowerCase()) &&
+        (!assignee ||
+          assignee === "all" ||
+          task.assignee.toLowerCase() === assignee.toLowerCase()) &&
+        (!dueDate || dueDate === "all")
+      ) {
+        column.tasks.push(task);
+      }
+    }
+  });
+
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Backlog":
+    switch (status.toLowerCase()) {
+      case "backlog":
         return "bg-purple-100 text-purple-700";
-      case "Todo":
+      case "todo":
         return "bg-red-100 text-red-700";
-      case "In Progress":
+      case "in progress":
         return "bg-yellow-100 text-yellow-700";
-      case "Done":
+      case "done":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (!project || project === "all") {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Please select a project to view tasks
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Loading tasks...
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
@@ -127,7 +152,7 @@ const TasksKanban = ({
                     </CardTitle>
                     <CardDescription className="flex items-center gap-2 text-xs">
                       <span className="flex h-5 w-5 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                        M
+                        {task.project[0]}
                       </span>
                       {task.project}
                     </CardDescription>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -34,44 +34,33 @@ const TasksTable = ({
   dueDate,
 }: TasksTableProps) => {
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock data - Replace with actual data fetching
-  const tasks: Task[] = [
-    {
-      id: 1,
-      name: "Conduct usability testing",
-      project: "Mobile App Development",
-      assignee: "John",
-      dueDate: "October 15th, 2024",
-      status: "Backlog",
-    },
-    {
-      id: 2,
-      name: "Implement offline mode",
-      project: "Mobile App Development",
-      assignee: "Antonio",
-      dueDate: "October 14th, 2024",
-      status: "Todo",
-    },
-    {
-      id: 3,
-      name: "Design UI components",
-      project: "Mobile App Development",
-      assignee: "Antonio",
-      dueDate: "October 10th, 2024",
-      status: "In Progress",
-    },
-    {
-      id: 4,
-      name: "Create app wireframes",
-      project: "Mobile App Development",
-      assignee: "John",
-      dueDate: "October 9th, 2024",
-      status: "Done",
-    },
-  ];
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!project || project === "all") {
+        setTasks([]);
+        return;
+      }
 
-  // Filter tasks based on props
+      setLoading(true);
+      try {
+        // Replace with your actual API call
+        const response = await fetch(`/api/tasks?projectId=${project}`);
+        const data = await response.json();
+        setTasks(data);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+        setTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [project]);
+
   const filteredTasks = tasks.filter((task) => {
     if (
       status &&
@@ -87,14 +76,10 @@ const TasksTable = ({
     ) {
       return false;
     }
-    if (
-      project &&
-      project !== "all" &&
-      task.project.toLowerCase() !== project.toLowerCase()
-    ) {
-      return false;
+    if (dueDate && dueDate !== "all") {
+      // Add due date filtering logic based on your requirements
+      return true;
     }
-    // Add due date filtering logic here based on your requirements
     return true;
   });
 
@@ -115,19 +100,35 @@ const TasksTable = ({
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Backlog":
+    switch (status.toLowerCase()) {
+      case "backlog":
         return "bg-purple-100 text-purple-700";
-      case "Todo":
+      case "todo":
         return "bg-red-100 text-red-700";
-      case "In Progress":
+      case "in progress":
         return "bg-yellow-100 text-yellow-700";
-      case "Done":
+      case "done":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (!project || project === "all") {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Please select a project to view tasks
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Loading tasks...
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -163,7 +164,7 @@ const TasksTable = ({
               <TableCell>
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-blue-700">
-                    M
+                    {task.project[0]}
                   </span>
                   {task.project}
                 </div>

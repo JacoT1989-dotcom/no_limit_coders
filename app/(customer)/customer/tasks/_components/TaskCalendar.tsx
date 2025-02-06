@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -21,6 +21,15 @@ import {
   isToday,
 } from "date-fns";
 
+interface Task {
+  id: number;
+  title: string;
+  project: string;
+  assignee: string;
+  dueDate: Date;
+  status: string;
+}
+
 interface TasksCalendarProps {
   status?: string;
   assignee?: string;
@@ -35,50 +44,84 @@ const TasksCalendar = ({
   dueDate,
 }: TasksCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock tasks data
-  const tasks = [
-    {
-      id: 1,
-      title: "Conduct usability testing",
-      project: "Mobile App Development",
-      assignee: "John",
-      dueDate: new Date("2024-10-15"),
-      status: "Backlog",
-    },
-    {
-      id: 2,
-      title: "Implement offline mode",
-      project: "Mobile App Development",
-      assignee: "Antonio",
-      dueDate: new Date("2024-10-14"),
-      status: "Todo",
-    },
-    // Add more tasks as needed
-  ];
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (!project || project === "all") {
+        setTasks([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/tasks?projectId=${project}`);
+        const data = await response.json();
+        setTasks(
+          data.map((task: any) => ({
+            ...task,
+            dueDate: new Date(task.dueDate),
+          })),
+        );
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+        setTasks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [project]);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const getTasksForDate = (date: Date) => {
-    return tasks.filter((task) => isSameDay(task.dueDate, date));
+    return tasks.filter(
+      (task) =>
+        isSameDay(task.dueDate, date) &&
+        (!status ||
+          status === "all" ||
+          task.status.toLowerCase() === status.toLowerCase()) &&
+        (!assignee ||
+          assignee === "all" ||
+          task.assignee.toLowerCase() === assignee.toLowerCase()),
+    );
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Backlog":
+    switch (status.toLowerCase()) {
+      case "backlog":
         return "bg-purple-100 text-purple-700";
-      case "Todo":
+      case "todo":
         return "bg-red-100 text-red-700";
-      case "In Progress":
+      case "in progress":
         return "bg-yellow-100 text-yellow-700";
-      case "Done":
+      case "done":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (!project || project === "all") {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Please select a project to view tasks
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+        Loading tasks...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -154,7 +197,7 @@ const TasksCalendar = ({
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1 text-xs">
                           <span className="flex h-4 w-4 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                            M
+                            {task.project[0]}
                           </span>
                           <span className="truncate">{task.project}</span>
                         </CardDescription>

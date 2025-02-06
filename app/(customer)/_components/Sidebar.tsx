@@ -42,7 +42,7 @@ const Sidebar = () => {
           {isCollapsed ? (
             <span className="mx-auto text-xl font-bold text-primary">D</span>
           ) : (
-            <Link href="/dashboard" className="flex items-center space-x-2">
+            <Link href="/customer" className="flex items-center space-x-2">
               <span className="text-xl font-bold text-primary">
                 My Dashboard
               </span>
