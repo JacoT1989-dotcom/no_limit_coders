@@ -127,7 +127,7 @@ model Project {
   description String?
   startDate   DateTime
   endDate     DateTime?
-  status      ProjectStatus @default(ACTIVE)
+  status      ProjectStatus @default(UNDER_REVIEW)
   priority    Priority      @default(MEDIUM)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -231,6 +231,7 @@ model TaskAttachment {
 }
 
 enum ProjectStatus {
+  UNDER_REVIEW
   ACTIVE
   COMPLETED
   ARCHIVED

@@ -10,7 +10,7 @@ const Navbar = () => {
       <div className="fixed top-0 left-0 right-0 z-50">
         <nav className=" text-white shadow-lg">
           <div className="flex items-center justify-between text-xs mx-auto w-full py-6 px-8">
-            <Link href="/" className="flex items-center">
+            <Link href="/customer" className="flex items-center">
               <Image
                 src="/logo_gh.png"
                 alt="Genius Humans Logo"
