@@ -122,15 +122,16 @@ enum PackageSelection {
 }
 
 model Project {
-  id          String        @id @default(uuid())
-  name        String
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  status      ProjectStatus @default(UNDER_REVIEW)
-  priority    Priority      @default(MEDIUM)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id               String        @id @default(uuid())
+  name             String
+  description      String?
+  startDate        DateTime
+  endDate          DateTime?
+  status           ProjectStatus @default(UNDER_REVIEW)
+  priority         Priority      @default(MEDIUM)
+  preferredMeeting DateTime
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   // Relations
   customer    User                @relation(fields: [customerId], references: [id])

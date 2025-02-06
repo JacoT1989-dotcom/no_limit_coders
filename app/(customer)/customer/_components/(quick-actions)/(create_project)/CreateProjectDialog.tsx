@@ -1,6 +1,9 @@
 "use client";
+
 import React, { ReactNode } from "react";
 import { useForm } from "react-hook-form";
+import { Priority } from "@prisma/client";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -28,16 +31,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { createProject } from "./actions";
 
 interface CreateProjectDialogProps {
   children: ReactNode;
-}
-
-enum Priority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  URGENT = "URGENT",
+  customerId: string;
 }
 
 interface FormValues {
@@ -46,11 +44,27 @@ interface FormValues {
   startDate: string;
   endDate: string;
   priority: Priority;
-  meetingDateTime: string;
+  meetingDate: string;
+  meetingTime: string;
 }
 
-const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
+const CreateProjectDialog = ({
+  children,
+  customerId,
+}: CreateProjectDialogProps) => {
   const [open, setOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour < 17; hour++) {
+      for (let minute of ["00", "30"]) {
+        const time = `${hour.toString().padStart(2, "0")}:${minute}`;
+        slots.push(time);
+      }
+    }
+    return slots;
+  };
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -59,17 +73,47 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
       startDate: "",
       endDate: "",
       priority: Priority.MEDIUM,
-      meetingDateTime: "",
+      meetingDate: "",
+      meetingTime: "",
     },
   });
 
   const onSubmit = async (data: FormValues) => {
     try {
-      console.log("Form data:", data);
-      setOpen(false);
-      form.reset();
+      setIsSubmitting(true);
+      const formattedDate = new Date(
+        `${data.meetingDate}T${data.meetingTime}`,
+      ).toISOString();
+
+      const result = await createProject({
+        name: data.name,
+        description: data.description,
+        startDate: new Date(data.startDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
+        priority: data.priority,
+        preferredMeeting: formattedDate,
+        customerId,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        form.setError("root", { message: result.error });
+        return;
+      }
+
+      if (result.success) {
+        toast.success("Project created successfully");
+        setOpen(false);
+        form.reset();
+      }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error creating project:", error);
+      toast.error("Failed to create project. Please try again.");
+      form.setError("root", {
+        message: "Failed to create project. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,13 +134,13 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
                 Create New Project
               </DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Fill in the project details below. Please select your preferred
-                meeting time for the initial project discussion.
+                Fill in the project details and select your preferred meeting
+                time for the initial discussion.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* Project Name and Priority Row */}
+              {/* Name and Priority */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -154,7 +198,7 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
                 />
               </div>
 
-              {/* Start Date and End Date Row */}
+              {/* Start Date and End Date */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -214,7 +258,7 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
                 />
               </div>
 
-              {/* Description Field (Full Width) */}
+              {/* Description */}
               <FormField
                 control={form.control}
                 name="description"
@@ -240,43 +284,71 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
                 )}
               />
 
-              {/* Meeting Date/Time Field (Full Width) */}
-              <FormField
-                control={form.control}
-                name="meetingDateTime"
-                rules={{
-                  required: "Meeting time is required",
-                  validate: (value) => {
-                    const meetingDate = new Date(value);
-                    const now = new Date();
-                    const hours = meetingDate.getHours();
+              {/* Meeting Date and Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="meetingDate"
+                  rules={{
+                    required: "Meeting date is required",
+                    validate: (value) => {
+                      const date = new Date(value);
+                      const today = new Date();
+                      return (
+                        date >= today || "Meeting date must be in the future"
+                      );
+                    },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meeting Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          className="bg-background dark:bg-card"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    if (meetingDate <= now) {
-                      return "Meeting time must be in the future";
-                    }
-
-                    if (hours < 9 || hours >= 17) {
-                      return "Meeting must be scheduled between 9 AM and 5 PM";
-                    }
-
-                    return true;
-                  },
-                }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Meeting Time</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="datetime-local"
-                        className="bg-background dark:bg-card"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="meetingTime"
+                  rules={{ required: "Meeting time is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meeting Time</FormLabel>
+                      <FormControl>
+                        <select
+                          aria-label="Select meeting time"
+                          title="Meeting time selection"
+                          className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background dark:bg-card text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          value={field.value}
+                          onChange={field.onChange}
+                        >
+                          <option value="">Select time</option>
+                          {generateTimeSlots().map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
+
+            {form.formState.errors.root && (
+              <p className="text-sm text-red-500 mt-2">
+                {form.formState.errors.root.message}
+              </p>
+            )}
 
             <DialogFooter>
               <Button
@@ -293,8 +365,9 @@ const CreateProjectDialog = ({ children }: CreateProjectDialogProps) => {
               <Button
                 type="submit"
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
+                disabled={isSubmitting}
               >
-                Create Project
+                {isSubmitting ? "Creating..." : "Create Project"}
               </Button>
             </DialogFooter>
           </form>

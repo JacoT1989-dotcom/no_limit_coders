@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import {
   Calendar,
@@ -12,11 +13,12 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useSession } from "../SessionProvider";
-import CreateProjectDialog from "./_components/CreateProjectDialog";
+import CreateProjectDialog from "./_components/(quick-actions)/(create_project)/CreateProjectDialog";
+import { SessionUser } from "../SessionProvider";
 
 const WelcomePage = () => {
   const { user } = useSession();
-  const displayName = user.displayName || `${user.firstName} ${user.lastName}`;
+  const displayName = user.displayName;
 
   return (
     <div className="space-y-12">
@@ -45,7 +47,7 @@ const WelcomePage = () => {
           </button>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <CreateProjectDialog>
+          <CreateProjectDialog customerId={user.id}>
             <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300 cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader>
@@ -119,8 +121,14 @@ const WelcomePage = () => {
 
       {/* Projects and Activity */}
       <div className="grid gap-8 lg:grid-cols-2">
+        {/* Active Projects Section */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold">Active Projects</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Active Projects</h2>
+            <button className="flex items-center text-accent hover:text-accent/80 text-sm">
+              View All <ChevronRight className="h-4 w-4 ml-1" />
+            </button>
+          </div>
           <div className="space-y-4">
             <Card className="group hover:bg-accent/5 transition-colors">
               <CardContent className="pt-6">
@@ -162,8 +170,14 @@ const WelcomePage = () => {
           </div>
         </section>
 
+        {/* Recent Activity Section */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold">Recent Activity</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">Recent Activity</h2>
+            <button className="flex items-center text-accent hover:text-accent/80 text-sm">
+              View All <ChevronRight className="h-4 w-4 ml-1" />
+            </button>
+          </div>
           <Card>
             <CardContent className="pt-6">
               <div className="space-y-6">
