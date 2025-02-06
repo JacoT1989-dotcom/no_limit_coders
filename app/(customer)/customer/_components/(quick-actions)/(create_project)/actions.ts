@@ -6,11 +6,18 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { ProjectFormValues } from "./types";
 import { projectSchema } from "./validations";
+import { validateRequest } from "@/auth";
+import { redirect } from "next/navigation";
 
 export async function createProject(
   formData: ProjectFormValues,
 ): Promise<{ error?: string; success?: boolean } | never> {
   try {
+    const { user } = await validateRequest();
+    if (!user) throw new Error("Unauthorized access");
+    if (user.role !== "CUSTOMER") {
+      return redirect("/login");
+    }
     const validatedData = projectSchema.parse(formData);
 
     await prisma.project.create({
