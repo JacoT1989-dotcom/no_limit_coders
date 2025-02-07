@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useSession } from "../SessionProvider";
-import CustomerProjectsCard from "./CustomerProjectsCard";
-import ConsultationsCard from "./ConsultationsCard";
-import MessagesCard from "./MessagesCard";
-import TaskAlertCard from "./TaskAlertCard";
+import CustomerProjectsCard from "./_components/(quick-actions)/(customer-projects)/CustomerProjectsCard";
+import ConsultationsCard from "./_components/(quick-actions)/(public-consultations)/ConsultationsCard";
+import MessagesCard from "./_components/(quick-actions)/(public-messages)/MessagesCard";
+import TaskAlertCard from "./_components/(quick-actions)/(customers-task-alerts)/TaskAlertCard";
 
 const WelcomePage = () => {
   const { user } = useSession();
