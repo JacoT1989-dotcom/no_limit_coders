@@ -15,8 +15,18 @@ import { Settings, Users, FileText } from "lucide-react";
 export const navigation: NavItem[] = [
   {
     label: "Tasks",
-    icon: Users,
-    href: "/customer/tasks",
+    icon: FileText,
+    links: [
+      { name: "Task Table", href: "/admin/customer-tasks/customer-task-table" },
+      {
+        name: "Task Kanban",
+        href: "/admin/customer-tasks/task-kanban-progress",
+      },
+      {
+        name: "Task Calendar",
+        href: "/admin/customer-tasks/task-calendar-update",
+      },
+    ],
   },
   {
     label: "Chat & Feeds",

@@ -8,28 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-interface Task {
-  id: number;
-  title: string;
-  project: string;
-  assignee: string | null;
-  dueDate: string;
-  status: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  tasks: Task[];
-}
-
-interface TasksKanbanProps {
-  status?: string;
-  assignee?: string;
-  project?: string;
-  dueDate?: string;
-}
+import { Column, TasksKanbanProps } from "./types";
+import TaskMembersModal from "./TaskMembersModal";
 
 const TasksKanban = ({
   status,
@@ -183,66 +163,69 @@ const TasksKanban = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-      {columns.map((column) => (
-        <div
-          key={column.id}
-          className="flex flex-col rounded-lg red-gradient p-[1px] shadow-lg"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, column.id)}
-        >
-          <div className="bg-card rounded-lg flex flex-col h-full">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-card-foreground">
-                  {column.title}
-                </h3>
-                <span className="rounded-full bg-accent/10 text-accent px-2 py-1 text-sm">
-                  {column.tasks.length}
-                </span>
+    <>
+      <TaskMembersModal />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+        {columns.map((column) => (
+          <div
+            key={column.id}
+            className="flex flex-col rounded-lg red-gradient p-[1px] shadow-lg"
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, column.id)}
+          >
+            <div className="bg-card rounded-lg flex flex-col h-full">
+              <div className="p-4 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-card-foreground">
+                    {column.title}
+                  </h3>
+                  <span className="rounded-full bg-accent/10 text-accent px-2 py-1 text-sm">
+                    {column.tasks.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1 p-4 space-y-3 min-h-[calc(100vh-300px)]">
+                {column.tasks.map((task) => (
+                  <Card
+                    key={task.id}
+                    className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border cursor-move"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task.id, column.id)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="text-sm font-medium text-card-foreground">
+                        {task.title}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-2 text-xs">
+                        <span className="flex h-5 w-5 items-center justify-center rounded bg-accent/10 text-accent text-xs">
+                          M
+                        </span>
+                        {task.project}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-2">
+                      <div className="flex justify-between items-center">
+                        {renderAssigneeAvatar(task.assignee)}
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
+                        >
+                          {task.status}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Due {task.dueDate}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
-
-            <div className="flex-1 p-4 space-y-3 min-h-[calc(100vh-300px)]">
-              {column.tasks.map((task) => (
-                <Card
-                  key={task.id}
-                  className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border cursor-move"
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, task.id, column.id)}
-                  onDragEnd={handleDragEnd}
-                >
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-medium text-card-foreground">
-                      {task.title}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 text-xs">
-                      <span className="flex h-5 w-5 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                        M
-                      </span>
-                      {task.project}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-2">
-                    <div className="flex justify-between items-center">
-                      {renderAssigneeAvatar(task.assignee)}
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
-                      >
-                        {task.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Due {task.dueDate}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 };
 
