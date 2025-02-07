@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useSession } from "../SessionProvider";
+import CustomerProjectsCard from "./CustomerProjectsCard";
+import ConsultationsCard from "./ConsultationsCard";
+import MessagesCard from "./MessagesCard";
+import TaskAlertCard from "./TaskAlertCard";
 
 const WelcomePage = () => {
   const { user } = useSession();
@@ -42,72 +46,10 @@ const WelcomePage = () => {
           <h2 className="text-2xl font-semibold">Quick Actions</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300 cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <div className="rounded-lg bg-accent/10 p-2">
-                  <FolderPlus className="h-6 w-6 text-accent" />
-                </div>
-                <span>Customer Projects</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Stay up to date with our project inbox
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <div className="rounded-lg bg-accent/10 p-2">
-                  <Calendar className="h-6 w-6 text-accent" />
-                </div>
-                <span>Consultations Booked</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Public consultation booking Inbox
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <div className="rounded-lg bg-accent/10 p-2">
-                  <FileText className="h-6 w-6 text-accent" />
-                </div>
-                <span>Messages Recieved</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Public message Inbox</p>
-            </CardContent>
-          </Card>
-
-          <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <div className="rounded-lg bg-accent/10 p-2">
-                  <Layout className="h-6 w-6 text-accent" />
-                </div>
-                <span>New Task Alert</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Be informed immediately after a customer assigned a task to a
-                project
-              </p>
-            </CardContent>
-          </Card>
+          <CustomerProjectsCard />
+          <ConsultationsCard />
+          <MessagesCard />
+          <TaskAlertCard />
         </div>
       </section>
 
