@@ -79,9 +79,9 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-6 rounded-lg">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900">
           Welcome to Genius Humans
         </h2>
         <p className="text-gray-600">
@@ -97,7 +97,9 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Email*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Email*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="your.name@geniushumans.com"
@@ -105,10 +107,14 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
                       disabled={isPending}
                       autoComplete="email"
                       type="email"
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -119,19 +125,25 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-gray-700">Password*</FormLabel>
+                    <FormLabel className="text-gray-700 font-medium">
+                      Password*
+                    </FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-gray-400" />
+                          <Info className="h-4 w-4 text-gray-400 hover:text-red-500 transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent className="bg-white text-gray-700 border-gray-200">
-                          <p>Password must contain:</p>
-                          <p>- At least 8 characters</p>
-                          <p>- One uppercase letter</p>
-                          <p>- One lowercase letter</p>
-                          <p>- One number</p>
-                          <p>- One special character</p>
+                        <TooltipContent className="bg-white text-gray-700 border-gray-100 shadow-lg">
+                          <p className="font-medium mb-2">
+                            Password must contain:
+                          </p>
+                          <ul className="space-y-1 text-sm text-gray-600">
+                            <li>- At least 8 characters</li>
+                            <li>- One uppercase letter</li>
+                            <li>- One lowercase letter</li>
+                            <li>- One number</li>
+                            <li>- One special character</li>
+                          </ul>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -142,10 +154,14 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
                       {...field}
                       disabled={isPending}
                       autoComplete="current-password"
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900
+                               shadow-sm hover:border-red-300
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -162,7 +178,10 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isPending}
-                      className="border-gray-300 text-red-600 focus:ring-red-500"
+                      className="border-gray-200 text-red-500 
+                               focus:ring-red-500 
+                               bg-white hover:border-red-300
+                               transition-colors"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
@@ -175,7 +194,8 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
             />
             <Link
               href="/forgot-password"
-              className="text-sm text-red-600 hover:text-red-500 font-medium"
+              className="text-sm text-red-600 hover:text-red-700 
+                       font-medium transition-colors"
             >
               Forgot password?
             </Link>
@@ -183,7 +203,11 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+            className="w-full bg-gradient-to-r from-red-600 to-red-500 
+                     hover:from-red-700 hover:to-red-600 
+                     text-white font-medium
+                     shadow-md hover:shadow-lg
+                     transition-all duration-200"
             disabled={isPending}
           >
             {isPending ? (

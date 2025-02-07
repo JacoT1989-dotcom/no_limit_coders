@@ -74,11 +74,9 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white p-6 rounded-lg">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Create an Account
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900">Create an Account</h2>
         <p className="text-gray-600">
           Please complete all required fields to register
         </p>
@@ -92,17 +90,23 @@ const RegisterForm = () => {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Username*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Username*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="johndoe"
                       {...field}
                       autoComplete="username"
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -112,7 +116,9 @@ const RegisterForm = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Email*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Email*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="john@example.com"
@@ -120,10 +126,14 @@ const RegisterForm = () => {
                       {...field}
                       autoComplete="email"
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -133,16 +143,22 @@ const RegisterForm = () => {
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Display Name*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Display Name*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="John Doe"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -152,16 +168,22 @@ const RegisterForm = () => {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">First Name*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    First Name*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="John"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -171,16 +193,22 @@ const RegisterForm = () => {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Last Name*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Last Name*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Doe"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -190,7 +218,7 @@ const RegisterForm = () => {
               name="streetAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">
+                  <FormLabel className="text-gray-700 font-medium">
                     Street Address*
                   </FormLabel>
                   <FormControl>
@@ -198,10 +226,14 @@ const RegisterForm = () => {
                       placeholder="123 Main St"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -211,16 +243,22 @@ const RegisterForm = () => {
               name="townCity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Town/City*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Town/City*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="New York"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -230,16 +268,22 @@ const RegisterForm = () => {
               name="postcode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Postcode*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Postcode*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="12345"
                       {...field}
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -249,7 +293,9 @@ const RegisterForm = () => {
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Country*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Country*
+                  </FormLabel>
                   <FormControl>
                     <CountrySelect
                       field={field}
@@ -258,7 +304,7 @@ const RegisterForm = () => {
                       disabled={isPending}
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -270,13 +316,13 @@ const RegisterForm = () => {
               name="package"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">
+                  <FormLabel className="text-gray-700 font-medium">
                     Package Selection*
                   </FormLabel>
                   <FormControl>
                     <PackageSelect field={field} disabled={isPending} />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -288,17 +334,23 @@ const RegisterForm = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">Password*</FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Password*
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
                       autoComplete="new-password"
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -308,7 +360,7 @@ const RegisterForm = () => {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700">
+                  <FormLabel className="text-gray-700 font-medium">
                     Confirm Password*
                   </FormLabel>
                   <FormControl>
@@ -317,10 +369,14 @@ const RegisterForm = () => {
                       {...field}
                       autoComplete="new-password"
                       disabled={isPending}
-                      className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500"
+                      className="bg-white border-gray-200 
+                               focus:border-red-500 focus:ring-red-500 
+                               text-gray-900 placeholder-gray-400
+                               shadow-sm hover:border-red-300 
+                               transition-colors"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-600" />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -336,7 +392,10 @@ const RegisterForm = () => {
                     checked={field.value}
                     onCheckedChange={field.onChange}
                     disabled={isPending}
-                    className="border-gray-300 text-red-600 focus:ring-red-500"
+                    className="border-gray-200 text-red-500 
+                             focus:ring-red-500 
+                             bg-white hover:border-red-300
+                             transition-colors"
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
@@ -344,7 +403,8 @@ const RegisterForm = () => {
                     I agree to the{" "}
                     <Link
                       href="/terms"
-                      className="text-red-600 hover:text-red-500 underline"
+                      className="text-red-600 hover:text-red-700 
+                               font-medium transition-colors"
                     >
                       terms and conditions
                     </Link>
@@ -357,7 +417,11 @@ const RegisterForm = () => {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white"
+            className="w-full bg-gradient-to-r from-red-600 to-red-500 
+                     hover:from-red-700 hover:to-red-600 
+                     text-white font-medium
+                     shadow-md hover:shadow-lg
+                     transition-all duration-200"
             disabled={isPending}
           >
             {isPending ? (
