@@ -81,7 +81,7 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900 pt-3">
           Welcome to Genius Humans
         </h2>
         <p className="text-gray-600">
@@ -90,7 +90,7 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
           <div className="grid gap-4">
             <FormField
               control={form.control}
@@ -172,7 +172,7 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
               control={form.control}
               name="remember"
               render={({ field }) => (
-                <FormItem className="flex items-start space-x-2">
+                <FormItem className="flex items-center space-x-2">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -184,7 +184,7 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
                                transition-colors"
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
+                  <div className="pb-2 leading-none">
                     <FormLabel className="text-sm text-gray-600">
                       Remember me
                     </FormLabel>

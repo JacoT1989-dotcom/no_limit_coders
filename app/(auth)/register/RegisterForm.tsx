@@ -76,14 +76,16 @@ const RegisterForm = () => {
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Create an Account</h2>
+        <h2 className="text-2xl font-bold text-gray-900 pt-2">
+          Create an Account
+        </h2>
         <p className="text-gray-600">
           Please complete all required fields to register
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -382,38 +384,43 @@ const RegisterForm = () => {
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="agreeTerms"
-            render={({ field }) => (
-              <FormItem className="flex items-start space-x-2">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isPending}
-                    className="border-gray-200 text-red-500 
+          <div className="">
+            <FormField
+              control={form.control}
+              name="agreeTerms"
+              render={({ field }) => (
+                <FormItem className="flex items-center space-x-2">
+                  <div>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isPending}
+                        className="border-gray-200 text-red-500 
                              focus:ring-red-500 
                              bg-white hover:border-red-300
                              transition-colors"
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="text-sm text-gray-600">
-                    I agree to the{" "}
-                    <Link
-                      href="/terms"
-                      className="text-red-600 hover:text-red-700 
+                      />
+                    </FormControl>
+                  </div>
+
+                  <div className="pb-2">
+                    <FormLabel className="text-sm text-gray-600">
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        className="text-red-600 hover:text-red-700 
                                font-medium transition-colors"
-                    >
-                      terms and conditions
-                    </Link>
-                    *
-                  </FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
+                      >
+                        terms and conditions
+                      </Link>
+                      *
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
 
           <Button
             type="submit"
