@@ -10,6 +10,7 @@ export type UserRole =
   | "PROCUSTOMER"
   | "EDITOR"
   | "ADMIN"
+  | "DEVELOPER"
   | "SUPERADMIN";
 
 // Define the SessionUser type with only the safe fields we want to expose

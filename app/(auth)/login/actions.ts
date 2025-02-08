@@ -8,13 +8,27 @@ import { cookies } from "next/headers";
 import { LoginFormValues } from "./validation";
 import { UserRole } from "@prisma/client";
 
-const roleRoutes: Record<UserRole, string> = {
+type StaticRoute = string;
+type DynamicRoute = (developerId: string) => string; // Changed parameter name to match route
+
+type RoleRoutes = {
+  [UserRole.USER]: StaticRoute;
+  [UserRole.CUSTOMER]: StaticRoute;
+  [UserRole.PROCUSTOMER]: StaticRoute;
+  [UserRole.EDITOR]: StaticRoute;
+  [UserRole.ADMIN]: StaticRoute;
+  [UserRole.SUPERADMIN]: StaticRoute;
+  [UserRole.DEVELOPER]: DynamicRoute;
+};
+
+const roleRoutes: RoleRoutes = {
   [UserRole.USER]: "/register-success",
   [UserRole.CUSTOMER]: "/customer",
   [UserRole.PROCUSTOMER]: "/pro",
   [UserRole.EDITOR]: "/editor",
   [UserRole.ADMIN]: "/admin",
   [UserRole.SUPERADMIN]: "/super-admin",
+  [UserRole.DEVELOPER]: (developerId: string) => `/${developerId}/developer`, // Changed parameter name
 } as const;
 
 export async function login(
@@ -63,7 +77,7 @@ export async function login(
         data: {
           id: crypto.randomUUID(),
           userId: existingUser.id,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         },
       });
 
@@ -75,8 +89,16 @@ export async function login(
       );
     }
 
+    // Handle dynamic route for developer role
+    if (existingUser.role === UserRole.DEVELOPER) {
+      return {
+        redirectTo: roleRoutes[existingUser.role](existingUser.id), // This uses the id as developerId
+      };
+    }
+
+    // Handle static routes for other roles
     const redirectPath = roleRoutes[existingUser.role];
-    if (!redirectPath) {
+    if (typeof redirectPath === "function") {
       return {
         error: "Unable to determine user access. Please contact support.",
       };

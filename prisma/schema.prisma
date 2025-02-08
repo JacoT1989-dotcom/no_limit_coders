@@ -102,6 +102,7 @@ enum UserRole {
   EDITOR
   ADMIN
   SUPERADMIN
+  DEVELOPER
 }
 
 enum KavanProcess {
