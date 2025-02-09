@@ -94,34 +94,6 @@ model UserMessage {
   @@map("user_messages")
 }
 
-///////////////////////////// ENUS ///////////////////////////////
-enum UserRole {
-  USER
-  CUSTOMER
-  PROCUSTOMER
-  EDITOR
-  ADMIN
-  SUPERADMIN
-  DEVELOPER
-}
-
-enum KavanProcess {
-  PENDING
-  PROCESSING
-  REVIEWING
-  FINALIZING
-  COMPLETED
-  REJECTED
-  CANCELLED
-}
-
-enum PackageSelection {
-  NONE
-  STARTUPTEAM
-  PROFESSIONALTEAM
-  ENTERPRISE
-}
-
 model Project {
   id               String        @id @default(uuid())
   name             String
@@ -161,11 +133,11 @@ model ProjectTeamMember {
 }
 
 model TaskColumn {
-  id        String   @id @default(uuid())
-  name      String
+  id        String      @id @default(uuid())
+  name      ColumnState // Changed from String to ColumnState
   order     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   // Relations
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -232,6 +204,34 @@ model TaskAttachment {
   @@map("task_attachments")
 }
 
+///////////////////////////// ENUS ///////////////////////////////
+enum UserRole {
+  USER
+  CUSTOMER
+  PROCUSTOMER
+  EDITOR
+  ADMIN
+  SUPERADMIN
+  DEVELOPER
+}
+
+enum KavanProcess {
+  PENDING
+  PROCESSING
+  REVIEWING
+  FINALIZING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum PackageSelection {
+  NONE
+  STARTUPTEAM
+  PROFESSIONALTEAM
+  ENTERPRISE
+}
+
 enum ProjectStatus {
   UNDER_REVIEW
   ACTIVE
@@ -258,4 +258,11 @@ enum TeamRole {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum ColumnState {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  DONE
 }

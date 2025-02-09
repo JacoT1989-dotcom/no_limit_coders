@@ -13,7 +13,7 @@ import TasksKanban from "./_components/TasksKanban";
 import TasksCalendar from "./_components/TaskCalendar";
 import { getCustomerProjects } from "./actions";
 import { ProjectOption } from "./types";
-import { CreateTaskDialog } from "./CreateTaskDialog";
+import { CreateTaskDialog } from "./(create_task)/CreateTaskDialog";
 
 const ProjectTasks = () => {
   const [activeView, setActiveView] = useState("table");

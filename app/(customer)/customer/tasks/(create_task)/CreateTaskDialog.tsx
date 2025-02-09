@@ -27,33 +27,16 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-
-enum Priority {
-  LOW = "LOW",
-  MEDIUM = "MEDIUM",
-  HIGH = "HIGH",
-  URGENT = "URGENT",
-}
-
-interface CreateTaskDialogProps {
-  projectId: string;
-  projectName: string; // Add this to display project name
-}
-
-interface TaskFormValues {
-  name: string;
-  projectId: string;
-  description: string;
-  priority: Priority;
-  attachments: FileList | null;
-  dueDate: string;
-}
+import { CreateTaskDialogProps, Priority, TaskFormValues } from "../types";
+import { createTask } from "./actions";
 
 export function CreateTaskDialog({
   projectId,
   projectName,
 }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<TaskFormValues>({
     defaultValues: {
       name: "",
@@ -74,8 +57,43 @@ export function CreateTaskDialog({
   };
 
   async function onSubmit(data: TaskFormValues) {
-    console.log(data);
-    setOpen(false);
+    try {
+      setIsSubmitting(true);
+
+      // Create FormData object
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("projectId", data.projectId);
+      formData.append("description", data.description);
+      formData.append("priority", data.priority);
+      if (data.dueDate) {
+        formData.append("dueDate", data.dueDate);
+      }
+
+      // Handle file attachments
+      if (data.attachments) {
+        Array.from(data.attachments).forEach((file) => {
+          formData.append("attachments", file);
+        });
+      }
+
+      // Call the server action
+      const result = await createTask(formData);
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      toast.success("Task created successfully");
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create task",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -228,14 +246,16 @@ export function CreateTaskDialog({
                   onClick={() => setOpen(false)}
                   type="button"
                   className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  disabled={isSubmitting}
                 >
-                  Create
+                  {isSubmitting ? "Creating..." : "Create"}
                 </Button>
               </div>
             </form>
