@@ -37,6 +37,15 @@ const ProjectTasks = () => {
   }, []);
 
   const renderView = () => {
+    // Don't render any view component if no project is selected or if "all" is selected
+    if (!selectedProject || selectedProject === "all") {
+      return (
+        <div className="text-center p-4 text-muted-foreground">
+          Please select a project to view tasks
+        </div>
+      );
+    }
+
     switch (activeView) {
       case "table":
         return (
@@ -85,7 +94,9 @@ const ProjectTasks = () => {
             <h1 className="text-2xl font-bold">My Tasks</h1>
             <p className="text-muted-foreground">View all of your tasks here</p>
           </div>
-          <CreateTaskDialog projectId={selectedProject} />
+          {selectedProject !== "all" && (
+            <CreateTaskDialog projectId={selectedProject} />
+          )}
         </div>
 
         {/* Project Selection */}
@@ -107,88 +118,79 @@ const ProjectTasks = () => {
           </div>
 
           {/* View Type Tabs */}
-          <div>
-            <Button
-              variant={activeView === "table" ? "secondary" : "ghost"}
-              onClick={() => setActiveView("table")}
+          {selectedProject !== "all" && (
+            <div>
+              <Button
+                variant={activeView === "table" ? "secondary" : "ghost"}
+                onClick={() => setActiveView("table")}
+              >
+                Table
+              </Button>
+              <Button
+                variant={activeView === "kanban" ? "secondary" : "ghost"}
+                onClick={() => setActiveView("kanban")}
+              >
+                Kanban
+              </Button>
+              <Button
+                variant={activeView === "calendar" ? "secondary" : "ghost"}
+                onClick={() => setActiveView("calendar")}
+              >
+                Calendar
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter Buttons - Only show when a project is selected */}
+        {selectedProject !== "all" && (
+          <div className="flex gap-4">
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[180px]">
+                <div className="flex items-center gap-2">
+                  <span>All statuses</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
+                <SelectItem value="todo">Todo</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={selectedAssignee}
+              onValueChange={setSelectedAssignee}
             >
-              Table
-            </Button>
-            <Button
-              variant={activeView === "kanban" ? "secondary" : "ghost"}
-              onClick={() => setActiveView("kanban")}
-            >
-              Kanban
-            </Button>
-            <Button
-              variant={activeView === "calendar" ? "secondary" : "ghost"}
-              onClick={() => setActiveView("calendar")}
-            >
-              Calendar
-            </Button>
+              <SelectTrigger className="w-[180px]">
+                <div className="flex items-center gap-2">
+                  <span>All assignees</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All assignees</SelectItem>
+                <SelectItem value="john">John</SelectItem>
+                <SelectItem value="antonio">Antonio</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedDueDate} onValueChange={setSelectedDueDate}>
+              <SelectTrigger className="w-[180px]">
+                <div className="flex items-center gap-2">
+                  <span>Due date</span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All dates</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This week</SelectItem>
+                <SelectItem value="month">This month</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex gap-4">
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <span>All statuses</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="backlog">Backlog</SelectItem>
-              <SelectItem value="todo">Todo</SelectItem>
-              <SelectItem value="in-progress">In Progress</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <span>All assignees</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All assignees</SelectItem>
-              <SelectItem value="john">John</SelectItem>
-              <SelectItem value="antonio">Antonio</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <span>All projects</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All projects</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedDueDate} onValueChange={setSelectedDueDate}>
-            <SelectTrigger className="w-[180px]">
-              <div className="flex items-center gap-2">
-                <span>Due date</span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All dates</SelectItem>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This week</SelectItem>
-              <SelectItem value="month">This month</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        )}
 
         {/* Render Active View */}
         {renderView()}

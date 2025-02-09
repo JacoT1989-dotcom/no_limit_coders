@@ -46,10 +46,8 @@ const TasksTable = ({
 
       setLoading(true);
       try {
-        // Replace with your actual API call
-        const response = await fetch(`/api/tasks?projectId=${project}`);
-        const data = await response.json();
-        setTasks(data);
+        // Temporary: Return empty array until API is implemented
+        setTasks([]);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         setTasks([]);

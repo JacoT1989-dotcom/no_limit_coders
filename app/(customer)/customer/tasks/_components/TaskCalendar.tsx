@@ -56,14 +56,8 @@ const TasksCalendar = ({
 
       setLoading(true);
       try {
-        const response = await fetch(`/api/tasks?projectId=${project}`);
-        const data = await response.json();
-        setTasks(
-          data.map((task: any) => ({
-            ...task,
-            dueDate: new Date(task.dueDate),
-          })),
-        );
+        // Temporary: Return empty array until API is implemented
+        setTasks([]);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         setTasks([]);
