@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -27,24 +28,39 @@ import {
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 
+enum Priority {
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
+}
+
 interface CreateTaskDialogProps {
   projectId: string;
+  projectName: string; // Add this to display project name
 }
 
 interface TaskFormValues {
   name: string;
-  status: string;
-  assignee: string;
+  projectId: string;
+  description: string;
+  priority: Priority;
+  attachments: FileList | null;
   dueDate: string;
 }
 
-export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
+export function CreateTaskDialog({
+  projectId,
+  projectName,
+}: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<TaskFormValues>({
     defaultValues: {
       name: "",
-      status: "",
-      assignee: "",
+      projectId: projectId,
+      description: "",
+      priority: Priority.MEDIUM,
+      attachments: null,
       dueDate: "",
     },
   });
@@ -74,12 +90,13 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
         </Button>
       </DialogTrigger>
       {projectId !== "all" && (
-        <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
+        <DialogContent className="sm:max-w-[625px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
           <DialogHeader>
             <DialogTitle>Create New Task</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Task Name */}
               <FormField
                 control={form.control}
                 name="name"
@@ -98,26 +115,65 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                 )}
               />
 
+              {/* Project (readonly/disabled) */}
               <FormField
                 control={form.control}
-                name="status"
+                name="projectId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>Project</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={projectName}
+                        className="bg-background dark:bg-card"
+                        disabled
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter task description"
+                        className="bg-background dark:bg-card min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Priority */}
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger className="bg-background dark:bg-card">
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="backlog">Backlog</SelectItem>
-                        <SelectItem value="todo">Todo</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
+                        <SelectItem value={Priority.LOW}>Low</SelectItem>
+                        <SelectItem value={Priority.MEDIUM}>Medium</SelectItem>
+                        <SelectItem value={Priority.HIGH}>High</SelectItem>
+                        <SelectItem value={Priority.URGENT}>Urgent</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -125,31 +181,28 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                 )}
               />
 
+              {/* Attachments */}
               <FormField
                 control={form.control}
-                name="assignee"
-                render={({ field }) => (
+                name="attachments"
+                render={({ field: { value, onChange, ...field } }) => (
                   <FormItem>
-                    <FormLabel>Assignee</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-background dark:bg-card">
-                          <SelectValue placeholder="Select assignee" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="john">John</SelectItem>
-                        <SelectItem value="antonio">Antonio</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Attachments</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="file"
+                        multiple
+                        className="bg-background dark:bg-card"
+                        onChange={(e) => onChange(e.target.files)}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Due Date */}
               <FormField
                 control={form.control}
                 name="dueDate"
@@ -168,6 +221,7 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                 )}
               />
 
+              {/* Form Actions */}
               <div className="flex justify-end gap-2 pt-4">
                 <Button
                   variant="outline"

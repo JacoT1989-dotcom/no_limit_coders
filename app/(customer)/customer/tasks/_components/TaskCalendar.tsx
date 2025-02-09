@@ -19,6 +19,7 @@ import {
   addMonths,
   subMonths,
   isToday,
+  startOfToday,
 } from "date-fns";
 
 interface Task {
@@ -43,9 +44,24 @@ const TasksCalendar = ({
   project,
   dueDate,
 }: TasksCalendarProps) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Initialize with real current date and store today separately
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    // Create date for first day of current month
+    return new Date(now.getFullYear(), now.getMonth());
+  });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Reset to current month when project changes or component mounts
+  useEffect(() => {
+    if (project && project !== "all") {
+      const now = new Date();
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      setCurrentMonth(currentMonthStart);
+    }
+  }, [project]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -101,6 +117,12 @@ const TasksCalendar = ({
     }
   };
 
+  // Add button to return to current month
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setCurrentMonth(new Date(now.getFullYear(), now.getMonth()));
+  };
+
   if (!project || project === "all") {
     return (
       <div className="flex items-center justify-center h-[400px] text-muted-foreground">
@@ -124,6 +146,9 @@ const TasksCalendar = ({
           {format(currentMonth, "MMMM yyyy")}
         </h2>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={goToCurrentMonth}>
+            Today
+          </Button>
           <Button
             variant="outline"
             size="icon"

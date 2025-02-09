@@ -95,7 +95,12 @@ const ProjectTasks = () => {
             <p className="text-muted-foreground">View all of your tasks here</p>
           </div>
           {selectedProject !== "all" && (
-            <CreateTaskDialog projectId={selectedProject} />
+            <CreateTaskDialog
+              projectId={selectedProject}
+              projectName={
+                projects.find((p) => p.id === selectedProject)?.name || ""
+              }
+            />
           )}
         </div>
 
