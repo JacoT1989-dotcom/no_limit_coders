@@ -43,7 +43,7 @@ const DayTasksDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] bg-white dark:bg-black border-red-600 dark:border-red-800 shadow-lg">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] bg-white dark:bg-black border-red-600 dark:border-gray-600 shadow-lg">
         <DialogHeader className="border-b border-red-200 dark:border-red-900 pb-4">
           <DialogTitle className="text-xl font-bold text-red-600 dark:text-red-500">
             Tasks List {format(date, "MMMM d, yyyy")}
@@ -54,7 +54,7 @@ const DayTasksDialog = ({
             {tasks.map((task) => (
               <Card
                 key={task.id}
-                className="hover:shadow-xl transition-all duration-300 border border-red-100 dark:border-red-900 bg-white dark:bg-black"
+                className="hover:shadow-xl transition-all duration-300 border border-red-100 dark:border-gray-600 bg-white dark:bg-black"
               >
                 <CardContent className="p-4">
                   <div className="space-y-2">

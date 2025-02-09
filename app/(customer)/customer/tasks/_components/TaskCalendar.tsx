@@ -142,7 +142,7 @@ const TasksCalendar = ({
                          text-red-700 dark:text-red-300 
                          hover:text-red-800 dark:hover:text-red-200
                          font-medium 
-                         border border-red-200 dark:border-red-800/50
+                         border border-red-200 dark:border-white
                          hover:border-red-300 dark:hover:border-red-700
                          transition-all duration-200
                          shadow-sm"
@@ -170,7 +170,7 @@ const TasksCalendar = ({
                          text-red-700 dark:text-red-300 
                          hover:text-red-800 dark:hover:text-red-200
                          font-medium 
-                         border border-red-200 dark:border-red-800/50
+                         border border-red-200 dark:border-white
                          hover:border-red-300 dark:hover:border-red-700
                          transition-all duration-200
                          shadow-sm"
@@ -204,7 +204,7 @@ const TasksCalendar = ({
             variant="outline"
             size="sm"
             onClick={() => setCurrentMonth(new Date())}
-            className="border-2 border-red-600 dark:border-red-800 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
+            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded"
           >
             Today
           </Button>
@@ -212,7 +212,7 @@ const TasksCalendar = ({
             variant="outline"
             size="icon"
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="border-2 border-red-600 dark:border-red-800 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
+            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -220,7 +220,7 @@ const TasksCalendar = ({
             variant="outline"
             size="icon"
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="border-2 border-red-600 dark:border-red-800 text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
+            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -231,7 +231,7 @@ const TasksCalendar = ({
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div
             key={day}
-            className="text-center font-semibold text-red-600/70 dark:text-red-500/70 py-2"
+            className="text-center font-semibold text-red-600/70 dark:text-white py-2"
           >
             {day}
           </div>
@@ -251,7 +251,7 @@ const TasksCalendar = ({
           return (
             <div
               key={day.toISOString()}
-              className="aspect-square border-2 border-red-100 dark:border-red-900 rounded-lg overflow-hidden"
+              className="aspect-square border-[1px] border-red-100 dark:border-gray-600 rounded-lg overflow-hidden"
             >
               <div
                 className={`
