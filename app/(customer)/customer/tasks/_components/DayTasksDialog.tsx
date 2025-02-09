@@ -29,34 +29,41 @@ const DayTasksDialog = ({
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "backlog":
-        return "bg-purple-100 text-purple-700";
+        return "bg-purple-900 dark:bg-purple-950 text-white";
       case "todo":
-        return "bg-red-100 text-red-700";
+        return "bg-red-600 dark:bg-red-800 text-white";
       case "in_progress":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-yellow-600 dark:bg-yellow-800 text-white";
       case "done":
-        return "bg-green-100 text-green-700";
+        return "bg-green-600 dark:bg-green-800 text-white";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-gray-600 dark:bg-gray-800 text-white";
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>Tasks for {format(date, "MMMM d, yyyy")}</DialogTitle>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] bg-white dark:bg-black border-red-600 dark:border-red-800 shadow-lg">
+        <DialogHeader className="border-b border-red-200 dark:border-red-900 pb-4">
+          <DialogTitle className="text-xl font-bold text-red-600 dark:text-red-500">
+            Tasks List {format(date, "MMMM d, yyyy")}
+          </DialogTitle>
         </DialogHeader>
         <ScrollArea className="mt-4 max-h-[60vh] pr-4">
           <div className="space-y-4">
             {tasks.map((task) => (
-              <Card key={task.id} className="hover:shadow-md transition-all">
+              <Card
+                key={task.id}
+                className="hover:shadow-xl transition-all duration-300 border border-red-100 dark:border-red-900 bg-white dark:bg-black"
+              >
                 <CardContent className="p-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium">{task.title}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">
+                        {task.title}
+                      </h3>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                        className={`px-3 py-1 rounded text-xs font-semibold ${getStatusColor(
                           task.status,
                         )}`}
                       >
@@ -64,7 +71,7 @@ const DayTasksDialog = ({
                       </span>
                     </div>
 
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {task.description}
                     </p>
 
@@ -73,15 +80,15 @@ const DayTasksDialog = ({
                         {task.assignees.map((assignee) => (
                           <Avatar
                             key={assignee.id}
-                            className="h-6 w-6 border-2 border-background"
+                            className="h-8 w-8 border-2 border-white dark:border-black"
                           >
-                            <AvatarFallback className="text-xs bg-accent/10 text-accent">
+                            <AvatarFallback className="text-xs bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-100">
                               {assignee.userId.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                         ))}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         Due:{" "}
                         {task.dueDate
                           ? format(new Date(task.dueDate), "MMM d")
