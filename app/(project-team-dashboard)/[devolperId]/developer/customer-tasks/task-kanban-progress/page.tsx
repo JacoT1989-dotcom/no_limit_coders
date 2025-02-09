@@ -1,7 +1,12 @@
 import React from "react";
+import TasksKanban from "./TasksKanban";
 
-const TaskKanbanPage = () => {
-  return <div></div>;
+const CustomerTasksPage = () => {
+  return (
+    <div>
+      <TasksKanban />
+    </div>
+  );
 };
 
-export default TaskKanbanPage;
+export default CustomerTasksPage;

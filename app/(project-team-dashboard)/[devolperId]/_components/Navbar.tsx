@@ -2,15 +2,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import UserButton from "./UserButton";
+import { usePathname } from "next/navigation";
 
 const Navbar = () => {
+  // Extract developerId from the current path
+  const pathname = usePathname();
+  const developerId = pathname.split("/")[1];
+
   return (
     <>
       {/* Fixed top navbar */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <nav className=" text-white shadow-lg">
+        <nav className="text-white shadow-lg">
           <div className="flex items-center justify-between text-xs mx-auto w-full py-6 px-8">
-            <Link href="/admin" className="flex items-center">
+            <Link
+              href={`/${developerId}/developer`}
+              className="flex items-center"
+            >
               <Image
                 src="/logo_gh.png"
                 alt="Genius Humans Logo"

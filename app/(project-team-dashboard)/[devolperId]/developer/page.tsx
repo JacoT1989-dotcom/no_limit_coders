@@ -1,10 +1,10 @@
 import React from "react";
-import DeveloperWelcome from "../_components/DeveloperWelcome";
+import WelcomePage from "./Welcome";
 
 const DeveloperPage = () => {
   return (
     <div>
-      <DeveloperWelcome />
+      <WelcomePage />
     </div>
   );
 };
