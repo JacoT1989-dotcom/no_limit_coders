@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ interface TasksKanbanProps {
   assignee?: string;
   project?: string;
   dueDate?: string;
-  projects: ProjectOption[]; // Add projects prop
+  projects: ProjectOption[];
 }
 
 interface Column {
@@ -24,6 +24,14 @@ interface Column {
   tasks: Task[];
 }
 
+// Define column type with initial empty arrays
+const initialColumns = (): Column[] => [
+  { id: "TODO", title: "Todo", tasks: [] as Task[] },
+  { id: "BACKLOG", title: "Backlog", tasks: [] as Task[] },
+  { id: "IN_PROGRESS", title: "In Progress", tasks: [] as Task[] },
+  { id: "DONE", title: "Done", tasks: [] as Task[] },
+];
+
 const TasksKanban = ({
   status,
   assignee,
@@ -31,51 +39,39 @@ const TasksKanban = ({
   dueDate,
   projects,
 }: TasksKanbanProps) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!project || project === "all") {
-        setTasks([]);
-        return;
-      }
-
-      const selectedProject = projects.find((p) => p.id === project);
-      if (selectedProject) {
-        setTasks(selectedProject.tasks);
-      }
-    };
-
-    fetchTasks();
+  // Get tasks directly from the selected project using useMemo
+  const tasks = useMemo(() => {
+    if (!project || project === "all") return [];
+    const selectedProject = projects.find((p) => p.id === project);
+    return selectedProject?.tasks || [];
   }, [project, projects]);
 
-  const columns: Column[] = [
-    { id: "TODO", title: "Todo", tasks: [] },
-    { id: "BACKLOG", title: "Backlog", tasks: [] },
-    { id: "IN_PROGRESS", title: "In Progress", tasks: [] },
-    { id: "DONE", title: "Done", tasks: [] },
-  ];
+  // Define columns with memoization to prevent unnecessary recalculations
+  const columns = useMemo(() => {
+    const baseColumns = initialColumns();
 
-  // Filter and distribute tasks to columns
-  tasks.forEach((task) => {
-    const column = columns.find((col) => col.id === task.status);
-    if (column) {
-      const matchesAssignee =
-        !assignee ||
-        assignee === "all" ||
-        task.assignees.some((a) => a.userId === assignee);
+    // Distribute tasks to columns
+    tasks.forEach((task) => {
+      const column = baseColumns.find((col) => col.id === task.status);
+      if (column) {
+        const matchesAssignee =
+          !assignee ||
+          assignee === "all" ||
+          task.assignees.some((a) => a.userId === assignee);
 
-      const matchesDueDate =
-        !dueDate ||
-        dueDate === "all" ||
-        (task.dueDate && isWithinDueDate(task.dueDate, dueDate));
+        const matchesDueDate =
+          !dueDate ||
+          dueDate === "all" ||
+          (task.dueDate && isWithinDueDate(task.dueDate, dueDate));
 
-      if (matchesAssignee && matchesDueDate) {
-        column.tasks.push(task);
+        if (matchesAssignee && matchesDueDate) {
+          column.tasks.push(task);
+        }
       }
-    }
-  });
+    });
+
+    return baseColumns;
+  }, [tasks, assignee, dueDate]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -121,14 +117,6 @@ const TasksKanban = ({
     return (
       <div className="flex items-center justify-center h-[400px] text-muted-foreground">
         Please select a project to view tasks
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-        Loading tasks...
       </div>
     );
   }

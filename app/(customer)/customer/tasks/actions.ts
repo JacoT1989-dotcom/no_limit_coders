@@ -29,6 +29,8 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
             priority: true,
             status: true,
             dueDate: true,
+            createdAt: true, // Added this
+            updatedAt: true, // Added this
             order: true,
             column: {
               select: {
@@ -84,7 +86,6 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
   }
 }
 
-// You can add other actions here as needed, such as:
 export type CreateTaskResponse = {
   success: boolean;
   data?: Task;

@@ -28,6 +28,7 @@ import {
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { CreateTaskDialogProps, Priority, TaskFormValues } from "../types";
+import { TaskStatus } from "@prisma/client"; // Import TaskStatus
 import { createTask } from "./actions";
 
 export function CreateTaskDialog({
@@ -46,6 +47,7 @@ export function CreateTaskDialog({
       priority: Priority.MEDIUM,
       attachments: null,
       dueDate: "",
+      status: TaskStatus.TODO, // Use the TaskStatus enum
     },
   });
 
@@ -67,8 +69,10 @@ export function CreateTaskDialog({
       formData.append("projectId", data.projectId);
       formData.append("description", data.description);
       formData.append("priority", data.priority);
+      formData.append("status", data.status);
+
       if (data.dueDate) {
-        formData.append("dueDate", data.dueDate);
+        formData.append("dueDate", new Date(data.dueDate).toISOString());
       }
 
       // Handle file attachments
@@ -85,12 +89,10 @@ export function CreateTaskDialog({
         throw new Error(result.error);
       }
 
-      toast.success(
-        "Task created successfully, Check your inbox to view confirmation for task creation received",
-      );
+      toast.success("Task created successfully");
       form.reset();
       setOpen(false);
-      
+
       // Call the onTaskCreated callback if it exists
       if (onTaskCreated) {
         onTaskCreated();
@@ -207,6 +209,26 @@ export function CreateTaskDialog({
                 )}
               />
 
+              {/* Due Date */}
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="date"
+                        className="bg-background dark:bg-card"
+                        min={new Date().toISOString().split("T")[0]}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Attachments */}
               <FormField
                 control={form.control}
@@ -220,25 +242,6 @@ export function CreateTaskDialog({
                         multiple
                         className="bg-background dark:bg-card"
                         onChange={(e) => onChange(e.target.files)}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Due Date */}
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Due Date</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        className="bg-background dark:bg-card"
                         {...field}
                       />
                     </FormControl>

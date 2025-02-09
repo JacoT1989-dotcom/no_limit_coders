@@ -24,13 +24,22 @@ const ProjectTasks = () => {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Moved fetchProjects out of useEffect for reusability
+  // Fetch projects with loading and error handling
   const fetchProjects = async () => {
-    const result = await getCustomerProjects();
-    if (result.error) {
-      setError(result.error);
-    } else if (result.projects) {
-      setProjects(result.projects);
+    try {
+      const result = await getCustomerProjects();
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.projects) {
+        setProjects(result.projects);
+      }
+    } catch (err) {
+      console.error("Error fetching projects:", err);
+      setError("Failed to load projects");
     }
   };
 
@@ -39,11 +48,17 @@ const ProjectTasks = () => {
   }, []);
 
   // Handler for task creation success
-  const handleTaskCreated = () => {
-    fetchProjects(); // Refresh projects data after task creation
+  const handleTaskCreated = async () => {
+    await fetchProjects(); // Refresh projects data after task creation
   };
 
+  const selectedProjectData = projects.find((p) => p.id === selectedProject);
+
   const renderView = () => {
+    if (error) {
+      return <div className="text-center p-4 text-red-500">Error: {error}</div>;
+    }
+
     // Don't render any view component if no project is selected or if "all" is selected
     if (!selectedProject || selectedProject === "all") {
       return (
@@ -52,6 +67,15 @@ const ProjectTasks = () => {
         </div>
       );
     }
+
+    // Log the props being passed to the view components
+    console.log("View props:", {
+      status: selectedStatus,
+      assignee: selectedAssignee,
+      project: selectedProject,
+      dueDate: selectedDueDate,
+      projectData: selectedProjectData,
+    });
 
     switch (activeView) {
       case "table":
@@ -80,6 +104,7 @@ const ProjectTasks = () => {
             assignee={selectedAssignee}
             project={selectedProject}
             dueDate={selectedDueDate}
+            projects={projects}
           />
         );
       default:
@@ -100,15 +125,17 @@ const ProjectTasks = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">My Tasks</h1>
-            <p className="text-muted-foreground">View all of your tasks here</p>
+            <p className="text-muted-foreground">
+              {selectedProjectData
+                ? `Viewing ${selectedProjectData.tasks.length} tasks in ${selectedProjectData.name}`
+                : "View all of your tasks here"}
+            </p>
           </div>
           {selectedProject !== "all" && (
             <CreateTaskDialog
               projectId={selectedProject}
-              projectName={
-                projects.find((p) => p.id === selectedProject)?.name || ""
-              }
-              onTaskCreated={handleTaskCreated} // Added the callback prop
+              projectName={selectedProjectData?.name || ""}
+              onTaskCreated={handleTaskCreated}
             />
           )}
         </div>
@@ -116,7 +143,17 @@ const ProjectTasks = () => {
         {/* Project Selection */}
         <div className="flex flex-col gap-2">
           <div>
-            <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <Select
+              value={selectedProject}
+              onValueChange={(value) => {
+                setSelectedProject(value);
+                console.log(
+                  "Selected project:",
+                  value,
+                  projects.find((p) => p.id === value),
+                );
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Project" />
               </SelectTrigger>
@@ -174,7 +211,10 @@ const ProjectTasks = () => {
               </SelectContent>
             </Select>
 
-            <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+            <Select
+              value={selectedAssignee}
+              onValueChange={setSelectedAssignee}
+            >
               <SelectTrigger className="w-[180px]">
                 <div className="flex items-center gap-2">
                   <span>All assignees</span>

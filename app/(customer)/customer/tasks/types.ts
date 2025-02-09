@@ -41,6 +41,8 @@ export type Task = {
   priority: Priority;
   status: TaskStatus;
   dueDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
   order: number;
   column: TaskColumn;
   assignees: ProjectTeamMember[];
@@ -64,7 +66,7 @@ export enum Priority {
 export interface CreateTaskDialogProps {
   projectId: string;
   projectName: string;
-  onTaskCreated?: () => void; // Added this new prop
+  onTaskCreated?: () => void;
 }
 
 export interface TaskFormValues {
@@ -74,4 +76,5 @@ export interface TaskFormValues {
   priority: Priority;
   attachments: FileList | null;
   dueDate: string;
+  status: TaskStatus; // Add this line using TaskStatus from @prisma/client
 }

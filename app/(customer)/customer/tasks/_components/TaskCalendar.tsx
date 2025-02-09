@@ -1,13 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -19,23 +11,16 @@ import {
   addMonths,
   subMonths,
   isToday,
-  startOfToday,
 } from "date-fns";
-
-interface Task {
-  id: number;
-  title: string;
-  project: string;
-  assignee: string;
-  dueDate: Date;
-  status: string;
-}
+import { ProjectOption, Task } from "../types";
+import DayTasksDialog from "./DayTasksDialog";
 
 interface TasksCalendarProps {
   status?: string;
   assignee?: string;
   project?: string;
   dueDate?: string;
+  projects: ProjectOption[];
 }
 
 const TasksCalendar = ({
@@ -43,25 +28,26 @@ const TasksCalendar = ({
   assignee,
   project,
   dueDate,
+  projects,
 }: TasksCalendarProps) => {
-  // Initialize with real current date and store today separately
-  const today = new Date();
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const now = new Date();
-    // Create date for first day of current month
-    return new Date(now.getFullYear(), now.getMonth());
-  });
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<"created" | "due">("created");
 
-  // Reset to current month when project changes or component mounts
-  useEffect(() => {
-    if (project && project !== "all") {
-      const now = new Date();
-      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      setCurrentMonth(currentMonthStart);
-    }
-  }, [project]);
+  // Calculate calendar dates using useMemo
+  const calendarDates = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+    const days = eachDayOfInterval({ start, end });
+    return {
+      monthStart: start,
+      monthEnd: end,
+      monthDays: days,
+    };
+  }, [currentMonth]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -72,8 +58,16 @@ const TasksCalendar = ({
 
       setLoading(true);
       try {
-        // Temporary: Return empty array until API is implemented
-        setTasks([]);
+        const selectedProject = projects.find((p) => p.id === project);
+        if (selectedProject) {
+          console.log("Selected Project:", {
+            id: selectedProject.id,
+            name: selectedProject.name,
+            taskCount: selectedProject.tasks.length,
+          });
+
+          setTasks(selectedProject.tasks);
+        }
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         setTasks([]);
@@ -83,44 +77,73 @@ const TasksCalendar = ({
     };
 
     fetchTasks();
-  }, [project]);
-
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  }, [project, projects]);
 
   const getTasksForDate = (date: Date) => {
-    return tasks.filter(
-      (task) =>
-        isSameDay(task.dueDate, date) &&
-        (!status ||
-          status === "all" ||
-          task.status.toLowerCase() === status.toLowerCase()) &&
-        (!assignee ||
-          assignee === "all" ||
-          task.assignee.toLowerCase() === assignee.toLowerCase()),
+    // Filter tasks created on this day
+    const createdTasks = tasks.filter((task) => {
+      const taskCreatedAt =
+        task.createdAt instanceof Date
+          ? task.createdAt
+          : new Date(task.createdAt);
+
+      return isSameDay(taskCreatedAt, date);
+    });
+
+    // Filter tasks due on this day
+    const dueTasks = tasks.filter((task) => {
+      if (!task.dueDate) return false;
+      const taskDueDate =
+        task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+
+      return isSameDay(taskDueDate, date);
+    });
+
+    return {
+      createdTasks,
+      dueTasks,
+    };
+  };
+
+  const openDayDialog = (date: Date, type: "created" | "due") => {
+    setSelectedDay(date);
+    setDialogType(type);
+    setIsDialogOpen(true);
+  };
+
+  const renderDayContent = (date: Date) => {
+    const { createdTasks, dueTasks } = getTasksForDate(date);
+
+    return (
+      <div className="space-y-1">
+        {createdTasks.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDayDialog(date, "created");
+            }}
+            className="w-full text-xs py-1 h-auto bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+          >
+            View {createdTasks.length} Created
+          </Button>
+        )}
+        {dueTasks.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDayDialog(date, "due");
+            }}
+            className="w-full text-xs py-1 h-auto bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+          >
+            View {dueTasks.length} Due
+          </Button>
+        )}
+      </div>
     );
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "backlog":
-        return "bg-purple-100 text-purple-700";
-      case "todo":
-        return "bg-red-100 text-red-700";
-      case "in progress":
-        return "bg-yellow-100 text-yellow-700";
-      case "done":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  // Add button to return to current month
-  const goToCurrentMonth = () => {
-    const now = new Date();
-    setCurrentMonth(new Date(now.getFullYear(), now.getMonth()));
   };
 
   if (!project || project === "all") {
@@ -131,13 +154,7 @@ const TasksCalendar = ({
     );
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[400px] text-muted-foreground">
-        Loading tasks...
-      </div>
-    );
-  }
+  const { monthStart, monthDays } = calendarDates;
 
   return (
     <div className="space-y-6">
@@ -146,7 +163,11 @@ const TasksCalendar = ({
           {format(currentMonth, "MMMM yyyy")}
         </h2>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToCurrentMonth}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentMonth(new Date())}
+          >
             Today
           </Button>
           <Button
@@ -180,75 +201,48 @@ const TasksCalendar = ({
           <div key={`empty-${index}`} className="aspect-square" />
         ))}
 
-        {monthDays.map((day) => {
-          const dayTasks = getTasksForDate(day);
-          return (
+        {monthDays.map((day) => (
+          <div
+            key={day.toISOString()}
+            className="aspect-square red-gradient rounded-lg p-[1px]"
+          >
             <div
-              key={day.toISOString()}
-              className="aspect-square red-gradient rounded-lg p-[1px]"
-            >
-              <div
-                className={`
-                h-full rounded-lg bg-card p-2
+              className={`
+                h-full rounded-lg bg-card p-2 
+                hover:bg-slate-100 dark:hover:bg-slate-800/50
+                transition-colors
                 ${isToday(day) ? "ring-2 ring-accent" : ""}
               `}
-              >
-                <div className="text-right mb-2">
-                  <span
-                    className={`
+            >
+              <div className="text-right mb-2">
+                <span
+                  className={`
                     inline-block rounded-full w-6 h-6 text-center leading-6 text-sm
                     ${isToday(day) ? "bg-accent text-white" : "text-muted-foreground"}
                   `}
-                  >
-                    {format(day, "d")}
-                  </span>
-                </div>
-
-                <div className="space-y-2 overflow-auto max-h-[calc(100%-2rem)]">
-                  {dayTasks.map((task) => (
-                    <Card
-                      key={task.id}
-                      className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border"
-                    >
-                      <CardHeader className="p-2">
-                        <CardTitle className="text-xs font-medium truncate">
-                          {task.title}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-1 text-xs">
-                          <span className="flex h-4 w-4 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                            {task.project[0]}
-                          </span>
-                          <span className="truncate">{task.project}</span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-2 pt-0">
-                        <div className="flex items-center justify-between">
-                          <Avatar className="h-4 w-4">
-                            <AvatarImage
-                              src={`/avatars/${task.assignee.toLowerCase()}.png`}
-                            />
-                            <AvatarFallback className="text-[10px] bg-accent/10 text-accent">
-                              {task.assignee[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span
-                            className={`
-                            inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium
-                            ${getStatusColor(task.status)}
-                          `}
-                          >
-                            {task.status}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                >
+                  {format(day, "d")}
+                </span>
               </div>
+              {renderDayContent(day)}
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
+
+      {selectedDay && (
+        <DayTasksDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          tasks={
+            dialogType === "created"
+              ? getTasksForDate(selectedDay).createdTasks
+              : getTasksForDate(selectedDay).dueTasks
+          }
+          date={selectedDay}
+          project={projects.find((p) => p.id === project)}
+        />
+      )}
     </div>
   );
 };
