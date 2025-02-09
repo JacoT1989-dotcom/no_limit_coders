@@ -72,7 +72,7 @@ export async function createTask(formData: FormData) {
 
       backlogColumn = await prisma.taskColumn.create({
         data: {
-          name: ColumnState.BACKLOG,
+          name: ColumnState.TODO,
           order: columnCount,
           projectId,
         },
