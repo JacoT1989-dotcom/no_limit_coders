@@ -84,7 +84,9 @@ export function CreateTaskDialog({
         throw new Error(result.error);
       }
 
-      toast.success("Task created successfully");
+      toast.success(
+        "Task created successfully, Check your inbox to view confirmation for task creation received",
+      );
       form.reset();
       setOpen(false);
     } catch (error) {
