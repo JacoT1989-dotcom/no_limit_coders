@@ -24,17 +24,24 @@ const ProjectTasks = () => {
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Moved fetchProjects out of useEffect for reusability
+  const fetchProjects = async () => {
+    const result = await getCustomerProjects();
+    if (result.error) {
+      setError(result.error);
+    } else if (result.projects) {
+      setProjects(result.projects);
+    }
+  };
+
   useEffect(() => {
-    const fetchProjects = async () => {
-      const result = await getCustomerProjects();
-      if (result.error) {
-        setError(result.error);
-      } else if (result.projects) {
-        setProjects(result.projects);
-      }
-    };
     fetchProjects();
   }, []);
+
+  // Handler for task creation success
+  const handleTaskCreated = () => {
+    fetchProjects(); // Refresh projects data after task creation
+  };
 
   const renderView = () => {
     // Don't render any view component if no project is selected or if "all" is selected
@@ -63,6 +70,7 @@ const ProjectTasks = () => {
             assignee={selectedAssignee}
             project={selectedProject}
             dueDate={selectedDueDate}
+            projects={projects}
           />
         );
       case "calendar":
@@ -100,6 +108,7 @@ const ProjectTasks = () => {
               projectName={
                 projects.find((p) => p.id === selectedProject)?.name || ""
               }
+              onTaskCreated={handleTaskCreated} // Added the callback prop
             />
           )}
         </div>
@@ -165,10 +174,7 @@ const ProjectTasks = () => {
               </SelectContent>
             </Select>
 
-            <Select
-              value={selectedAssignee}
-              onValueChange={setSelectedAssignee}
-            >
+            <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
               <SelectTrigger className="w-[180px]">
                 <div className="flex items-center gap-2">
                   <span>All assignees</span>

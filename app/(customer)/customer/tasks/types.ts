@@ -1,6 +1,57 @@
+import { ColumnState, TaskStatus } from "@prisma/client";
+
+export type TaskColumn = {
+  id: string;
+  name: ColumnState;
+  createdAt: Date;
+  updatedAt: Date;
+  order: number;
+  projectId: string;
+};
+
+export type ProjectTeamMember = {
+  id: string;
+  role: string;
+  userId: string;
+  projectId: string;
+};
+
+export type TaskAttachment = {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: Date;
+  taskId: string;
+  uploaderId: string;
+};
+
+export type TaskComment = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  taskId: string;
+  authorId: string;
+};
+
+export type Task = {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: Priority;
+  status: TaskStatus;
+  dueDate: Date | null;
+  order: number;
+  column: TaskColumn;
+  assignees: ProjectTeamMember[];
+  attachments: TaskAttachment[];
+  comments: TaskComment[];
+};
+
 export type ProjectOption = {
   id: string;
   name: string;
+  tasks: Task[];
 };
 
 export enum Priority {
@@ -12,7 +63,8 @@ export enum Priority {
 
 export interface CreateTaskDialogProps {
   projectId: string;
-  projectName: string; // Add this to display project name
+  projectName: string;
+  onTaskCreated?: () => void; // Added this new prop
 }
 
 export interface TaskFormValues {

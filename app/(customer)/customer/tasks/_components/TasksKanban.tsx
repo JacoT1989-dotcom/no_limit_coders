@@ -8,14 +8,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProjectOption, ProjectTeamMember, Task } from "../types";
 
-interface Task {
-  id: number;
-  title: string;
-  project: string;
-  assignee: string;
-  dueDate: string;
-  status: string;
+interface TasksKanbanProps {
+  status?: string;
+  assignee?: string;
+  project?: string;
+  dueDate?: string;
+  projects: ProjectOption[]; // Add projects prop
 }
 
 interface Column {
@@ -24,18 +24,12 @@ interface Column {
   tasks: Task[];
 }
 
-interface TasksKanbanProps {
-  status?: string;
-  assignee?: string;
-  project?: string;
-  dueDate?: string;
-}
-
 const TasksKanban = ({
   status,
   assignee,
   project,
   dueDate,
+  projects,
 }: TasksKanbanProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,61 +41,80 @@ const TasksKanban = ({
         return;
       }
 
-      setLoading(true);
-      try {
-        // Temporary: Return empty array until API is implemented
-        setTasks([]);
-      } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-        setTasks([]);
-      } finally {
-        setLoading(false);
+      const selectedProject = projects.find((p) => p.id === project);
+      if (selectedProject) {
+        setTasks(selectedProject.tasks);
       }
     };
 
     fetchTasks();
-  }, [project]);
+  }, [project, projects]);
 
   const columns: Column[] = [
-    { id: "backlog", title: "Backlog", tasks: [] },
-    { id: "todo", title: "Todo", tasks: [] },
-    { id: "in-progress", title: "In Progress", tasks: [] },
-    { id: "done", title: "Done", tasks: [] },
+    { id: "TODO", title: "Todo", tasks: [] },
+    { id: "BACKLOG", title: "Backlog", tasks: [] },
+    { id: "IN_PROGRESS", title: "In Progress", tasks: [] },
+    { id: "DONE", title: "Done", tasks: [] },
   ];
 
   // Filter and distribute tasks to columns
   tasks.forEach((task) => {
-    const column = columns.find(
-      (col) => col.id === task.status.toLowerCase().replace(" ", "-"),
-    );
+    const column = columns.find((col) => col.id === task.status);
     if (column) {
-      if (
-        (!status ||
-          status === "all" ||
-          task.status.toLowerCase() === status.toLowerCase()) &&
-        (!assignee ||
-          assignee === "all" ||
-          task.assignee.toLowerCase() === assignee.toLowerCase()) &&
-        (!dueDate || dueDate === "all")
-      ) {
+      const matchesAssignee =
+        !assignee ||
+        assignee === "all" ||
+        task.assignees.some((a) => a.userId === assignee);
+
+      const matchesDueDate =
+        !dueDate ||
+        dueDate === "all" ||
+        (task.dueDate && isWithinDueDate(task.dueDate, dueDate));
+
+      if (matchesAssignee && matchesDueDate) {
         column.tasks.push(task);
       }
     }
   });
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "backlog":
+    switch (status) {
+      case "BACKLOG":
         return "bg-purple-100 text-purple-700";
-      case "todo":
+      case "TODO":
         return "bg-red-100 text-red-700";
-      case "in progress":
+      case "IN_PROGRESS":
         return "bg-yellow-100 text-yellow-700";
-      case "done":
+      case "DONE":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
+  };
+
+  const isWithinDueDate = (dueDate: Date, selectedRange: string) => {
+    const today = new Date();
+    const dueDateTime = new Date(dueDate);
+
+    switch (selectedRange) {
+      case "today":
+        return dueDateTime.toDateString() === today.toDateString();
+      case "week":
+        const weekFromNow = new Date(today);
+        weekFromNow.setDate(today.getDate() + 7);
+        return dueDateTime <= weekFromNow && dueDateTime >= today;
+      case "month":
+        const monthFromNow = new Date(today);
+        monthFromNow.setMonth(today.getMonth() + 1);
+        return dueDateTime <= monthFromNow && dueDateTime >= today;
+      default:
+        return true;
+    }
+  };
+
+  // Helper function to get initials from team member ID
+  const getAssigneeInitials = (teamMember: ProjectTeamMember) => {
+    return teamMember.userId.slice(0, 2).toUpperCase();
   };
 
   if (!project || project === "all") {
@@ -149,32 +162,35 @@ const TasksKanban = ({
                     <CardTitle className="text-sm font-medium text-card-foreground">
                       {task.title}
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-2 text-xs">
-                      <span className="flex h-5 w-5 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                        {task.project[0]}
-                      </span>
-                      {task.project}
+                    <CardDescription className="text-xs">
+                      {task.description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 pt-2">
                     <div className="flex justify-between items-center">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage
-                          src={`/avatars/${task.assignee.toLowerCase()}.png`}
-                        />
-                        <AvatarFallback className="bg-accent/10 text-accent">
-                          {task.assignee[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="flex -space-x-2">
+                        {task.assignees.map((assignee) => (
+                          <Avatar
+                            key={assignee.id}
+                            className="h-6 w-6 border-2 border-background"
+                          >
+                            <AvatarFallback className="bg-accent/10 text-accent">
+                              {getAssigneeInitials(assignee)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                      </div>
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
                       >
-                        {task.status}
+                        {task.status.replace("_", " ")}
                       </span>
                     </div>
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Due {task.dueDate}
-                    </div>
+                    {task.dueDate && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Due {new Date(task.dueDate).toLocaleDateString()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}

@@ -33,6 +33,7 @@ import { createTask } from "./actions";
 export function CreateTaskDialog({
   projectId,
   projectName,
+  onTaskCreated,
 }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,6 +90,11 @@ export function CreateTaskDialog({
       );
       form.reset();
       setOpen(false);
+      
+      // Call the onTaskCreated callback if it exists
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create task",
