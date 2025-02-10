@@ -150,7 +150,9 @@ const TasksKanban = ({
                     <CardTitle className="text-sm font-medium text-card-foreground">
                       {task.title}
                     </CardTitle>
-                    <CardDescription className="text-xs">
+                    <CardDescription
+                      className="text-xs line-clamp-6 hover:line-clamp-none"
+                    >
                       {task.description}
                     </CardDescription>
                   </CardHeader>

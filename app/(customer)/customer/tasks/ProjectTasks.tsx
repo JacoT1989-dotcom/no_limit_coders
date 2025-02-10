@@ -23,8 +23,8 @@ const ProjectTasks = () => {
   const [selectedDueDate, setSelectedDueDate] = useState("all");
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [availableDates, setAvailableDates] = useState<string[]>(["all"]);
 
-  // Fetch projects with loading and error handling
   const fetchProjects = async () => {
     try {
       const result = await getCustomerProjects();
@@ -47,9 +47,8 @@ const ProjectTasks = () => {
     fetchProjects();
   }, []);
 
-  // Handler for task creation success
   const handleTaskCreated = async () => {
-    await fetchProjects(); // Refresh projects data after task creation
+    await fetchProjects();
   };
 
   const selectedProjectData = projects.find((p) => p.id === selectedProject);
@@ -59,7 +58,6 @@ const ProjectTasks = () => {
       return <div className="text-center p-4 text-red-500">Error: {error}</div>;
     }
 
-    // Don't render any view component if no project is selected or if "all" is selected
     if (!selectedProject || selectedProject === "all") {
       return (
         <div className="text-center p-4 text-muted-foreground">
@@ -67,15 +65,6 @@ const ProjectTasks = () => {
         </div>
       );
     }
-
-    // Log the props being passed to the view components
-    console.log("View props:", {
-      status: selectedStatus,
-      assignee: selectedAssignee,
-      project: selectedProject,
-      dueDate: selectedDueDate,
-      projectData: selectedProjectData,
-    });
 
     switch (activeView) {
       case "table":
@@ -85,6 +74,8 @@ const ProjectTasks = () => {
             assignee={selectedAssignee}
             project={selectedProject}
             dueDate={selectedDueDate}
+            projects={projects}
+            onAvailableDates={setAvailableDates}
           />
         );
       case "kanban":
@@ -114,6 +105,8 @@ const ProjectTasks = () => {
             assignee={selectedAssignee}
             project={selectedProject}
             dueDate={selectedDueDate}
+            projects={projects}
+            onAvailableDates={setAvailableDates}
           />
         );
     }
@@ -140,18 +133,12 @@ const ProjectTasks = () => {
           )}
         </div>
 
-        {/* Project Selection */}
         <div className="flex flex-col gap-2">
           <div>
             <Select
               value={selectedProject}
               onValueChange={(value) => {
                 setSelectedProject(value);
-                console.log(
-                  "Selected project:",
-                  value,
-                  projects.find((p) => p.id === value),
-                );
               }}
             >
               <SelectTrigger className="w-[180px]">
@@ -168,7 +155,6 @@ const ProjectTasks = () => {
             </Select>
           </div>
 
-          {/* View Type Tabs */}
           {selectedProject !== "all" && (
             <div>
               <Button
@@ -193,19 +179,23 @@ const ProjectTasks = () => {
           )}
         </div>
 
-        {/* Filter Buttons - Only show when a project is selected */}
-        {selectedProject !== "all" && (
+        {selectedProject !== "all" && activeView === "table" && (
           <div className="flex gap-4">
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-[180px]">
-                <div className="flex items-center gap-2">
-                  <span>All statuses</span>
-                </div>
+                <SelectValue>
+                  {selectedStatus === "all"
+                    ? "All statuses"
+                    : selectedStatus === "in-progress"
+                      ? "In Progress"
+                      : selectedStatus.charAt(0).toUpperCase() +
+                        selectedStatus.slice(1)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="todo">Todo</SelectItem>
+                <SelectItem value="backlog">Backlog</SelectItem>
                 <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
@@ -216,22 +206,30 @@ const ProjectTasks = () => {
               onValueChange={setSelectedAssignee}
             >
               <SelectTrigger className="w-[180px]">
-                <div className="flex items-center gap-2">
-                  <span>All assignees</span>
-                </div>
+                <SelectValue>
+                  {selectedAssignee === "all"
+                    ? "All assignees"
+                    : selectedAssignee}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All assignees</SelectItem>
-                <SelectItem value="john">John</SelectItem>
-                <SelectItem value="antonio">Antonio</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={selectedDueDate} onValueChange={setSelectedDueDate}>
               <SelectTrigger className="w-[180px]">
-                <div className="flex items-center gap-2">
-                  <span>Due date</span>
-                </div>
+                <SelectValue>
+                  {selectedDueDate === "all"
+                    ? "All dates"
+                    : selectedDueDate === "today"
+                      ? "Today"
+                      : selectedDueDate === "week"
+                        ? "This week"
+                        : selectedDueDate === "month"
+                          ? "This month"
+                          : selectedDueDate}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All dates</SelectItem>
@@ -243,7 +241,6 @@ const ProjectTasks = () => {
           </div>
         )}
 
-        {/* Render Active View */}
         {renderView()}
       </div>
     </div>
