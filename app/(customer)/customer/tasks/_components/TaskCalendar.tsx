@@ -251,7 +251,7 @@ const TasksCalendar = ({
           return (
             <div
               key={day.toISOString()}
-              className="aspect-square border-[1px] border-red-100 dark:border-gray-600 rounded-lg overflow-hidden"
+              className="aspect-square border-[1px] border-red-600 dark:border-gray-600 rounded-lg overflow-hidden"
             >
               <div
                 className={`
