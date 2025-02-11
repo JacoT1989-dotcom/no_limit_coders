@@ -1,4 +1,3 @@
-// LoginForm.tsx
 "use client";
 
 import React from "react";
@@ -30,9 +29,10 @@ import {
 
 interface LoginFormProps {
   onClose: () => void;
+  onLoginSuccess: (redirectPath: string) => Promise<void>;
 }
 
-const LoginForm = ({ onClose }: LoginFormProps) => {
+const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
   const router = useRouter();
   const [isPending, setIsPending] = React.useState(false);
 
@@ -62,12 +62,18 @@ const LoginForm = ({ onClose }: LoginFormProps) => {
       }
 
       if (result?.redirectTo) {
+        // Show success message if needed
         if (result.redirectTo !== "/register-success") {
           toast.success("Logged in successfully!");
         }
-        onClose();
-        router.push(result.redirectTo);
-        router.refresh();
+
+        // Instead of closing the dialog, show loading state until navigation completes
+        setIsPending(true);
+
+        // Start the navigation while keeping the form visible
+        await router.replace(result.redirectTo);
+
+        // The dialog will stay visible with the loading state until the new page loads
         return;
       }
     } catch (error) {

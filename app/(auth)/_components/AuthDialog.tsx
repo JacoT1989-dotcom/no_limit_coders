@@ -8,9 +8,20 @@ import RegisterForm from "../register/RegisterForm";
 
 export function AuthDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const handleClose = () => {
+    if (!isRedirecting) {
+      setIsOpen(false);
+    }
+  };
+
+  const handleLoginSuccess = async (redirectPath: string) => {
+    setIsRedirecting(true);
+    // Wait longer to ensure navigation has started
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setIsOpen(false);
+    setIsRedirecting(false);
   };
 
   return (
@@ -27,8 +38,8 @@ export function AuthDialog() {
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent
           className="max-w-lg max-h-[90vh] overflow-y-auto p-0 
-                                bg-gradient-to-br from-red-50 to-white 
-                                border border-red-100/50 shadow-xl"
+                  bg-gradient-to-br from-red-50 to-white 
+                  border border-red-100/50 shadow-xl"
         >
           <div className="flex flex-col h-full">
             <div className="flex justify-end p-2">
@@ -46,28 +57,28 @@ export function AuthDialog() {
             <Tabs defaultValue="login" className="w-full">
               <TabsList
                 className="grid w-full grid-cols-2 
-                                 bg-white/80 backdrop-blur-sm
-                                 p-1 gap-2"
+                       bg-white/80 backdrop-blur-sm
+                       p-1 gap-2"
               >
                 <TabsTrigger
                   value="login"
                   className="data-[state=active]:bg-red-600 
-                           data-[state=active]:text-white 
-                           py-3 
-                           text-red-600
-                           transition-colors
-                           hover:bg-red-50"
+                         data-[state=active]:text-white 
+                         py-3 
+                         text-red-600
+                         transition-colors
+                         hover:bg-red-50"
                 >
                   Login
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
                   className="data-[state=active]:bg-red-600 
-                           data-[state=active]:text-white 
-                           py-3 
-                           text-red-600
-                           transition-colors
-                           hover:bg-red-50"
+                         data-[state=active]:text-white 
+                         py-3 
+                         text-red-600
+                         transition-colors
+                         hover:bg-red-50"
                 >
                   Register
                 </TabsTrigger>
@@ -75,7 +86,10 @@ export function AuthDialog() {
 
               <TabsContent value="login" className="p-8 pt-6 bg-transparent">
                 <div className="[&>div]:p-0 [&>div]:shadow-none [&>div]:border-0">
-                  <LoginForm onClose={handleClose} />
+                  <LoginForm
+                    onClose={handleClose}
+                    onLoginSuccess={handleLoginSuccess}
+                  />
                 </div>
               </TabsContent>
 
