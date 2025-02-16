@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
-import { ProjectOption, Task } from "./types";
+import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
 
 type GetCustomerProjectsResponse = {
   projects?: ProjectOption[];
@@ -14,10 +14,18 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
   try {
     const { user } = await validateRequest();
     if (!user) throw new Error("Unauthorized");
-    if (user.role !== "CUSTOMER") return redirect("/login");
+    if (!["CUSTOMER", "ADMIN", "SUPERADMIN", "DEVELOPER"].includes(user.role))
+      return redirect("/login");
 
+    // Query projects based on user role
     const projects = await prisma.project.findMany({
-      where: { customerId: user.id },
+      where: {
+        // If user is admin/superadmin/developer, get all projects
+        // Otherwise, only get their own projects
+        ...(!["ADMIN", "SUPERADMIN", "DEVELOPER"].includes(user.role)
+          ? { customerId: user.id }
+          : {}),
+      },
       select: {
         id: true,
         name: true,
@@ -85,15 +93,3 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
     return { error: "Failed to fetch projects" };
   }
 }
-
-export type CreateTaskResponse = {
-  success: boolean;
-  data?: Task;
-  error?: string;
-};
-
-export type UpdateTaskResponse = {
-  success: boolean;
-  data?: Task;
-  error?: string;
-};

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
@@ -7,11 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format, isThisWeek, isThisMonth } from "date-fns";
 import { Priority, ProjectOption, ProjectTeamMember, Task } from "../types";
+import { getCustomerProjects } from "../actions";
 
 interface TasksTableProps {
   status?: string;
@@ -73,6 +77,7 @@ const TasksTable = ({
 }: TasksTableProps) => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!project || project === "all") {
@@ -104,6 +109,25 @@ const TasksTable = ({
 
     onAvailableDates(availableDates);
   }, [tasks, onAvailableDates]);
+
+  const refreshTasks = async () => {
+    if (!project || project === "all") return;
+
+    setIsRefreshing(true);
+    try {
+      const result = await getCustomerProjects();
+      if (result.projects) {
+        const updatedProject = result.projects.find((p) => p.id === project);
+        if (updatedProject) {
+          setTasks(updatedProject.tasks);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing tasks:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>
@@ -187,9 +211,19 @@ const TasksTable = ({
         <div className="text-sm text-muted-foreground">
           {selectedTasks.length} of {filteredTasks.length} row(s) selected
         </div>
-        <span className="text-red-600 font-semibold">
-          {format(new Date(), "dd MMMM yyyy")}
-        </span>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshTasks}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? "Refreshing..." : "Refresh Tasks"}
+          </Button>
+          <span className="text-red-600 font-semibold">
+            {format(new Date(), "dd MMMM yyyy")}
+          </span>
+        </div>
       </div>
       <div className="relative w-full overflow-auto border rounded-lg">
         <Table>
@@ -308,4 +342,4 @@ const TasksTable = ({
   );
 };
 
-export default TasksTable;
+export default React.memo(TasksTable);

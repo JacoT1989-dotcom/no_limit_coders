@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -7,87 +8,121 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Column, TasksKanbanProps } from "./types";
+import { toast } from "sonner";
 import TaskMembersModal from "./TaskMembersModal";
+import {
+  Priority,
+  ProjectOption,
+  Task,
+} from "@/app/(customer)/customer/tasks/types";
+import { ColumnState, TaskStatus } from "@prisma/client";
+import { updateTaskColumn } from "./update-actions";
+import { Toaster } from "sonner";
+import { getCustomerProjects } from "./get-actions";
 
-const TasksKanban = ({
-  status,
-  assignee,
-  project,
-  dueDate,
-}: TasksKanbanProps) => {
-  const [draggingTaskId, setDraggingTaskId] = useState<number | null>(null);
-  const [columns, setColumns] = useState<Column[]>([
-    {
-      id: "backlog",
-      title: "Backlog",
-      tasks: [
-        {
-          id: 1,
-          title: "Conduct usability testing",
-          project: "Mobile App Development",
-          assignee: "John",
-          dueDate: "October 15th, 2024",
-          status: "Backlog",
-        },
-      ],
-    },
-    {
-      id: "todo",
-      title: "Todo",
-      tasks: [
-        {
-          id: 2,
-          title: "Implement offline mode",
-          project: "Mobile App Development",
-          assignee: null,
-          dueDate: "October 14th, 2024",
-          status: "Todo",
-        },
-      ],
-    },
-    {
-      id: "in-progress",
-      title: "In Progress",
-      tasks: [
-        {
-          id: 3,
-          title: "Design UI components",
-          project: "Mobile App Development",
-          assignee: "Antonio",
-          dueDate: "October 10th, 2024",
-          status: "In Progress",
-        },
-      ],
-    },
-    {
-      id: "done",
-      title: "Done",
-      tasks: [
-        {
-          id: 4,
-          title: "Create app wireframes",
-          project: "Mobile App Development",
-          assignee: "John",
-          dueDate: "October 9th, 2024",
-          status: "Done",
-        },
-      ],
-    },
-  ]);
+const ProjectKanban = () => {
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [columns, setColumns] = useState<{
+    [key in TaskStatus]: Task[];
+  }>({
+    TODO: [],
+    REVIEW: [],
+    IN_PROGRESS: [],
+    COMPLETED: [],
+  });
 
-  const handleDragStart = (
-    e: React.DragEvent<HTMLDivElement>,
-    taskId: number,
-    fromColumn: string,
-  ) => {
-    setDraggingTaskId(taskId);
-    e.dataTransfer.setData("fromColumn", fromColumn);
+  const getStatusColor = (status: TaskStatus) => {
+    const colors = {
+      [TaskStatus.TODO]: "bg-gray-100 text-gray-800",
+      [TaskStatus.REVIEW]: "bg-yellow-100 text-yellow-800",
+      [TaskStatus.IN_PROGRESS]: "bg-blue-100 text-blue-800",
+      [TaskStatus.COMPLETED]: "bg-green-100 text-green-800",
+    };
+    return colors[status];
   };
 
-  const handleDragEnd = () => {
-    setDraggingTaskId(null);
+  const getHeaderStatusColor = (status: TaskStatus) => {
+    const colors = {
+      [TaskStatus.TODO]: "bg-gray-500/10",
+      [TaskStatus.REVIEW]: "bg-yellow-500/10",
+      [TaskStatus.IN_PROGRESS]: "bg-blue-500/10",
+      [TaskStatus.COMPLETED]: "bg-green-500/10",
+    };
+    return colors[status];
+  };
+
+  // Define organizeTasksByStatus at the top level
+  const organizeTasksByStatus = useCallback((tasks: Task[]) => {
+    const newColumns = {
+      TODO: [] as Task[],
+      REVIEW: [] as Task[],
+      IN_PROGRESS: [] as Task[],
+      COMPLETED: [] as Task[],
+    };
+
+    tasks.forEach((task) => {
+      newColumns[task.status].push(task);
+    });
+
+    setColumns(newColumns);
+  }, []);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await getCustomerProjects();
+        if (response.projects) {
+          setProjects(response.projects);
+          if (response.projects.length > 0) {
+            setSelectedProject(response.projects[0].id);
+            organizeTasksByStatus(response.projects[0].tasks);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading projects:", error);
+        toast.error("Failed to load projects");
+      }
+    };
+
+    loadProjects();
+  }, [organizeTasksByStatus]);
+
+  const handleProjectChange = useCallback(
+    (projectId: string) => {
+      setSelectedProject(projectId);
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        organizeTasksByStatus(project.tasks);
+      }
+    },
+    [projects, organizeTasksByStatus],
+  );
+
+  const getColumnState = (status: TaskStatus): ColumnState => {
+    switch (status) {
+      case TaskStatus.TODO:
+        return ColumnState.TODO;
+      case TaskStatus.REVIEW:
+        return ColumnState.BACKLOG;
+      case TaskStatus.IN_PROGRESS:
+        return ColumnState.IN_PROGRESS;
+      case TaskStatus.COMPLETED:
+        return ColumnState.DONE;
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, task: Task) => {
+    e.dataTransfer.setData("taskId", task.id);
+    e.dataTransfer.setData("fromStatus", task.status);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -95,138 +130,179 @@ const TasksKanban = ({
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toColumn: string) => {
+  const handleDrop = async (
+    e: React.DragEvent<HTMLDivElement>,
+    newStatus: TaskStatus,
+  ) => {
     e.preventDefault();
+    const taskId = e.dataTransfer.getData("taskId");
+    const fromStatus = e.dataTransfer.getData("fromStatus") as TaskStatus;
 
-    if (draggingTaskId === null) return;
+    if (fromStatus === newStatus) return;
 
-    const fromColumn = e.dataTransfer.getData("fromColumn");
-    if (fromColumn === toColumn) return;
+    // Optimistically update UI
+    setColumns((prev) => {
+      const newColumns = { ...prev };
+      const task = newColumns[fromStatus].find((t) => t.id === taskId);
 
-    setColumns((prevColumns) => {
-      const newColumns = [...prevColumns];
-
-      const sourceColumn = newColumns.find((col) => col.id === fromColumn);
-      const targetColumn = newColumns.find((col) => col.id === toColumn);
-
-      if (!sourceColumn || !targetColumn) return prevColumns;
-
-      const taskIndex = sourceColumn.tasks.findIndex(
-        (task) => task.id === draggingTaskId,
-      );
-      if (taskIndex === -1) return prevColumns;
-
-      // Remove task from source column
-      const [taskToMove] = sourceColumn.tasks.splice(taskIndex, 1);
-
-      // Update task status and add to target column
-      const updatedTask = { ...taskToMove, status: targetColumn.title };
-      targetColumn.tasks.push(updatedTask);
+      if (task) {
+        newColumns[fromStatus] = newColumns[fromStatus].filter(
+          (t) => t.id !== taskId,
+        );
+        newColumns[newStatus] = [
+          ...newColumns[newStatus],
+          { ...task, status: newStatus },
+        ];
+      }
 
       return newColumns;
     });
-  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Backlog":
-        return "bg-purple-100 text-purple-700";
-      case "Todo":
-        return "bg-red-100 text-red-700";
-      case "In Progress":
-        return "bg-yellow-100 text-yellow-700";
-      case "Done":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+    try {
+      // Get corresponding column state for the new status
+      const newColumnState = getColumnState(newStatus);
+
+      // Call server action to update task
+      const response = await updateTaskColumn(taskId, newColumnState);
+
+      if (response.success) {
+        toast.success("Task updated successfully");
+      } else {
+        // Revert optimistic update if server update fails
+        setColumns((prev) => {
+          const newColumns = { ...prev };
+          const task = newColumns[newStatus].find((t) => t.id === taskId);
+
+          if (task) {
+            newColumns[newStatus] = newColumns[newStatus].filter(
+              (t) => t.id !== taskId,
+            );
+            newColumns[fromStatus] = [
+              ...newColumns[fromStatus],
+              { ...task, status: fromStatus },
+            ];
+          }
+
+          return newColumns;
+        });
+
+        toast.error(response.error || "Failed to update task");
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast.error("Failed to update task");
     }
   };
 
-  const renderAssigneeAvatar = (assignee: string | null) => {
-    if (!assignee) {
-      return (
-        <Avatar className="h-6 w-6">
-          <AvatarFallback className="bg-accent/10 text-accent">
-            NA
-          </AvatarFallback>
-        </Avatar>
-      );
-    }
-
-    return (
-      <Avatar className="h-6 w-6">
-        <AvatarFallback className="bg-accent/10 text-accent">
-          {assignee.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
-    );
+  const getPriorityColor = (priority: Priority) => {
+    const colors = {
+      [Priority.LOW]: "bg-blue-100 text-blue-800",
+      [Priority.MEDIUM]: "bg-yellow-100 text-yellow-800",
+      [Priority.HIGH]: "bg-orange-100 text-orange-800",
+      [Priority.URGENT]: "bg-red-100 text-red-800",
+    };
+    return colors[priority];
   };
 
   return (
-    <>
+    <div className="space-y-6">
+      <Toaster richColors position="top-right" />
       <TaskMembersModal />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-        {columns.map((column) => (
-          <div
-            key={column.id}
-            className="flex flex-col rounded-lg red-gradient p-[1px] shadow-lg"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, column.id)}
-          >
-            <div className="bg-card rounded-lg flex flex-col h-full">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-card-foreground">
-                    {column.title}
-                  </h3>
-                  <span className="rounded-full bg-accent/10 text-accent px-2 py-1 text-sm">
-                    {column.tasks.length}
-                  </span>
+
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <Select value={selectedProject} onValueChange={handleProjectChange}>
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Select a project" />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Object.entries(columns).map(([status, tasks]) => (
+            <div
+              key={status}
+              className="flex flex-col rounded-lg red-gradient p-[1px] shadow-lg"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, status as TaskStatus)}
+            >
+              <div className="bg-card rounded-lg flex flex-col h-full">
+                <div
+                  className={`p-4 border-b border-border ${getHeaderStatusColor(status as TaskStatus)}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-card-foreground">
+                      {status.replace("_", " ")}
+                    </h3>
+                    <span className="rounded-full bg-accent/10 text-accent px-2 py-1 text-sm">
+                      {tasks.length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex-1 p-4 space-y-3 min-h-[calc(100vh-300px)]">
+                  {tasks.map((task) => (
+                    <Card
+                      key={task.id}
+                      className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border cursor-move"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, task)}
+                    >
+                      <CardHeader className="p-4 pb-2">
+                        <CardTitle className="text-sm font-medium text-card-foreground">
+                          {task.title}
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          {task.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="p-4 pt-2">
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-2">
+                            {task.assignees.map((assignee) => (
+                              <Avatar key={assignee.id} className="h-6 w-6">
+                                <AvatarFallback className="bg-accent/10 text-accent">
+                                  {assignee.userId.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                            ))}
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
+                            >
+                              {task.status.replace("_", " ")}
+                            </span>
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(task.priority)}`}
+                            >
+                              {task.priority}
+                            </span>
+                          </div>
+                        </div>
+                        {task.dueDate && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            Due {new Date(task.dueDate).toLocaleDateString()}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-
-              <div className="flex-1 p-4 space-y-3 min-h-[calc(100vh-300px)]">
-                {column.tasks.map((task) => (
-                  <Card
-                    key={task.id}
-                    className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border cursor-move"
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, task.id, column.id)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <CardHeader className="p-4 pb-2">
-                      <CardTitle className="text-sm font-medium text-card-foreground">
-                        {task.title}
-                      </CardTitle>
-                      <CardDescription className="flex items-center gap-2 text-xs">
-                        <span className="flex h-5 w-5 items-center justify-center rounded bg-accent/10 text-accent text-xs">
-                          M
-                        </span>
-                        {task.project}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-2">
-                      <div className="flex justify-between items-center">
-                        {renderAssigneeAvatar(task.assignee)}
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
-                        >
-                          {task.status}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Due {task.dueDate}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default TasksKanban;
+export default ProjectKanban;

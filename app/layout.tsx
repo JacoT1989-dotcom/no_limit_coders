@@ -18,8 +18,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <main>{children}</main>
-          <Toaster />
         </ThemeProvider>
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          theme="light"
+          duration={4000}
+        />
       </body>
     </html>
   );

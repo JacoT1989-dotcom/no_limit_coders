@@ -242,8 +242,8 @@ enum ProjectStatus {
 
 enum TaskStatus {
   TODO
-  IN_PROGRESS
   REVIEW
+  IN_PROGRESS
   COMPLETED
 }
 
@@ -261,8 +261,8 @@ enum TeamRole {
 }
 
 enum ColumnState {
-  BACKLOG
   TODO
+  BACKLOG // this is the review of the task status
   IN_PROGRESS
-  DONE
+  DONE // this is the completed of the task status
 }
