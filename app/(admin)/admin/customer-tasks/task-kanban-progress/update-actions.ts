@@ -64,12 +64,6 @@ export async function updateTaskColumn(
       return { success: false, error: "Task not found" };
     }
 
-    console.log("Current task:", {
-      taskId,
-      projectId: currentTask.projectId,
-      newColumnState,
-    });
-
     // Find or create the target column if it doesn't exist
     let targetColumn = await prisma.taskColumn.findFirst({
       where: {
