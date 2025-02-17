@@ -269,7 +269,7 @@ const TasksCalendar = ({
                       ${
                         isToday(day)
                           ? "bg-red-600 dark:bg-red-500 text-white"
-                          : "text-red-600 dark:text-red-500"
+                          : "text-red-600 dark:text-white"
                       }
                     `}
                   >

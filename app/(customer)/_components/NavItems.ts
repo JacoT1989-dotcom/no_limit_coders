@@ -28,18 +28,18 @@ export const navigation: NavItem[] = [
     label: "Chat & Feeds",
     icon: FileText,
     links: [
-      { name: "Notify tech Team", href: "/customers/notify-tech-team" },
-      { name: "Tech Team Feed", href: "/customers/tech-team-feed" },
-      { name: "Upcoming Meetings", href: "/customers/schedule-meeting" },
+      { name: "Notify tech Team", href: "/customer/notify-tech-team" },
+      { name: "Tech Team Feed", href: "/customer/tech-team-feed" },
+      { name: "Upcoming Meetings", href: "/customer/schedule-meeting" },
     ],
   },
   {
     label: "Settings",
     icon: Settings,
     links: [
-      { name: "General", href: "/customers/settings/general" },
-      { name: "Security", href: "/customers/settings/security" },
-      { name: "Preferences", href: "/customers/settings/preferences" },
+      { name: "General", href: "/customer/settings/general" },
+      { name: "Security", href: "/customer/settings/security" },
+      { name: "Preferences", href: "/customer/settings/preferences" },
     ],
   },
 ];
