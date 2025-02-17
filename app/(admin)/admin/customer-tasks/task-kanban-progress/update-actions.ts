@@ -113,6 +113,12 @@ export async function updateTaskColumn(
           select: {
             id: true,
             name: true,
+            customer: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
           },
         },
         column: {
@@ -131,6 +137,16 @@ export async function updateTaskColumn(
             role: true,
             userId: true,
             projectId: true,
+            user: {
+              select: {
+                id: true,
+                displayName: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
         attachments: {
@@ -168,7 +184,7 @@ export async function updateTaskColumn(
     });
 
     // Revalidate the customer tasks path
-    revalidatePath("/customer/tasks");
+    revalidatePath("/admin/customer-tasks/task-kanban-progress");
 
     return {
       success: true,
