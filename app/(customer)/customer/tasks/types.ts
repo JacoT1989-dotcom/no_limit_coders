@@ -1,10 +1,19 @@
-// types.ts
 import {
   ColumnState,
   TaskStatus,
   Priority as PrismaPriority,
   TeamRole,
+  UserRole,
 } from "@prisma/client";
+
+export type User = {
+  id: string;
+  displayName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+};
 
 export type TaskColumn = {
   id: string;
@@ -20,6 +29,7 @@ export type ProjectTeamMember = {
   role: TeamRole;
   userId: string;
   projectId: string;
+  user: User;
 };
 
 export type TaskAttachment = {
@@ -60,6 +70,13 @@ export type ProjectOption = {
   id: string;
   name: string;
   tasks: Task[];
+  customerId: string;
+  customer: {
+    id: string;
+    displayName: string;
+  };
+  team: ProjectTeamMember[];
+  availableDevelopers?: User[]; // New field for available developers
 };
 
 // Re-export Priority from Prisma
@@ -96,7 +113,7 @@ export interface TaskFormValues {
   status: TaskStatus;
 }
 
-// Helper function to format task for Kanban display
+// Helper functions
 export const formatTaskForKanban = (task: Task) => ({
   ...task,
   project: task.column.projectId,
@@ -104,7 +121,6 @@ export const formatTaskForKanban = (task: Task) => ({
   dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "",
 });
 
-// Helper function to map column state to task status
 export const columnToStatusMap: Record<ColumnState, TaskStatus> = {
   TODO: TaskStatus.TODO,
   BACKLOG: TaskStatus.REVIEW,
@@ -112,7 +128,6 @@ export const columnToStatusMap: Record<ColumnState, TaskStatus> = {
   DONE: TaskStatus.COMPLETED,
 };
 
-// Helper function to get status color
 export const getStatusColor = (status: TaskStatus) => {
   const colors = {
     [TaskStatus.TODO]: "bg-gray-100 text-gray-800",
@@ -123,7 +138,6 @@ export const getStatusColor = (status: TaskStatus) => {
   return colors[status] || colors[TaskStatus.TODO];
 };
 
-// Helper function to get priority color
 export const getPriorityColor = (priority: PrismaPriority) => {
   const colors = {
     [PrismaPriority.LOW]: "bg-blue-100 text-blue-800",

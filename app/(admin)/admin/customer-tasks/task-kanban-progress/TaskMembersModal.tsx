@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,65 +11,114 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Toaster } from "sonner";
+import { getCustomerProjects } from "./get-actions";
+import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
+import { assignTeamMemberToTask } from "./assign-member-action";
 
-const members = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Antonio Rodriguez" },
-  { id: 3, name: "Sarah Johnson" },
-  { id: 4, name: "Michael Chen" },
-];
+interface TaskMembersModalProps {
+  onUpdate: () => Promise<void>;
+  selectedProjectId: string;
+}
 
-const projects = [
-  { id: 1, name: "Mobile App Development" },
-  { id: 2, name: "Website Redesign" },
-  { id: 3, name: "Marketing Campaign" },
-];
+const TaskMembersModal = ({
+  onUpdate,
+  selectedProjectId,
+}: TaskMembersModalProps) => {
+  const [open, setOpen] = useState(false);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [selectedTask, setSelectedTask] = useState<string>("");
+  const [selectedMember, setSelectedMember] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
-const tasks = [
-  { id: 1, name: "Design UI components", projectId: 1 },
-  { id: 2, name: "Implement offline mode", projectId: 1 },
-  { id: 3, name: "Create wireframes", projectId: 2 },
-  { id: 4, name: "Content strategy", projectId: 3 },
-];
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await getCustomerProjects();
+        if (response.projects) {
+          setProjects(response.projects);
+        }
+      } catch (error) {
+        console.error("Error loading projects:", error);
+        toast.error("Failed to load projects");
+      }
+    };
 
-const TaskMembersModal = () => {
-  const [selectedMember, setSelectedMember] = React.useState<
-    string | undefined
-  >();
-  const [selectedProject, setSelectedProject] = React.useState<
-    string | undefined
-  >();
-  const [selectedTask, setSelectedTask] = React.useState<string | undefined>();
+    loadProjects();
+  }, []);
 
-  const filteredTasks = tasks.filter((task) =>
-    selectedProject ? task.projectId === parseInt(selectedProject) : true,
-  );
+  useEffect(() => {
+    if (selectedProjectId) {
+      setSelectedProject(selectedProjectId);
+    }
+  }, [selectedProjectId]);
 
-  const handleAssign = () => {
-    console.log({
-      member: selectedMember,
-      project: selectedProject,
-      task: selectedTask,
-    });
+  // Get tasks and team members for selected project
+  const selectedProjectData = projects.find((p) => p.id === selectedProject);
+  const projectTasks = selectedProjectData?.tasks || [];
+  const projectTeamMembers = selectedProjectData?.team || [];
+  const availableDevelopers = selectedProjectData?.availableDevelopers || [];
+
+  const handleAssign = async () => {
+    if (!selectedTask || !selectedMember) {
+      toast.error("Please select both a task and a team member");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await assignTeamMemberToTask(
+        selectedTask,
+        selectedMember,
+      );
+
+      if (response.success) {
+        toast.success("Team member assigned successfully");
+        setOpen(false);
+        // Reset selections
+        setSelectedTask("");
+        setSelectedMember("");
+        setSelectedProject("");
+        // Refresh the projects data
+        await onUpdate();
+      } else {
+        toast.error(response.error || "Failed to assign team member");
+      }
+    } catch (error) {
+      console.error("Error assigning team member:", error);
+      toast.error("Failed to assign team member");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDialogChange = (newOpen: boolean) => {
+    setOpen(newOpen);
     if (!newOpen) {
-      setSelectedMember(undefined);
-      setSelectedProject(undefined);
-      setSelectedTask(undefined);
+      setSelectedMember("");
+      setSelectedTask("");
+      if (selectedProjectId) {
+        setSelectedProject(selectedProjectId);
+      } else {
+        setSelectedProject("");
+      }
     }
   };
 
   return (
     <div className="px-6 mb-6">
+      <Toaster richColors position="top-right" />
       <Card className="p-4">
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -76,7 +127,7 @@ const TaskMembersModal = () => {
               Assign team members to specific tasks
             </p>
           </div>
-          <Dialog onOpenChange={handleDialogChange}>
+          <Dialog open={open} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button className="red-gradient text-white hover:opacity-90">
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -99,11 +150,8 @@ const TaskMembersModal = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {projects.map((project) => (
-                        <SelectItem
-                          key={project.id}
-                          value={project.id.toString()}
-                        >
-                          {project.name}
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name} [{project.customer.displayName}]
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -112,14 +160,18 @@ const TaskMembersModal = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Task</label>
-                  <Select onValueChange={setSelectedTask} value={selectedTask}>
+                  <Select
+                    onValueChange={setSelectedTask}
+                    value={selectedTask}
+                    disabled={!selectedProject}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select task..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredTasks.map((task) => (
-                        <SelectItem key={task.id} value={task.id.toString()}>
-                          {task.name}
+                      {projectTasks.map((task) => (
+                        <SelectItem key={task.id} value={task.id}>
+                          {task.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -127,23 +179,37 @@ const TaskMembersModal = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Team Member</label>
+                  <label className="text-sm font-medium">Assign To</label>
                   <Select
                     onValueChange={setSelectedMember}
                     value={selectedMember}
+                    disabled={!selectedProject}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {members.map((member) => (
-                        <SelectItem
-                          key={member.id}
-                          value={member.id.toString()}
-                        >
-                          {member.name}
-                        </SelectItem>
-                      ))}
+                      {projectTeamMembers.length > 0 && (
+                        <SelectGroup>
+                          <SelectLabel>Current Team</SelectLabel>
+                          {projectTeamMembers.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.user.displayName} ({member.role})
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      )}
+
+                      {availableDevelopers?.length > 0 && (
+                        <SelectGroup>
+                          <SelectLabel>Available Developers</SelectLabel>
+                          {availableDevelopers.map((dev) => (
+                            <SelectItem key={dev.id} value={dev.id}>
+                              {dev.displayName} (Developer)
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -151,8 +217,9 @@ const TaskMembersModal = () => {
                 <Button
                   className="w-full red-gradient text-white hover:opacity-90"
                   onClick={handleAssign}
+                  disabled={isLoading || !selectedTask || !selectedMember}
                 >
-                  Assign Member
+                  {isLoading ? "Assigning..." : "Assign Member"}
                 </Button>
               </div>
             </DialogContent>

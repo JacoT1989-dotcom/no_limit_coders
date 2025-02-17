@@ -60,7 +60,6 @@ const ProjectKanban = () => {
     return colors[status];
   };
 
-  // Define organizeTasksByStatus at the top level
   const organizeTasksByStatus = useCallback((tasks: Task[]) => {
     const newColumns = {
       TODO: [] as Task[],
@@ -76,25 +75,30 @@ const ProjectKanban = () => {
     setColumns(newColumns);
   }, []);
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const response = await getCustomerProjects();
-        if (response.projects) {
-          setProjects(response.projects);
-          if (response.projects.length > 0) {
-            setSelectedProject(response.projects[0].id);
-            organizeTasksByStatus(response.projects[0].tasks);
+  const loadProjects = useCallback(async () => {
+    try {
+      const response = await getCustomerProjects();
+      if (response.projects) {
+        setProjects(response.projects);
+        // If there's a selected project, refresh its tasks
+        if (selectedProject) {
+          const project = response.projects.find(
+            (p) => p.id === selectedProject,
+          );
+          if (project) {
+            organizeTasksByStatus(project.tasks);
           }
         }
-      } catch (error) {
-        console.error("Error loading projects:", error);
-        toast.error("Failed to load projects");
       }
-    };
+    } catch (error) {
+      console.error("Error loading projects:", error);
+      toast.error("Failed to load projects");
+    }
+  }, [selectedProject, organizeTasksByStatus]);
 
+  useEffect(() => {
     loadProjects();
-  }, [organizeTasksByStatus]);
+  }, [loadProjects]);
 
   const handleProjectChange = useCallback(
     (projectId: string) => {
@@ -159,14 +163,13 @@ const ProjectKanban = () => {
     });
 
     try {
-      // Get corresponding column state for the new status
       const newColumnState = getColumnState(newStatus);
-
-      // Call server action to update task
       const response = await updateTaskColumn(taskId, newColumnState);
 
       if (response.success) {
         toast.success("Task updated successfully");
+        // Refresh projects to get updated data
+        await loadProjects();
       } else {
         // Revert optimistic update if server update fails
         setColumns((prev) => {
@@ -207,18 +210,24 @@ const ProjectKanban = () => {
   return (
     <div className="space-y-6">
       <Toaster richColors position="top-right" />
-      <TaskMembersModal />
+      <TaskMembersModal
+        onUpdate={loadProjects}
+        selectedProjectId={selectedProject}
+      />
 
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <Select value={selectedProject} onValueChange={handleProjectChange}>
             <SelectTrigger className="w-[300px]">
-              <SelectValue placeholder="Select a project" />
+              <SelectValue placeholder="Select Project" />
             </SelectTrigger>
             <SelectContent>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
-                  {project.name}
+                  {project.name}{" "}
+                  {project.customer?.displayName
+                    ? `[${project.customer.displayName}]`
+                    : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -259,7 +268,7 @@ const ProjectKanban = () => {
                         <CardTitle className="text-sm font-medium text-card-foreground">
                           {task.title}
                         </CardTitle>
-                        <CardDescription className="text-xs">
+                        <CardDescription className="text-xs line-clamp-6 hover:line-clamp-none">
                           {task.description}
                         </CardDescription>
                       </CardHeader>
@@ -267,11 +276,20 @@ const ProjectKanban = () => {
                         <div className="flex justify-between items-center">
                           <div className="flex gap-2">
                             {task.assignees.map((assignee) => (
-                              <Avatar key={assignee.id} className="h-6 w-6">
-                                <AvatarFallback className="bg-accent/10 text-accent">
-                                  {assignee.userId.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
+                              <div key={assignee.id} className="relative group">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback
+                                    className="bg-accent/10 text-accent"
+                                    title={`${assignee.user.displayName} (${assignee.user.role.toLowerCase()})`}
+                                  >
+                                    {assignee.user.displayName.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="absolute hidden group-hover:block bottom-full mb-2 z-50 bg-popover text-popover-foreground text-xs rounded-md px-2 py-1 whitespace-nowrap shadow-md">
+                                  {assignee.user.displayName} (
+                                  {assignee.user.role.toLowerCase()})
+                                </div>
+                              </div>
                             ))}
                           </div>
                           <div className="flex gap-2 items-center">
