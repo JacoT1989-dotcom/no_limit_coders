@@ -2,14 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,16 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { format, isThisWeek, isThisMonth } from "date-fns";
 import { Priority, ProjectOption, ProjectTeamMember, Task } from "../types";
 import { getCustomerProjects } from "../actions";
+import { Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-interface TasksTableProps {
-  status?: string;
-  assignee?: string;
-  project?: string;
-  dueDate?: string;
-  projects: ProjectOption[];
-  onAvailableDates: (dates: string[]) => void;
-}
-
+// Helper function to check if a task is within the selected due date range
 const isWithinDueDate = (
   dueDate: Date | null,
   createdAt: Date,
@@ -68,6 +60,97 @@ const isWithinDueDate = (
   }
 };
 
+// AssigneesDisplay component for showing assignees in the table
+const AssigneesDisplay = ({
+  assignees,
+}: {
+  assignees: ProjectTeamMember[];
+}) => {
+  const getInitials = (firstName: string, lastName: string) =>
+    `${firstName[0]}${lastName[0]}`;
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="w-[140px]">
+          <div className="flex items-center">
+            {assignees.length > 0 ? (
+              <div className="flex -space-x-2 mr-2">
+                {assignees.slice(0, 3).map((assignee) => (
+                  <Avatar
+                    key={assignee.id}
+                    className="h-6 w-6 border-2 border-background"
+                  >
+                    <AvatarFallback className="text-xs">
+                      {getInitials(
+                        assignee.user.firstName,
+                        assignee.user.lastName,
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+              </div>
+            ) : (
+              <Users className="h-4 w-4 mr-2" />
+            )}
+            <span>
+              {assignees.length}{" "}
+              {assignees.length === 1 ? "Assignee" : "Assignees"}
+            </span>
+          </div>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Task Assignees</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {assignees.map((assignee) => (
+            <div
+              key={assignee.id}
+              className="flex items-center justify-between p-2 rounded-lg border"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-primary/10">
+                    {getInitials(
+                      assignee.user.firstName,
+                      assignee.user.lastName,
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <p className="font-medium">
+                    {assignee.user.firstName} {assignee.user.lastName}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {assignee.user.email}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline">{assignee.role}</Badge>
+            </div>
+          ))}
+          {assignees.length === 0 && (
+            <div className="text-center py-4 text-muted-foreground">
+              No assignees for this task
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface TasksTableProps {
+  status?: string;
+  assignee?: string;
+  project?: string;
+  dueDate?: string;
+  projects: ProjectOption[];
+  onAvailableDates: (dates: string[]) => void;
+}
+
 const TasksTable = ({
   status,
   assignee,
@@ -80,6 +163,7 @@ const TasksTable = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Initialize tasks when project changes
   useEffect(() => {
     if (!project || project === "all") {
       setTasks([]);
@@ -92,6 +176,7 @@ const TasksTable = ({
     }
   }, [project, projects]);
 
+  // Update available dates based on tasks
   useEffect(() => {
     const availableDates = ["all"];
     const hasTasksForToday = tasks.some((task) =>
@@ -111,6 +196,7 @@ const TasksTable = ({
     onAvailableDates(availableDates);
   }, [tasks, onAvailableDates]);
 
+  // Refresh tasks function
   const refreshTasks = async () => {
     if (!project || project === "all") return;
 
@@ -130,6 +216,7 @@ const TasksTable = ({
     }
   };
 
+  // Task selection handlers
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>
       prev.includes(taskId)
@@ -146,6 +233,7 @@ const TasksTable = ({
     );
   };
 
+  // Style helper functions
   const getStatusColor = (status: string) => {
     switch (status) {
       case "TODO":
@@ -174,10 +262,7 @@ const TasksTable = ({
     }
   };
 
-  const getAssigneeInitials = (assignee: ProjectTeamMember) => {
-    return assignee.userId.slice(0, 2).toUpperCase();
-  };
-
+  // Filter tasks based on selected filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesStatus =
@@ -226,6 +311,7 @@ const TasksTable = ({
           </span>
         </div>
       </div>
+
       <div className="border rounded-lg overflow-x-auto">
         <table className={cn("w-full caption-bottom text-sm border-collapse")}>
           <thead>
@@ -286,23 +372,19 @@ const TasksTable = ({
                 <td className="p-4 align-middle">
                   <div className="relative">
                     <div className="truncate font-medium cursor-pointer hover:text-primary peer">
-                      {task.title ? `${task.title.slice(0, 4)}...` : "-"}
+                      {task.title}
                     </div>
-                    {task.title && task.title.length > 0 && (
-                      <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[300px]">
-                        {task.title}
-                      </div>
-                    )}
+                    <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[300px]">
+                      {task.title}
+                    </div>
                   </div>
                 </td>
                 <td className="p-4 align-middle">
                   <div className="relative">
                     <div className="truncate cursor-pointer hover:text-primary peer">
-                      {task.description
-                        ? `${task.description.slice(0, 4)}...`
-                        : "-"}
+                      {task.description || "-"}
                     </div>
-                    {task.description && task.description.length > 0 && (
+                    {task.description && (
                       <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[400px]">
                         {task.description}
                       </div>
@@ -331,18 +413,7 @@ const TasksTable = ({
                   {format(new Date(task.updatedAt), "dd MMM")}
                 </td>
                 <td className="p-4 align-middle">
-                  <div className="flex -space-x-2">
-                    {task.assignees.map((assignee) => (
-                      <Avatar
-                        key={assignee.id}
-                        className="h-8 w-8 border-2 border-background"
-                      >
-                        <AvatarFallback className="bg-primary/10">
-                          {getAssigneeInitials(assignee)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                  </div>
+                  <AssigneesDisplay assignees={task.assignees} />
                 </td>
                 <td className="p-4 align-middle">
                   <Badge variant="outline">
@@ -356,6 +427,16 @@ const TasksTable = ({
                 </td>
               </tr>
             ))}
+            {filteredTasks.length === 0 && (
+              <tr>
+                <td
+                  colSpan={11}
+                  className="p-4 text-center text-muted-foreground"
+                >
+                  No tasks found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

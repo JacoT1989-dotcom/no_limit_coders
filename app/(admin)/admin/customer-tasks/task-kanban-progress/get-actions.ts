@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { validateRequest } from "@/auth";
 import { redirect } from "next/navigation";
-import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
+import { ProjectOption, User } from "@/app/(customer)/customer/tasks/types";
 
 type GetCustomerProjectsResponse = {
   projects?: ProjectOption[];
@@ -17,8 +17,8 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
     if (!["CUSTOMER", "ADMIN", "SUPERADMIN", "DEVELOPER"].includes(user.role))
       return redirect("/login");
 
-    // First get all developers
-    const developers = await prisma.user.findMany({
+    // Get all developers
+    const developersQuery = await prisma.user.findMany({
       where: {
         role: "DEVELOPER",
       },
@@ -32,11 +32,19 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
       },
     });
 
-    // Query projects based on user role
+    // Map developers to our User type
+    const developers: User[] = developersQuery.map((dev) => ({
+      id: dev.id,
+      displayName: dev.displayName,
+      firstName: dev.firstName,
+      lastName: dev.lastName,
+      email: dev.email,
+      role: dev.role,
+    }));
+
+    // Query projects
     const projects = await prisma.project.findMany({
       where: {
-        // If user is admin/superadmin/developer, get all projects
-        // Otherwise, only get their own projects
         ...(!["ADMIN", "SUPERADMIN", "DEVELOPER"].includes(user.role)
           ? { customerId: user.id }
           : {}),
@@ -102,6 +110,7 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                     displayName: true,
                     firstName: true,
                     lastName: true,
+                    email: true,
                     role: true,
                   },
                 },
@@ -110,37 +119,41 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
             attachments: true,
             comments: true,
           },
-          orderBy: {
-            order: "asc",
-          },
         },
       },
-      orderBy: { createdAt: "desc" },
     });
 
-    // Add available developers to each project
-    const projectsWithDevelopers = projects.map((project) => {
-      // Get IDs of developers already in the team
-      const teamDeveloperIds = new Set(
-        project.team
-          .filter((member) => member.user.role === "DEVELOPER")
-          .map((member) => member.user.id),
-      );
-
-      // Filter out developers already in the team
-      const availableDevelopers = developers.filter(
-        (dev) => !teamDeveloperIds.has(dev.id),
-      );
-
+    // Process projects to add available developers
+    const projectsWithDevelopers: ProjectOption[] = projects.map((project) => {
       return {
-        ...project,
-        availableDevelopers,
+        id: project.id,
+        name: project.name,
+        customerId: project.customerId,
+        customer: project.customer,
+        team: project.team,
+        tasks: project.tasks.map((task) => ({
+          ...task,
+          assignees: task.assignees,
+          attachments: task.attachments,
+          comments: task.comments,
+        })),
+        availableDevelopers: developers,
+        assignedDevelopersByTask: project.tasks.reduce(
+          (acc, task) => {
+            acc[task.id] = new Set(
+              task.assignees
+                .filter((assignee) => assignee.user.role === "DEVELOPER")
+                .map((assignee) => assignee.user.id),
+            );
+            return acc;
+          },
+          {} as { [taskId: string]: Set<string> },
+        ),
       };
     });
 
-    return { projects: projectsWithDevelopers as ProjectOption[] };
+    return { projects: projectsWithDevelopers };
   } catch (error) {
-    console.error("Project fetch error:", error);
     return { error: "Failed to fetch projects" };
   }
 }

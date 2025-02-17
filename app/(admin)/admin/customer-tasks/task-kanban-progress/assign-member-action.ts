@@ -11,7 +11,7 @@ type AssignMemberResponse = {
 
 export async function assignTeamMemberToTask(
   taskId: string,
-  userId: string,
+  memberId: string,
 ): Promise<AssignMemberResponse> {
   try {
     const { user } = await validateRequest();
@@ -19,81 +19,90 @@ export async function assignTeamMemberToTask(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get task and its project
-    const task = await prisma.task.findUnique({
-      where: { id: taskId },
-      include: {
-        project: true,
-        assignees: true,
-      },
-    });
-
-    if (!task) {
-      return { success: false, error: "Task not found" };
-    }
-
-    // Verify the developer exists
+    // Verify the developer exists and has the correct role
     const developer = await prisma.user.findUnique({
-      where: { id: userId },
+      where: {
+        id: memberId,
+      },
+      select: {
+        id: true,
+        role: true,
+        displayName: true,
+      },
     });
 
     if (!developer) {
       return { success: false, error: "Developer not found" };
     }
 
-    // Check if already assigned
-    const isAlreadyAssigned = task.assignees.some(
-      (assignee) => assignee.userId === userId,
-    );
-
-    if (isAlreadyAssigned) {
+    if (developer.role !== "DEVELOPER") {
       return {
         success: false,
-        error: "Member is already assigned to this task",
+        error: `User is not a developer. Current role: ${developer.role}`,
       };
     }
 
-    // First, find or create ProjectTeamMember
-    let teamMember = await prisma.projectTeamMember.findFirst({
-      where: {
-        userId: userId,
-        projectId: task.projectId,
-      },
-    });
-
-    if (!teamMember) {
-      teamMember = await prisma.projectTeamMember.create({
-        data: {
-          project: {
-            connect: { id: task.projectId },
+    return await prisma.$transaction(async (tx) => {
+      // Find the task and its current assignments
+      const task = await tx.task.findUnique({
+        where: { id: taskId },
+        include: {
+          project: true,
+          assignees: {
+            include: {
+              user: true,
+            },
           },
-          user: {
-            connect: { id: userId },
-          },
-          role: "MEMBER",
         },
       });
-    }
 
-    // Now assign to task
-    await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        assignees: {
-          connect: {
-            id: teamMember.id,
+      if (!task) {
+        return { success: false, error: "Task not found" };
+      }
+
+      // Check for existing team membership
+      let teamMember = await tx.projectTeamMember.findFirst({
+        where: {
+          userId: memberId,
+          projectId: task.projectId,
+        },
+      });
+
+      // Create team membership if it doesn't exist
+      if (!teamMember) {
+        teamMember = await tx.projectTeamMember.create({
+          data: {
+            project: {
+              connect: { id: task.projectId },
+            },
+            user: {
+              connect: { id: memberId },
+            },
+            role: "MEMBER",
+          },
+        });
+      }
+
+      // Assign to task
+      await tx.task.update({
+        where: { id: taskId },
+        data: {
+          assignees: {
+            connect: {
+              id: teamMember.id,
+            },
           },
         },
-      },
-    });
+      });
 
-    revalidatePath("/admin/customer-tasks/task-kanban-progress");
-    return { success: true };
-  } catch (error) {
-    console.error("Error assigning member to task:", error);
+      return { success: true };
+    });
+  } catch (error: any) {
     return {
       success: false,
-      error: "Failed to assign member to task",
+      error: error?.message || "Failed to assign developer to task",
     };
+  } finally {
+    revalidatePath("/admin/customer-tasks/task-kanban-progress");
   }
 }

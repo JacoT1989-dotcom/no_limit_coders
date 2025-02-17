@@ -48,6 +48,15 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                 role: true,
                 userId: true,
                 projectId: true,
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                    displayName: true,
+                  },
+                },
               },
             },
             attachments: {

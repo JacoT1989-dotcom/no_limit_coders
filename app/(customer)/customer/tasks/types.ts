@@ -76,7 +76,8 @@ export type ProjectOption = {
     displayName: string;
   };
   team: ProjectTeamMember[];
-  availableDevelopers?: User[]; // New field for available developers
+  availableDevelopers?: User[];
+  assignedDevelopersByTask?: { [taskId: string]: Set<string> };
 };
 
 // Re-export Priority from Prisma

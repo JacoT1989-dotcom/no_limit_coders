@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 import { getCustomerProjects } from "./get-actions";
-import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
+import { ProjectOption, User } from "@/app/(customer)/customer/tasks/types";
 import { assignTeamMemberToTask } from "./assign-member-action";
 
 interface TaskMembersModalProps {
@@ -50,7 +50,6 @@ const TaskMembersModal = ({
           setProjects(response.projects);
         }
       } catch (error) {
-        console.error("Error loading projects:", error);
         toast.error("Failed to load projects");
       }
     };
@@ -64,11 +63,34 @@ const TaskMembersModal = ({
     }
   }, [selectedProjectId]);
 
-  // Get tasks and team members for selected project
-  const selectedProjectData = projects.find((p) => p.id === selectedProject);
-  const projectTasks = selectedProjectData?.tasks || [];
-  const projectTeamMembers = selectedProjectData?.team || [];
-  const availableDevelopers = selectedProjectData?.availableDevelopers || [];
+  const selectedProjectData = useMemo(() => {
+    return projects.find((p) => p.id === selectedProject);
+  }, [projects, selectedProject]);
+
+  const selectedTaskData = useMemo(() => {
+    if (!selectedProjectData || !selectedTask) return null;
+    return selectedProjectData.tasks.find((t) => t.id === selectedTask);
+  }, [selectedProjectData, selectedTask]);
+
+  const currentAssignees = useMemo(() => {
+    if (!selectedTaskData) return [];
+    return selectedTaskData.assignees
+      .filter((assignee) => assignee.user.role === "DEVELOPER")
+      .map((assignee) => ({
+        id: assignee.user.id,
+        displayName: assignee.user.displayName,
+        role: assignee.user.role,
+      }));
+  }, [selectedTaskData]);
+
+  const availableDevelopers = useMemo(() => {
+    if (!selectedProjectData || !selectedTask) return [];
+
+    const developers = selectedProjectData.availableDevelopers || [];
+    const assignedIds = new Set(currentAssignees.map((a) => a.id));
+
+    return developers.filter((dev) => !assignedIds.has(dev.id));
+  }, [selectedProjectData, selectedTask, currentAssignees]);
 
   const handleAssign = async () => {
     if (!selectedTask || !selectedMember) {
@@ -86,33 +108,16 @@ const TaskMembersModal = ({
       if (response.success) {
         toast.success("Team member assigned successfully");
         setOpen(false);
-        // Reset selections
         setSelectedTask("");
         setSelectedMember("");
-        setSelectedProject("");
-        // Refresh the projects data
         await onUpdate();
       } else {
         toast.error(response.error || "Failed to assign team member");
       }
     } catch (error) {
-      console.error("Error assigning team member:", error);
       toast.error("Failed to assign team member");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDialogChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      setSelectedMember("");
-      setSelectedTask("");
-      if (selectedProjectId) {
-        setSelectedProject(selectedProjectId);
-      } else {
-        setSelectedProject("");
-      }
     }
   };
 
@@ -127,7 +132,7 @@ const TaskMembersModal = ({
               Assign team members to specific tasks
             </p>
           </div>
-          <Dialog open={open} onOpenChange={handleDialogChange}>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="red-gradient text-white hover:opacity-90">
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -139,10 +144,15 @@ const TaskMembersModal = ({
                 <DialogTitle>Assign Team Members</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                {/* Project Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Project</label>
                   <Select
-                    onValueChange={setSelectedProject}
+                    onValueChange={(value) => {
+                      setSelectedProject(value);
+                      setSelectedTask("");
+                      setSelectedMember("");
+                    }}
                     value={selectedProject}
                   >
                     <SelectTrigger>
@@ -158,10 +168,14 @@ const TaskMembersModal = ({
                   </Select>
                 </div>
 
+                {/* Task Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Task</label>
                   <Select
-                    onValueChange={setSelectedTask}
+                    onValueChange={(value) => {
+                      setSelectedTask(value);
+                      setSelectedMember("");
+                    }}
                     value={selectedTask}
                     disabled={!selectedProject}
                   >
@@ -169,7 +183,7 @@ const TaskMembersModal = ({
                       <SelectValue placeholder="Select task..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {projectTasks.map((task) => (
+                      {selectedProjectData?.tasks.map((task) => (
                         <SelectItem key={task.id} value={task.id}>
                           {task.title}
                         </SelectItem>
@@ -178,29 +192,35 @@ const TaskMembersModal = ({
                   </Select>
                 </div>
 
+                {/* Current Assignees */}
+                {currentAssignees.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Current Assignees
+                    </label>
+                    <div className="p-2 bg-muted rounded-md">
+                      {currentAssignees.map((assignee) => (
+                        <div key={assignee.id} className="text-sm py-1">
+                          {assignee.displayName} (Developer)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Developer Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Assign To</label>
                   <Select
                     onValueChange={setSelectedMember}
                     value={selectedMember}
-                    disabled={!selectedProject}
+                    disabled={!selectedTask}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select member..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {projectTeamMembers.length > 0 && (
-                        <SelectGroup>
-                          <SelectLabel>Current Team</SelectLabel>
-                          {projectTeamMembers.map((member) => (
-                            <SelectItem key={member.id} value={member.id}>
-                              {member.user.displayName} ({member.role})
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      )}
-
-                      {availableDevelopers?.length > 0 && (
+                      {availableDevelopers.length > 0 ? (
                         <SelectGroup>
                           <SelectLabel>Available Developers</SelectLabel>
                           {availableDevelopers.map((dev) => (
@@ -209,6 +229,10 @@ const TaskMembersModal = ({
                             </SelectItem>
                           ))}
                         </SelectGroup>
+                      ) : (
+                        <SelectItem value="none" disabled>
+                          No available developers for this task
+                        </SelectItem>
                       )}
                     </SelectContent>
                   </Select>
