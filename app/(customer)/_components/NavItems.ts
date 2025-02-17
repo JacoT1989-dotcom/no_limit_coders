@@ -20,14 +20,6 @@ import {
 
 export const navigation: NavItem[] = [
   {
-    label: "Projects",
-    icon: ShoppingCart,
-    links: [
-      { name: "Create", href: "/customer/products/create" },
-      { name: "Update", href: "/customer/products/update" },
-    ],
-  },
-  {
     label: "Tasks",
     icon: Users,
     href: "/customer/tasks",
