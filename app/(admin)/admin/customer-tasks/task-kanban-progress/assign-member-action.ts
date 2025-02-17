@@ -19,7 +19,7 @@ export async function assignTeamMemberToTask(
       return { success: false, error: "Unauthorized" };
     }
 
-    // First, get the task and its project
+    // Get task and its project
     const task = await prisma.task.findUnique({
       where: { id: taskId },
       include: {
@@ -32,23 +32,13 @@ export async function assignTeamMemberToTask(
       return { success: false, error: "Task not found" };
     }
 
-    // First create or get the project team member
-    let teamMember = await prisma.projectTeamMember.findFirst({
-      where: {
-        userId: userId,
-        projectId: task.project.id,
-      },
+    // Verify the developer exists
+    const developer = await prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (!teamMember) {
-      // Create new team member if doesn't exist
-      teamMember = await prisma.projectTeamMember.create({
-        data: {
-          userId: userId,
-          projectId: task.project.id,
-          role: "MEMBER",
-        },
-      });
+    if (!developer) {
+      return { success: false, error: "Developer not found" };
     }
 
     // Check if already assigned
@@ -63,7 +53,29 @@ export async function assignTeamMemberToTask(
       };
     }
 
-    // Now assign the team member to the task using their ProjectTeamMember ID
+    // First, find or create ProjectTeamMember
+    let teamMember = await prisma.projectTeamMember.findFirst({
+      where: {
+        userId: userId,
+        projectId: task.projectId,
+      },
+    });
+
+    if (!teamMember) {
+      teamMember = await prisma.projectTeamMember.create({
+        data: {
+          project: {
+            connect: { id: task.projectId },
+          },
+          user: {
+            connect: { id: userId },
+          },
+          role: "MEMBER",
+        },
+      });
+    }
+
+    // Now assign to task
     await prisma.task.update({
       where: { id: taskId },
       data: {
