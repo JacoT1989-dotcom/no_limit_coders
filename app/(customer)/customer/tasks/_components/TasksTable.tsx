@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -206,7 +207,7 @@ const TasksTable = ({
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-muted-foreground">
           {selectedTasks.length} of {filteredTasks.length} row(s) selected
@@ -225,11 +226,11 @@ const TasksTable = ({
           </span>
         </div>
       </div>
-      <div className="relative w-full overflow-auto border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px] sticky left-0 bg-background">
+      <div className="border rounded-lg overflow-x-auto">
+        <table className={cn("w-full caption-bottom text-sm border-collapse")}>
+          <thead>
+            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+              <th className="h-12 px-4 text-left align-middle font-medium w-[50px]">
                 <Checkbox
                   checked={
                     filteredTasks.length > 0 &&
@@ -237,34 +238,55 @@ const TasksTable = ({
                   }
                   onCheckedChange={toggleAllTasks}
                 />
-              </TableHead>
-              <TableHead className="w-[180px]">Title</TableHead>
-              <TableHead className="w-[200px]">Description</TableHead>
-              <TableHead className="w-[100px]">Priority</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[100px]">Due Date</TableHead>
-              <TableHead className="w-[100px]">Created</TableHead>
-              <TableHead className="w-[100px]">Updated</TableHead>
-              <TableHead className="w-[120px]">Assignees</TableHead>
-              <TableHead className="w-[100px]">Comments</TableHead>
-              <TableHead className="w-[100px]">Attachments</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[180px]">
+                Title
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[200px]">
+                Description
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Priority
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Status
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Due Date
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Created
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Updated
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[120px]">
+                Assignees
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Comments
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Attachments
+              </th>
+            </tr>
+          </thead>
+          <tbody>
             {filteredTasks.map((task) => (
-              <TableRow key={task.id} className="group hover:bg-muted/50">
-                <TableCell className="w-[50px] sticky left-0 bg-background">
+              <tr
+                key={task.id}
+                className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+              >
+                <td className="p-4 align-middle">
                   <Checkbox
                     checked={selectedTasks.includes(task.id)}
                     onCheckedChange={() => toggleTaskSelection(task.id)}
                   />
-                </TableCell>
-                <TableCell className="w-[180px]">
+                </td>
+                <td className="p-4 align-middle">
                   <div className="relative">
                     <div className="truncate font-medium cursor-pointer hover:text-primary peer">
-                      {task.title
-                        ? task.title.split(" ").slice(0, 2).join(" ") + "..."
-                        : "-"}
+                      {task.title ? `${task.title.slice(0, 4)}...` : "-"}
                     </div>
                     {task.title && task.title.length > 0 && (
                       <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[300px]">
@@ -272,13 +294,12 @@ const TasksTable = ({
                       </div>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="w-[200px]">
+                </td>
+                <td className="p-4 align-middle">
                   <div className="relative">
                     <div className="truncate cursor-pointer hover:text-primary peer">
                       {task.description
-                        ? task.description.split(" ").slice(0, 4).join(" ") +
-                          "..."
+                        ? `${task.description.slice(0, 4)}...`
                         : "-"}
                     </div>
                     {task.description && task.description.length > 0 && (
@@ -287,29 +308,29 @@ const TasksTable = ({
                       </div>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="w-[100px]">
+                </td>
+                <td className="p-4 align-middle">
                   <Badge className={getPriorityColor(task.priority)}>
                     {task.priority}
                   </Badge>
-                </TableCell>
-                <TableCell className="w-[100px]">
+                </td>
+                <td className="p-4 align-middle">
                   <Badge className={getStatusColor(task.status)}>
                     {task.status}
                   </Badge>
-                </TableCell>
-                <TableCell className="w-[100px] whitespace-nowrap">
+                </td>
+                <td className="p-4 align-middle whitespace-nowrap">
                   {task.dueDate
                     ? format(new Date(task.dueDate), "dd MMM")
                     : "-"}
-                </TableCell>
-                <TableCell className="w-[100px] whitespace-nowrap">
+                </td>
+                <td className="p-4 align-middle whitespace-nowrap">
                   {format(new Date(task.createdAt), "dd MMM")}
-                </TableCell>
-                <TableCell className="w-[100px] whitespace-nowrap">
+                </td>
+                <td className="p-4 align-middle whitespace-nowrap">
                   {format(new Date(task.updatedAt), "dd MMM")}
-                </TableCell>
-                <TableCell className="w-[120px]">
+                </td>
+                <td className="p-4 align-middle">
                   <div className="flex -space-x-2">
                     {task.assignees.map((assignee) => (
                       <Avatar
@@ -322,21 +343,21 @@ const TasksTable = ({
                       </Avatar>
                     ))}
                   </div>
-                </TableCell>
-                <TableCell className="w-[100px]">
+                </td>
+                <td className="p-4 align-middle">
                   <Badge variant="outline">
                     {task.comments.length} comments
                   </Badge>
-                </TableCell>
-                <TableCell className="w-[100px]">
+                </td>
+                <td className="p-4 align-middle">
                   <Badge variant="outline">
                     {task.attachments.length} files
                   </Badge>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
     </div>
   );
