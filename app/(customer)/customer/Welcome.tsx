@@ -42,9 +42,6 @@ const WelcomePage = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold">Quick Actions</h2>
-          <button className="flex items-center text-accent hover:text-accent/80 text-sm">
-            View All <ChevronRight className="h-4 w-4 ml-1" />
-          </button>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <CreateProjectDialog customerId={user.id}>
@@ -90,12 +87,12 @@ const WelcomePage = () => {
                 <div className="rounded-lg bg-accent/10 p-2">
                   <FileText className="h-6 w-6 text-accent" />
                 </div>
-                <span>Upload Reports</span>
+                <span>View My Messages</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Share and manage your documents
+                View your messages by clicking this block
               </p>
             </CardContent>
           </Card>
@@ -107,12 +104,12 @@ const WelcomePage = () => {
                 <div className="rounded-lg bg-accent/10 p-2">
                   <Layout className="h-6 w-6 text-accent" />
                 </div>
-                <span>Website Editor</span>
+                <span>Message Tech Team</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Customize your online presence
+                Instant Message allows you to have response in a flash
               </p>
             </CardContent>
           </Card>
