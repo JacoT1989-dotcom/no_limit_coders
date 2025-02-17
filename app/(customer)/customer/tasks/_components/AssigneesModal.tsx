@@ -8,17 +8,31 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ProjectTeamMember } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
+
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+interface ProjectTeamMember {
+  id: string;
+  user: User;
+  role: string;
+}
 
 interface AssigneesModalProps {
   assignees: ProjectTeamMember[];
 }
 
 const AssigneesModal = ({ assignees }: AssigneesModalProps) => {
-  const getInitials = (firstName: string, lastName: string) =>
-    `${firstName[0]}${lastName[0]}`;
+  // Compute initials once for reuse
+  const getInitials = (user: User) => {
+    return `${user.firstName?.charAt(0) || ""}${user.lastName?.charAt(0) || ""}`.toUpperCase();
+  };
 
   return (
     <Dialog>
@@ -30,39 +44,40 @@ const AssigneesModal = ({ assignees }: AssigneesModalProps) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assignees List</DialogTitle>
+          <DialogTitle>Task Assignees</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          {assignees.map((assignee) => (
-            <div
-              key={assignee.id}
-              className="flex items-center justify-between p-2 rounded-lg border"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-xs">
-                    {getInitials(
-                      assignee.user.firstName,
-                      assignee.user.lastName,
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <p className="font-medium">
-                    {assignee.user.firstName} {assignee.user.lastName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {assignee.user.email}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline">{assignee.role}</Badge>
-            </div>
-          ))}
-          {assignees.length === 0 && (
+          {assignees.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
-              No assignees
+              No assignees for this task
             </div>
+          ) : (
+            assignees.map((assignee) => {
+              const initials = getInitials(assignee.user);
+              return (
+                <div
+                  key={assignee.id}
+                  className="flex items-center justify-between p-2 rounded-lg border"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-xs">
+                        {assignee.user.firstName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <p className="font-medium">{assignee.user.firstName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {assignee.user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="capitalize ml-2 shrink-0">
+                    {assignee.role.toLowerCase()}
+                  </Badge>
+                </div>
+              );
+            })
           )}
         </div>
       </DialogContent>

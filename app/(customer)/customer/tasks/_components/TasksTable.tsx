@@ -4,19 +4,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format, isThisWeek, isThisMonth } from "date-fns";
-import { Priority, ProjectOption, ProjectTeamMember, Task } from "../types";
+import { Priority, ProjectOption, Task } from "../types";
 import { getCustomerProjects } from "../actions";
-import { Users } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import AssigneesModal from "./AssigneesModal"; // Import the AssigneesModal component
 
 // Helper function to check if a task is within the selected due date range
 const isWithinDueDate = (
@@ -58,88 +50,6 @@ const isWithinDueDate = (
     default:
       return true;
   }
-};
-
-// AssigneesDisplay component for showing assignees in the table
-const AssigneesDisplay = ({
-  assignees,
-}: {
-  assignees: ProjectTeamMember[];
-}) => {
-  const getInitials = (firstName: string, lastName: string) =>
-    `${firstName[0]}${lastName[0]}`;
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-[140px]">
-          <div className="flex items-center">
-            {assignees.length > 0 ? (
-              <div className="flex -space-x-2 mr-2">
-                {assignees.slice(0, 3).map((assignee) => (
-                  <Avatar
-                    key={assignee.id}
-                    className="h-6 w-6 border-2 border-background"
-                  >
-                    <AvatarFallback className="text-xs">
-                      {getInitials(
-                        assignee.user.firstName,
-                        assignee.user.lastName,
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-            ) : (
-              <Users className="h-4 w-4 mr-2" />
-            )}
-            <span>
-              {assignees.length}{" "}
-              {assignees.length === 1 ? "Assignee" : "Assignees"}
-            </span>
-          </div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Task Assignees</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {assignees.map((assignee) => (
-            <div
-              key={assignee.id}
-              className="flex items-center justify-between p-2 rounded-lg border"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10">
-                    {getInitials(
-                      assignee.user.firstName,
-                      assignee.user.lastName,
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <p className="font-medium">
-                    {assignee.user.firstName} {assignee.user.lastName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {assignee.user.email}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline">{assignee.role}</Badge>
-            </div>
-          ))}
-          {assignees.length === 0 && (
-            <div className="text-center py-4 text-muted-foreground">
-              No assignees for this task
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 };
 
 interface TasksTableProps {
@@ -413,7 +323,7 @@ const TasksTable = ({
                   {format(new Date(task.updatedAt), "dd MMM")}
                 </td>
                 <td className="p-4 align-middle">
-                  <AssigneesDisplay assignees={task.assignees} />
+                  <AssigneesModal assignees={task.assignees} />
                 </td>
                 <td className="p-4 align-middle">
                   <Badge variant="outline">
