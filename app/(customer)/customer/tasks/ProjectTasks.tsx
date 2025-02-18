@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/select";
 import TasksTable from "./_components/(table)/TasksTable";
 import TasksKanban from "./_components/TasksKanban";
-import TasksCalendar from "./_components/TaskCalendar";
 import { getCustomerProjects } from "./actions";
 import { ProjectOption } from "./types";
 import { CreateTaskDialog } from "./(create_task)/CreateTaskDialog";
+import TasksCalendar from "./_components/(calendar)/TaskCalendar";
 
 const ProjectTasks = () => {
   const [activeView, setActiveView] = useState("table");

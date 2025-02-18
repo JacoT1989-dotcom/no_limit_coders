@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ProjectOption, Task } from "../types";
+import { ProjectOption, Task } from "../../types";
 
 interface DayTasksDialogProps {
   isOpen: boolean;

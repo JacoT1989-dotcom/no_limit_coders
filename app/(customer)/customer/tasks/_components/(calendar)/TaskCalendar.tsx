@@ -12,7 +12,7 @@ import {
   subMonths,
   isToday,
 } from "date-fns";
-import { ProjectOption, Task } from "../types";
+import { ProjectOption, Task } from "../../types";
 import DayTasksDialog from "./DayTasksDialog";
 
 interface TasksCalendarProps {
