@@ -5,52 +5,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { format, isThisWeek, isThisMonth } from "date-fns";
-import { Priority, ProjectOption, Task } from "../types";
-import { getCustomerProjects } from "../actions";
-import AssigneesModal from "./AssigneesModal"; // Import the AssigneesModal component
-
-// Helper function to check if a task is within the selected due date range
-const isWithinDueDate = (
-  dueDate: Date | null,
-  createdAt: Date,
-  selectedRange: string | undefined,
-) => {
-  if (!selectedRange || selectedRange === "all") return true;
-
-  const today = new Date();
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-
-  const dueDateStart = dueDate
-    ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
-    : null;
-  const createdAtStart = new Date(
-    createdAt.getFullYear(),
-    createdAt.getMonth(),
-    createdAt.getDate(),
-  );
-
-  switch (selectedRange.toLowerCase()) {
-    case "today":
-      return (
-        dueDateStart?.getTime() === todayStart.getTime() ||
-        createdAtStart.getTime() === todayStart.getTime()
-      );
-    case "week":
-      return (
-        (dueDate && isThisWeek(dueDate, { weekStartsOn: 1 })) ||
-        isThisWeek(createdAt, { weekStartsOn: 1 })
-      );
-    case "month":
-      return (dueDate && isThisMonth(dueDate)) || isThisMonth(createdAt);
-    default:
-      return true;
-  }
-};
+import { format } from "date-fns";
+import { ProjectOption, Task } from "../../types";
+import { getCustomerProjects } from "../../actions";
+import AssigneesModal from "./AssigneesModal";
+import {
+  isWithinDueDate,
+  getStatusColor,
+  getPriorityColor,
+} from "./table-utils";
+import TaskDialog from "./task-dialog";
+import DeleteTasksModal from "./DeleteTasksModal";
 
 interface TasksTableProps {
   status?: string;
@@ -73,7 +38,6 @@ const TasksTable = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Initialize tasks when project changes
   useEffect(() => {
     if (!project || project === "all") {
       setTasks([]);
@@ -86,7 +50,6 @@ const TasksTable = ({
     }
   }, [project, projects]);
 
-  // Update available dates based on tasks
   useEffect(() => {
     const availableDates = ["all"];
     const hasTasksForToday = tasks.some((task) =>
@@ -106,7 +69,6 @@ const TasksTable = ({
     onAvailableDates(availableDates);
   }, [tasks, onAvailableDates]);
 
-  // Refresh tasks function
   const refreshTasks = async () => {
     if (!project || project === "all") return;
 
@@ -126,7 +88,14 @@ const TasksTable = ({
     }
   };
 
-  // Task selection handlers
+  const handleDeleteTasks = () => {
+    // Add your delete logic here
+    console.log("Deleting tasks:", selectedTasks);
+    setSelectedTasks([]);
+    // After successful deletion, you might want to refresh the tasks
+    refreshTasks();
+  };
+
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>
       prev.includes(taskId)
@@ -143,36 +112,6 @@ const TasksTable = ({
     );
   };
 
-  // Style helper functions
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "TODO":
-        return "bg-red-100 text-red-700";
-      case "IN_PROGRESS":
-        return "bg-yellow-100 text-yellow-700";
-      case "REVIEW":
-        return "bg-blue-100 text-blue-700";
-      case "COMPLETED":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
-  const getPriorityColor = (priority: Priority) => {
-    switch (priority) {
-      case "URGENT":
-        return "bg-red-100 text-red-700";
-      case "HIGH":
-        return "bg-orange-100 text-orange-700";
-      case "MEDIUM":
-        return "bg-yellow-100 text-yellow-700";
-      case "LOW":
-        return "bg-green-100 text-green-700";
-    }
-  };
-
-  // Filter tasks based on selected filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       const matchesStatus =
@@ -204,8 +143,16 @@ const TasksTable = ({
   return (
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-muted-foreground">
-          {selectedTasks.length} of {filteredTasks.length} row(s) selected
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            {selectedTasks.length} of {filteredTasks.length} row(s) selected
+          </span>
+          {selectedTasks.length > 0 && (
+            <DeleteTasksModal
+              selectedCount={selectedTasks.length}
+              onDelete={handleDeleteTasks}
+            />
+          )}
         </div>
         <div className="flex items-center gap-4">
           <Button
@@ -279,27 +226,14 @@ const TasksTable = ({
                     onCheckedChange={() => toggleTaskSelection(task.id)}
                   />
                 </td>
-                <td className="p-4 align-middle">
-                  <div className="relative">
-                    <div className="truncate font-medium cursor-pointer hover:text-primary peer">
-                      {task.title}
-                    </div>
-                    <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[300px]">
-                      {task.title}
-                    </div>
-                  </div>
+                <td className="p-4 align-middle max-w-[180px]">
+                  <TaskDialog title={task.title} description="" />
                 </td>
-                <td className="p-4 align-middle">
-                  <div className="relative">
-                    <div className="truncate cursor-pointer hover:text-primary peer">
-                      {task.description || "-"}
-                    </div>
-                    {task.description && (
-                      <div className="invisible peer-hover:visible absolute left-0 top-full z-50 bg-popover text-popover-foreground p-4 rounded-md shadow-md w-[400px]">
-                        {task.description}
-                      </div>
-                    )}
-                  </div>
+                <td className="p-4 align-middle max-w-[200px]">
+                  <TaskDialog
+                    title={task.description || "No description"}
+                    description=""
+                  />
                 </td>
                 <td className="p-4 align-middle">
                   <Badge className={getPriorityColor(task.priority)}>

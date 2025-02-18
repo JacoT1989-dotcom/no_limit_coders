@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import TasksTable from "./_components/TasksTable";
+import TasksTable from "./_components/(table)/TasksTable";
 import TasksKanban from "./_components/TasksKanban";
 import TasksCalendar from "./_components/TaskCalendar";
 import { getCustomerProjects } from "./actions";
