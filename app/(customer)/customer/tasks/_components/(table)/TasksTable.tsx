@@ -201,13 +201,13 @@ const TasksTable = ({
                 Status
               </th>
               <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
-                Due Date
-              </th>
-              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
                 Created
               </th>
               <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
                 Updated
+              </th>
+              <th className="h-12 px-4 text-left align-middle font-medium w-[100px]">
+                Due Date
               </th>
               <th className="h-12 px-4 text-left align-middle font-medium w-[120px]">
                 Assignees
@@ -252,13 +252,13 @@ const TasksTable = ({
                   </Badge>
                 </td>
                 <td className="p-4 align-middle whitespace-nowrap">
-                  {task.dueDate ? formatDate(task.dueDate) : "-"}
-                </td>
-                <td className="p-4 align-middle whitespace-nowrap">
                   {formatDate(task.createdAt)}
                 </td>
                 <td className="p-4 align-middle whitespace-nowrap">
                   {formatDate(task.updatedAt)}
+                </td>
+                <td className="p-4 align-middle whitespace-nowrap">
+                  {task.dueDate ? formatDate(task.dueDate) : "-"}
                 </td>
                 <td className="p-4 align-middle">
                   <AssigneesModal assignees={task.assignees} />
