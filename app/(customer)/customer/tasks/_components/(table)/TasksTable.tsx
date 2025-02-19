@@ -5,10 +5,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { ProjectOption, Task } from "../../types";
 import { getCustomerProjects } from "../../actions";
-import AssigneesModal from "./AssigneesModal";
+import { CommentsBadge } from "./CommentsModal";
 import {
   isWithinDueDate,
   getStatusColor,
@@ -16,6 +15,8 @@ import {
 } from "./table-utils";
 import TaskDialog from "./task-dialog";
 import DeleteTasksModal from "./DeleteTasksModal";
+import AssigneesModal from "./AssigneesModal";
+import { AttachmentsBadge } from "./AttachmentModal";
 
 interface TasksTableProps {
   status?: string;
@@ -89,10 +90,8 @@ const TasksTable = ({
   };
 
   const handleDeleteTasks = () => {
-    // Add your delete logic here
     console.log("Deleting tasks:", selectedTasks);
     setSelectedTasks([]);
-    // After successful deletion, you might want to refresh the tasks
     refreshTasks();
   };
 
@@ -110,6 +109,13 @@ const TasksTable = ({
         ? []
         : filteredTasks.map((task) => task.id),
     );
+  };
+
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const filteredTasks = useMemo(() => {
@@ -164,7 +170,7 @@ const TasksTable = ({
             {isRefreshing ? "Refreshing..." : "Refresh Tasks"}
           </Button>
           <span className="text-red-600 font-semibold">
-            {format(new Date(), "dd MMMM yyyy")}
+            {formatDate(new Date())}
           </span>
         </div>
       </div>
@@ -246,28 +252,25 @@ const TasksTable = ({
                   </Badge>
                 </td>
                 <td className="p-4 align-middle whitespace-nowrap">
-                  {task.dueDate
-                    ? format(new Date(task.dueDate), "dd MMM")
-                    : "-"}
+                  {task.dueDate ? formatDate(task.dueDate) : "-"}
                 </td>
                 <td className="p-4 align-middle whitespace-nowrap">
-                  {format(new Date(task.createdAt), "dd MMM")}
+                  {formatDate(task.createdAt)}
                 </td>
                 <td className="p-4 align-middle whitespace-nowrap">
-                  {format(new Date(task.updatedAt), "dd MMM")}
+                  {formatDate(task.updatedAt)}
                 </td>
                 <td className="p-4 align-middle">
                   <AssigneesModal assignees={task.assignees} />
                 </td>
                 <td className="p-4 align-middle">
-                  <Badge variant="outline">
-                    {task.comments.length} comments
-                  </Badge>
+                  <CommentsBadge
+                    comments={task.comments}
+                    taskTitle={task.title}
+                  />
                 </td>
                 <td className="p-4 align-middle">
-                  <Badge variant="outline">
-                    {task.attachments.length} files
-                  </Badge>
+                  <AttachmentsBadge attachments={task.attachments} />
                 </td>
               </tr>
             ))}

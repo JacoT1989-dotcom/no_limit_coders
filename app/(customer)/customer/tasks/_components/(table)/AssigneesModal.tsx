@@ -7,8 +7,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users } from "lucide-react";
 
 interface User {
@@ -16,6 +17,7 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
+  imageUrl?: string;
 }
 
 interface ProjectTeamMember {
@@ -29,57 +31,84 @@ interface AssigneesModalProps {
 }
 
 const AssigneesModal = ({ assignees }: AssigneesModalProps) => {
-  // Compute initials once for reuse
-  const getInitials = (user: User) => {
-    return `${user.firstName?.charAt(0) || ""}${user.lastName?.charAt(0) || ""}`.toUpperCase();
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
+  };
+
+  type Role = "owner" | "admin" | "member" | "viewer";
+
+  const roleColors: Record<Role, string> = {
+    owner: "bg-purple-100 text-purple-800",
+    admin: "bg-blue-100 text-blue-800",
+    member: "bg-green-100 text-green-800",
+    viewer: "bg-gray-100 text-gray-800",
+  };
+
+  const getRoleColor = (role: string): string => {
+    const normalizedRole = role.toLowerCase() as Role;
+    return roleColors[normalizedRole] || roleColors.member;
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-[140px]">
-          <Users className="h-4 w-4 mr-2" />
-          {assignees.length} {assignees.length === 1 ? "Assignee" : "Assignees"}
+        <Button variant="ghost" size="sm" className="px-2 h-8">
+          <Users className="h-3 w-3 mr-1" />
+          {assignees.length}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Task Assignees</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Assignees</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          {assignees.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No assignees for this task
-            </div>
-          ) : (
-            assignees.map((assignee) => {
-              const initials = getInitials(assignee.user);
-              return (
+        <ScrollArea className="max-h-[60vh] overflow-y-auto pr-4">
+          <div className="space-y-3">
+            {assignees.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No assignees for this task
+              </div>
+            ) : (
+              assignees.map((assignee) => (
                 <div
                   key={assignee.id}
-                  className="flex items-center justify-between p-2 rounded-lg border"
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card transition-colors hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary/10 text-xs">
-                        {assignee.user.firstName?.[0]}
-                      </AvatarFallback>
+                    <Avatar className="h-8 w-8">
+                      {assignee.user.imageUrl ? (
+                        <AvatarImage
+                          src={assignee.user.imageUrl}
+                          alt={`${assignee.user.firstName} ${assignee.user.lastName}`}
+                        />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10 text-xs">
+                          {getInitials(
+                            assignee.user.firstName,
+                            assignee.user.lastName,
+                          )}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
-                    <div className="flex flex-col">
-                      <p className="font-medium">{assignee.user.firstName}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex flex-col min-w-0">
+                      <p className="font-medium truncate">
+                        {assignee.user.firstName} {assignee.user.lastName}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
                         {assignee.user.email}
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="capitalize ml-2 shrink-0">
+                  <Badge
+                    variant="secondary"
+                    className={`capitalize ml-2 shrink-0 ${getRoleColor(assignee.role)}`}
+                  >
                     {assignee.role.toLowerCase()}
                   </Badge>
                 </div>
-              );
-            })
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
