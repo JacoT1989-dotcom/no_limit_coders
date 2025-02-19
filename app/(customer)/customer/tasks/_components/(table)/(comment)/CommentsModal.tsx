@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TaskComment } from "../../types";
+import { TaskComment } from "../../../types";
 import { toast } from "sonner";
 import { createTaskComment } from "./comment-actions";
 

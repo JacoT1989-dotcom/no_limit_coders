@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ProjectOption, Task } from "../../types";
 import { getCustomerProjects } from "../../actions";
-import { CommentsBadge } from "./CommentsModal";
+import { CommentsBadge } from "./(comment)/CommentsModal";
 import {
   isWithinDueDate,
   getStatusColor,
@@ -15,8 +15,8 @@ import {
 } from "./table-utils";
 import TaskDialog from "./task-dialog";
 import DeleteTasksModal from "./DeleteTasksModal";
-import AssigneesModal from "./AssigneesModal";
-import { AttachmentsBadge } from "./AttachmentModal";
+import AssigneesModal from "./(assignee)/AssigneesModal";
+import { AttachmentsBadge } from "./(attachment)/AttachmentModal";
 
 interface TasksTableProps {
   status?: string;
