@@ -266,7 +266,9 @@ const TasksTable = ({
                 <td className="p-4 align-middle">
                   <CommentsBadge
                     comments={task.comments}
+                    taskId={task.id}
                     taskTitle={task.title}
+                    onRefresh={refreshTasks}
                   />
                 </td>
                 <td className="p-4 align-middle">

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { MessageSquare } from "lucide-react";
 import {
@@ -8,11 +10,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TaskComment } from "../../types";
+import { toast } from "sonner";
+import { createTaskComment } from "./comment-actions";
 
 // Helper function to format date
 const formatDate = (date: Date): string => {
@@ -30,29 +33,41 @@ interface CommentsModalProps {
   isOpen: boolean;
   onClose: () => void;
   comments: TaskComment[];
+  taskId: string;
   taskTitle: string;
-  onAddComment?: (content: string) => Promise<void>;
+  onCommentAdded: () => void;
 }
 
 const CommentsModal = ({
   isOpen,
   onClose,
   comments,
+  taskId,
   taskTitle,
-  onAddComment,
+  onCommentAdded,
 }: CommentsModalProps) => {
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!newComment.trim() || !onAddComment) return;
+    if (!newComment.trim()) return;
 
     setIsSubmitting(true);
     try {
-      await onAddComment(newComment);
+      const response = await createTaskComment(taskId, newComment);
+
+      if (!response.success) {
+        toast.error(response.error || "Failed to add comment");
+        return;
+      }
+
       setNewComment("");
+      onCommentAdded();
+
+      toast.success("Comment added successfully");
     } catch (error) {
       console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,17 +142,16 @@ const CommentsModal = ({
 // Comment Badge Component
 export const CommentsBadge = ({
   comments,
+  taskId,
   taskTitle,
+  onRefresh,
 }: {
   comments: TaskComment[];
+  taskId: string;
   taskTitle: string;
+  onRefresh: () => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const handleAddComment = async (content: string) => {
-    // Implement your comment adding logic here
-    console.log("Adding comment:", content);
-  };
 
   return (
     <>
@@ -155,8 +169,9 @@ export const CommentsBadge = ({
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         comments={comments}
+        taskId={taskId}
         taskTitle={taskTitle}
-        onAddComment={handleAddComment}
+        onCommentAdded={onRefresh}
       />
     </>
   );
