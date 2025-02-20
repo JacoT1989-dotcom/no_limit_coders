@@ -99,7 +99,7 @@ const WelcomePage = () => {
                   <div className="rounded-lg bg-accent/10 p-2">
                     <FileText className="h-6 w-6 text-accent" />
                   </div>
-                  <span>View My Messages</span>
+                  <span>View My Inbox</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>

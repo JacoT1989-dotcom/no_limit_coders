@@ -1,4 +1,6 @@
 import React, { useState, ReactNode, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   MessageSquare,
   Users,
@@ -6,28 +8,45 @@ import {
   Paperclip,
   X,
   FileText,
+  Loader2,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  TechTeamMessageCategory,
+  TechTeamMessageType,
+  CATEGORY_OPTIONS,
+  MESSAGE_TYPE_OPTIONS,
+  PRIORITY_OPTIONS,
+} from "./types";
+import {
+  techTeamMessageSchema,
+  TechTeamMessageSchemaType,
+} from "./validations";
+import { createTechTeamMessage } from "./message-actions";
 
 interface MessageTechTeamModalProps {
   children: ReactNode;
-}
-
-interface CategoryOption {
-  value: string;
-  display: string;
+  onSuccess?: () => void;
 }
 
 interface FileAttachment {
@@ -37,282 +56,348 @@ interface FileAttachment {
 
 const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
   children,
+  onSuccess,
 }) => {
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [category, setCategory] = useState("");
-  const [messageType, setMessageType] = useState("");
-  const [priority, setPriority] = useState("");
+  const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categories: CategoryOption[] = [
-    { value: "bug", display: "Bug Report" },
-    { value: "feature", display: "Feature Request" },
-    { value: "support", display: "Technical Support" },
-    { value: "access", display: "Access Issue" },
-    { value: "performance", display: "Performance Issue" },
-    { value: "security", display: "Security Concern" },
-    { value: "other", display: "Other" },
-  ];
-
-  const messageTypes = [
-    { value: "design", display: "Design Feedback" },
-    { value: "support", display: "Support Request" },
-    { value: "meeting", display: "Meeting Related" },
-    { value: "development", display: "Development Issue" },
-    { value: "documentation", display: "Documentation" },
-    { value: "question", display: "General Question" },
-  ];
-
-  const priorities = [
-    { value: "low", display: "Low - Not time sensitive" },
-    { value: "medium", display: "Medium - Needs attention soon" },
-    { value: "high", display: "High - Urgent issue" },
-    { value: "critical", display: "Critical - System down/blocking work" },
-  ];
+  const form = useForm<TechTeamMessageSchemaType>({
+    resolver: zodResolver(techTeamMessageSchema),
+    defaultValues: {
+      subject: "",
+      message: "",
+      category: undefined,
+      messageType: undefined,
+      priority: undefined,
+      attachments: [],
+    },
+  });
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newAttachments = Array.from(files).map((file) => ({
-        file,
-        id: Math.random().toString(36).substr(2, 9),
-      }));
-      setAttachments((prev) => [...prev, ...newAttachments]);
-    }
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (!files) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+    ];
+
+    const newFiles = Array.from(files).filter((file) => {
+      if (file.size > maxSize) {
+        toast.error(`${file.name} exceeds 5MB limit`);
+        return false;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`${file.name} has an invalid file type`);
+        return false;
+      }
+      return true;
+    });
+
+    const newAttachments = newFiles.map((file) => ({
+      file,
+      id: crypto.randomUUID(),
+    }));
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    form.reset();
+    setAttachments([]);
+    setOpen(false);
+  };
+
+  const onSubmit = async (data: TechTeamMessageSchemaType) => {
     setIsSubmitting(true);
 
     try {
-      // Here you would implement your message submission logic
-      console.log({
-        subject,
-        message,
-        category,
-        messageType,
-        priority,
-        attachments: attachments.map((a) => a.file.name),
+      // Create and populate FormData
+      const formData = new FormData();
+      formData.append("subject", data.subject);
+      formData.append("message", data.message);
+      formData.append("category", data.category);
+      formData.append("messageType", data.messageType);
+      formData.append("priority", data.priority);
+
+      // Append each attachment
+      attachments.forEach((attachment) => {
+        formData.append("attachments", attachment.file);
       });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await createTechTeamMessage(formData);
 
-      // Reset form
-      setSubject("");
-      setMessage("");
-      setCategory("");
-      setMessageType("");
-      setPriority("");
-      setAttachments([]);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      toast.success("Message sent successfully", {
+        description: "Our tech team will review your message and respond soon.",
+      });
+
+      resetForm();
+      onSuccess?.();
     } catch (error) {
       console.error("Error sending message:", error);
+      toast.error("Failed to send message", {
+        description:
+          error instanceof Error ? error.message : "Please try again",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Message Tech Team</DialogTitle>
-          <DialogDescription>
+        <div className="text-left space-y-2 pb-4">
+          <h2 className="text-xl font-semibold">Message Tech Team</h2>
+          <p className="text-sm text-muted-foreground">
             Send a message to our technical team for support or assistance.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <div className="relative">
-                <Input
-                  id="subject"
-                  placeholder="Brief description of your issue"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full pl-10"
-                  required
-                  aria-label="Message subject"
+          </p>
+        </div>
+        <Form {...form}>
+          <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subject</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          placeholder="Brief description of your issue"
+                          className="w-full pl-10"
+                          disabled={isSubmitting}
+                          {...field}
+                        />
+                      </FormControl>
+                      <MessageSquare className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="messageType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message Type</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Select
+                            disabled={isSubmitting}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="w-full pl-10">
+                              <FileText className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {MESSAGE_TYPE_OPTIONS.map((type) => (
+                                <SelectItem key={type.value} value={type.value}>
+                                  {type.display}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <MessageSquare className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="messageType">Message Type</Label>
-                <div className="relative">
-                  <select
-                    id="messageType"
-                    value={messageType}
-                    onChange={(e) => setMessageType(e.target.value)}
-                    className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    required
-                    aria-label="Message type"
-                    title="Select message type"
-                  >
-                    <option value="">Select type</option>
-                    {messageTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.display}
-                      </option>
-                    ))}
-                  </select>
-                  <FileText className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Select
+                            disabled={isSubmitting}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="w-full pl-10">
+                              <Code className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CATEGORY_OPTIONS.map((cat) => (
+                                <SelectItem key={cat.value} value={cat.value}>
+                                  {cat.display}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <div className="relative">
-                  <select
-                    id="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                    required
-                    aria-label="Message category"
-                    title="Select message category"
-                  >
-                    <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.display}
-                      </option>
-                    ))}
-                  </select>
-                  <Code className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-                </div>
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Select
+                          disabled={isSubmitting}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <SelectTrigger className="w-full pl-10">
+                            <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRIORITY_OPTIONS.map((pri) => (
+                              <SelectItem key={pri.value} value={pri.value}>
+                                {pri.display}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <div className="relative">
-                <select
-                  id="priority"
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
-                  aria-label="Message priority"
-                  title="Select message priority"
-                >
-                  <option value="">Select priority</option>
-                  {priorities.map((pri) => (
-                    <option key={pri.value} value={pri.value}>
-                      {pri.display}
-                    </option>
-                  ))}
-                </select>
-                <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Message</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe your issue or request in detail..."
+                        className="min-h-[150px] resize-none"
+                        disabled={isSubmitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                placeholder="Describe your issue or request in detail..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="min-h-[150px] resize-none"
-                required
-                aria-label="Message content"
+              <FormField
+                control={form.control}
+                name="attachments"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Attachments</FormLabel>
+                    <div className="space-y-2">
+                      {attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {attachments.map((attachment) => (
+                            <Badge
+                              key={attachment.id}
+                              variant="secondary"
+                              className="flex items-center gap-1 px-2 py-1"
+                            >
+                              <Paperclip className="h-3 w-3" />
+                              <span className="max-w-[150px] truncate">
+                                {attachment.file.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeAttachment(attachment.id)}
+                                className="ml-1 hover:text-destructive"
+                                disabled={isSubmitting}
+                                aria-label={`Remove ${attachment.file.name}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input
+                            ref={fileInputRef}
+                            type="file"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            multiple
+                            accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          className="w-full"
+                          variant="secondary"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isSubmitting}
+                        >
+                          <Paperclip className="mr-2 h-4 w-4" />
+                          Attach Files
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Attachments</Label>
-              <div className="space-y-2">
-                {attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {attachments.map((attachment) => (
-                      <Badge
-                        key={attachment.id}
-                        variant="secondary"
-                        className="flex items-center gap-1 px-2 py-1"
-                      >
-                        <Paperclip className="h-3 w-3" />
-                        <span className="max-w-[150px] truncate">
-                          {attachment.file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeAttachment(attachment.id)}
-                          className="ml-1 hover:text-destructive"
-                          aria-label={`Remove ${attachment.file.name}`}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    multiple
-                    id="file-upload"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Paperclip className="mr-2 h-4 w-4" />
-                    Attach Files
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <DialogTrigger asChild>
+            <div className="flex justify-end space-x-2">
               <Button
-                variant="outline"
                 type="button"
-                aria-label="Cancel message"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isSubmitting}
               >
                 Cancel
               </Button>
-            </DialogTrigger>
-            <Button
-              type="submit"
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-              disabled={
-                isSubmitting ||
-                !subject ||
-                !message ||
-                !category ||
-                !priority ||
-                !messageType
-              }
-              aria-label="Send message"
-            >
-              {isSubmitting ? "Sending..." : "Send Message"}
-            </Button>
-          </div>
-        </form>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
