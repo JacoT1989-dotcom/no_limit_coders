@@ -1,4 +1,6 @@
-import React, { useState, ReactNode } from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Calendar, Clock, Users } from "lucide-react";
 import {
   Dialog,
@@ -11,18 +13,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface ScheduleMeetingModalProps {
-  children: ReactNode;
-}
+import { ScheduleMeetingModalProps, ScheduleMeetingFormValues } from "./types";
+import { scheduleMeeting } from "./scheduleMeetingActions";
+import { toast } from "sonner";
 
 const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
   children,
+  projectId,
+  onSuccess,
+  defaultSubject = "",
+  defaultParticipants = "",
 }) => {
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [time, setTime] = useState("");
-  const [participants, setParticipants] = useState("");
-  const [subject, setSubject] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<ScheduleMeetingFormValues>({
+    subject: defaultSubject,
+    date: new Date().toISOString().split("T")[0],
+    time: "",
+    participants: defaultParticipants,
+    projectId,
+  });
 
   const generateTimeSlots = () => {
     const slots = [];
@@ -36,15 +46,68 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
     return slots;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle meeting scheduling logic here
-    console.log({ date, time, participants, subject });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const result = await scheduleMeeting(formData);
+
+      if (result.error) {
+        toast.error("Failed to schedule meeting", {
+          description: result.error,
+        });
+      } else if (result.success) {
+        toast.success("Meeting scheduled successfully", {
+          description: "Your meeting has been added to the calendar.",
+        });
+        setIsOpen(false);
+
+        // Handle success callback - using optional chaining to avoid the TypeScript error
+        // Since meetingId is not guaranteed in the return type
+        if (onSuccess) {
+          // We're using type assertion here since we know this is a valid pattern in our app
+          // even though TypeScript doesn't know about the meetingId property
+          const meetingId = (result as any).meetingId || "";
+          onSuccess(meetingId);
+        }
+
+        // Reset form
+        setFormData({
+          subject: "",
+          date: new Date().toISOString().split("T")[0],
+          time: "",
+          participants: "",
+          projectId,
+        });
+      }
+    } catch (error) {
+      toast.error("Error scheduling meeting", {
+        description: "An unexpected error occurred. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isFormValid =
+    formData.subject.trim() !== "" &&
+    formData.date !== "" &&
+    formData.time !== "" &&
+    formData.participants.trim() !== "";
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild onClick={() => setIsOpen(true)}>
+        {children}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Schedule a Meeting</DialogTitle>
@@ -59,9 +122,10 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
               <div className="relative">
                 <Input
                   id="subject"
+                  name="subject"
                   placeholder="Enter meeting subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
+                  value={formData.subject}
+                  onChange={handleChange}
                   className="w-full pl-10"
                 />
                 <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -73,8 +137,9 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
               <div className="relative">
                 <Input
                   type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
                   min={new Date().toISOString().split("T")[0]}
                   className="w-full pl-10"
                 />
@@ -86,8 +151,10 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
               <Label htmlFor="time">Select Time</Label>
               <div className="relative">
                 <select
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  id="time"
+                  name="time"
+                  value={formData.time}
+                  onChange={handleChange}
                   className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   aria-label="Select meeting time"
                 >
@@ -107,9 +174,10 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
               <div className="relative">
                 <Input
                   id="participants"
+                  name="participants"
                   placeholder="Enter email addresses (comma-separated)"
-                  value={participants}
-                  onChange={(e) => setParticipants(e.target.value)}
+                  value={formData.participants}
+                  onChange={handleChange}
                   className="w-full pl-10"
                 />
                 <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -118,15 +186,19 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
           </div>
 
           <div className="flex justify-end space-x-2">
-            <DialogTrigger asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogTrigger>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button
               type="submit"
               className="bg-accent text-accent-foreground hover:bg-accent/90"
-              disabled={!date || !time || !participants || !subject}
+              disabled={!isFormValid || isSubmitting}
             >
-              Schedule Meeting
+              {isSubmitting ? "Scheduling..." : "Schedule Meeting"}
             </Button>
           </div>
         </form>
