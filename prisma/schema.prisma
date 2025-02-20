@@ -52,7 +52,8 @@ model Session {
   @@map("sessions")
 }
 
-///////////////////////////////// Public Models ////////////////////////////////
+///////////////////////// Public Models ////////////////////////
+
 model Booking {
   id        String           @id @default(uuid())
   fullName  String
@@ -84,7 +85,7 @@ model Message {
   @@map("messages")
 }
 
-//////////////////////////////// USER MODELS //////////////////////////////////
+////////////////////////// USER MODELS /////////////////////////////
 
 model Project {
   id               String        @id @default(uuid())
