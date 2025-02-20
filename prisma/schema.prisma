@@ -37,6 +37,8 @@ model User {
   ProjectTeamMember ProjectTeamMember[]
   TaskComment       TaskComment[]
   TaskAttachment    TaskAttachment[]
+  ScheduleMeeting   ScheduleMeeting[]
+  TechTeamMessage   TechTeamMessage[]
 
   @@map("users")
 }
@@ -83,16 +85,6 @@ model Message {
 }
 
 //////////////////////////////// USER MODELS //////////////////////////////////
-model UserMessage {
-  id        String   @id @default(uuid())
-  message   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-
-  @@map("user_messages")
-}
 
 model Project {
   id               String        @id @default(uuid())
@@ -204,6 +196,86 @@ model TaskAttachment {
   @@map("task_attachments")
 }
 
+model ScheduleMeeting {
+  id           String   @id @default(uuid())
+  subject      String
+  date         DateTime
+  time         String
+  participants String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@map("schedule_meetings")
+}
+
+model TechTeamMessage {
+  id          String   @id @default(uuid())
+  subject     String
+  message     String
+  category    String
+  messageType String
+  priority    Priority
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Attachments
+  attachments TechTeamMessageAttachment[]
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@map("tech_team_messages")
+}
+
+model TechTeamMessageAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message   TechTeamMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+
+  @@map("tech_team_message_attachments")
+}
+
+model UserMessage {
+  id            String          @id @default(uuid())
+  sender        String
+  subject       String
+  preview       String
+  category      MessageCategory
+  isUnread      Boolean         @default(true)
+  hasAttachment Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+
+  // Relationships
+  user        User                @relation(fields: [userId], references: [id])
+  userId      String
+  attachments MessageAttachment[]
+
+  @@map("user_messages")
+}
+
+model MessageAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message   UserMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+
+  @@map("message_attachments")
+}
+
 ///////////////////////////// ENUS ///////////////////////////////
 enum UserRole {
   USER
@@ -265,4 +337,10 @@ enum ColumnState {
   BACKLOG // this is the review of the task status
   IN_PROGRESS
   DONE // this is the completed of the task status
+}
+
+enum MessageCategory {
+  DESIGN
+  SUPPORT
+  MEETING
 }
