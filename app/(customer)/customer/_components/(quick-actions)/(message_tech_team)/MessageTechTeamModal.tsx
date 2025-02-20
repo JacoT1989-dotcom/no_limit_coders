@@ -165,7 +165,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <div className="text-left space-y-2 pb-4">
           <h2 className="text-xl font-semibold">Message Tech Team</h2>
           <p className="text-sm text-muted-foreground">
@@ -385,7 +385,11 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

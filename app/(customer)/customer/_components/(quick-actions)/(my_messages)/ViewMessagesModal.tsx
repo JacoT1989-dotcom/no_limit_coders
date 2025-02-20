@@ -90,7 +90,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] h-[600px] p-0">
+      <DialogContent className="sm:max-w-[800px] h-[700px] pb-10 bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <div className="h-full flex flex-col">
           {/* Header */}
           <DialogHeader className="p-6 pb-2">

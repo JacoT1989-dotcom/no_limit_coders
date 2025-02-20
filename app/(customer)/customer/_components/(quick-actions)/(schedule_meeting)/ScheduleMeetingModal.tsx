@@ -108,7 +108,7 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
       <DialogTrigger asChild onClick={() => setIsOpen(true)}>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader>
           <DialogTitle>Schedule a Meeting</DialogTitle>
           <DialogDescription>
@@ -196,7 +196,7 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
             <Button
               type="submit"
               className="bg-accent text-accent-foreground hover:bg-accent/90"
-              disabled={!isFormValid || isSubmitting}
+              disabled={isSubmitting}
             >
               {isSubmitting ? "Scheduling..." : "Schedule Meeting"}
             </Button>
