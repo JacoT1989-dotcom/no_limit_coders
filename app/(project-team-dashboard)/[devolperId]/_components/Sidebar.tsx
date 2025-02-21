@@ -9,12 +9,15 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { navigation } from "./NavItems";
+import { navigation, useCorrectNavigation } from "./NavItems";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
+
+  // Use the hook to get navigation with correct links after client-side hydration
+  const navItems = useCorrectNavigation();
 
   const toggleDropdown = (label: string) => {
     setOpenDropdown(openDropdown === label ? null : label);
@@ -65,7 +68,7 @@ const Sidebar = () => {
         {/* Sidebar Content */}
         <div className="select-scroll flex h-full flex-col overflow-y-auto py-8">
           <div className="space-y-2 px-3">
-            {navigation.map((item) => (
+            {navItems.map((item) => (
               <div key={item.label}>
                 {item.href ? (
                   // Direct link item (like Tasks)

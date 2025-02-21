@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,54 +10,46 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface Task {
-  id: number;
-  name: string;
-  project: string;
-  assignee: string;
-  dueDate: string;
-  status: string;
-}
+import { format } from "date-fns";
+import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
+import { getDeveloperProjects } from "./actions";
+import TasksTableSkeleton from "./TasksTableSkeleton";
 
 const TasksTable = () => {
-  const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
-  const tasks: Task[] = [
-    {
-      id: 1,
-      name: "Design UI Components",
-      project: "Mobile App",
-      assignee: "John",
-      dueDate: "Mar 15, 2025",
-      status: "In Progress",
-    },
-    {
-      id: 2,
-      name: "Implement Authentication",
-      project: "Mobile App",
-      assignee: "Sarah",
-      dueDate: "Mar 20, 2025",
-      status: "Todo",
-    },
-    {
-      id: 3,
-      name: "Create Documentation",
-      project: "Mobile App",
-      assignee: "Michael",
-      dueDate: "Mar 25, 2025",
-      status: "Backlog",
-    },
-    {
-      id: 4,
-      name: "Performance Testing",
-      project: "Mobile App",
-      assignee: "Antonio",
-      dueDate: "Mar 30, 2025",
-      status: "Done",
-    },
-  ];
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const toggleTaskSelection = (taskId: number) => {
+  // Flatten all tasks from all projects
+  const tasks = projects.flatMap((project) =>
+    project.tasks.map((task) => ({
+      ...task,
+      projectName: project.name,
+      assignees: task.assignees.map((assignee) => assignee.user),
+    })),
+  );
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const result = await getDeveloperProjects();
+        if (result.error) {
+          setError(result.error);
+        } else if (result.projects) {
+          setProjects(result.projects);
+        }
+      } catch (err) {
+        setError("Failed to fetch projects");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>
       prev.includes(taskId)
         ? prev.filter((id) => id !== taskId)
@@ -73,18 +65,26 @@ const TasksTable = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "backlog":
+      case "review":
         return "bg-purple-100 text-purple-700";
       case "todo":
         return "bg-red-100 text-red-700";
-      case "in progress":
+      case "in_progress":
         return "bg-yellow-100 text-yellow-700";
-      case "done":
+      case "completed":
         return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  if (loading) {
+    return <TasksTableSkeleton />;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="w-full p-6">
@@ -113,29 +113,44 @@ const TasksTable = () => {
                   onCheckedChange={() => toggleTaskSelection(task.id)}
                 />
               </TableCell>
-              <TableCell className="font-medium">{task.name}</TableCell>
+              <TableCell className="font-medium">{task.title}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-blue-700">
-                    {task.project[0]}
+                    {task.projectName[0]}
                   </span>
-                  {task.project}
+                  {task.projectName}
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage
-                      src={`/avatars/${task.assignee.toLowerCase()}.png`}
-                      alt={task.assignee}
-                    />
-                    <AvatarFallback>{task.assignee[0]}</AvatarFallback>
-                  </Avatar>
-                  {task.assignee}
+                  {task.assignees.length > 0 ? (
+                    <>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage
+                          src={`/avatars/${task.assignees[0].displayName.toLowerCase()}.png`}
+                          alt={task.assignees[0].displayName}
+                        />
+                        <AvatarFallback>
+                          {task.assignees[0].displayName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      {task.assignees[0].displayName}
+                      {task.assignees.length > 1 && (
+                        <span className="text-xs text-muted-foreground">
+                          +{task.assignees.length - 1}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">Unassigned</span>
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {task.dueDate}
+                {task.dueDate
+                  ? format(new Date(task.dueDate), "MMM dd, yyyy")
+                  : "No due date"}
               </TableCell>
               <TableCell>
                 <span
@@ -143,7 +158,7 @@ const TasksTable = () => {
                     task.status,
                   )}`}
                 >
-                  {task.status}
+                  {task.status.replace("_", " ")}
                 </span>
               </TableCell>
             </TableRow>

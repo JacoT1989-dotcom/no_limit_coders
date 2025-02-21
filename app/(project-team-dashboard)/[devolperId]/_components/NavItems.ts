@@ -1,5 +1,7 @@
-// app/[developerId]/developer/_components/NavItems.ts
+"use client";
+
 import { Settings, Users, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export type NavItem = {
   label: string;
@@ -11,9 +13,14 @@ export type NavItem = {
   }[];
 };
 
-// Get developerId from URL
-const path = window.location.pathname;
-const developerId = path.split("/")[1];
+// This is a placeholder that will be replaced on the client
+let developerId = "placeholder";
+
+// Only run this in client environment
+if (typeof window !== "undefined") {
+  const path = window.location.pathname;
+  developerId = path.split("/")[1];
+}
 
 export const navigation: NavItem[] = [
   {
@@ -71,3 +78,30 @@ export const navigation: NavItem[] = [
     ],
   },
 ];
+
+// Export a hook to get navigation with correct links after hydration
+export function useCorrectNavigation() {
+  const [nav, setNav] = useState(navigation);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      const id = path.split("/")[1];
+
+      // Only update if we have a real ID that's different from placeholder
+      if (id && id !== "placeholder") {
+        const updatedNav = navigation.map((item) => ({
+          ...item,
+          links: item.links?.map((link) => ({
+            ...link,
+            href: link.href.replace("placeholder", id),
+          })),
+        }));
+
+        setNav(updatedNav);
+      }
+    }
+  }, []);
+
+  return nav;
+}
