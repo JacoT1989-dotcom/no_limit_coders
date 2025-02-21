@@ -28,7 +28,7 @@ const DeleteTasksModal = ({
       <AlertDialogTrigger asChild>
         <Trash2 className="h-4 w-4 text-red-500 cursor-pointer hover:text-red-600" />
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white dark:bg-black">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Selected Tasks</AlertDialogTitle>
           <AlertDialogDescription>

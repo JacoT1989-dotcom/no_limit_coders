@@ -75,7 +75,7 @@ const CommentsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col">
+      <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader>
           <DialogTitle>Comments - {taskTitle}</DialogTitle>
         </DialogHeader>

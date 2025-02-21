@@ -153,7 +153,7 @@ const AttachmentsModal = ({ attachments }: AttachmentsModalProps) => {
           {attachments.length}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-semibold">
             {selectedImage ? (

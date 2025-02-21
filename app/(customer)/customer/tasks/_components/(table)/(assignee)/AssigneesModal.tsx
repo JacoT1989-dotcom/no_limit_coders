@@ -57,7 +57,7 @@ const AssigneesModal = ({ assignees }: AssigneesModalProps) => {
           {assignees.length}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Assignees</DialogTitle>
         </DialogHeader>
