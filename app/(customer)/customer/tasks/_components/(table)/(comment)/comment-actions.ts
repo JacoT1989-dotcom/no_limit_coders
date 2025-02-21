@@ -5,9 +5,28 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { TaskComment } from "@prisma/client";
 
+// Add author information to the response type
+type CommentWithAuthor = TaskComment & {
+  author: {
+    id: string;
+    displayName: string;
+  };
+};
+
 export type CreateCommentResponse = {
   success: boolean;
-  data?: TaskComment;
+  data?: CommentWithAuthor;
+  error?: string;
+};
+
+export type UpdateCommentResponse = {
+  success: boolean;
+  data?: CommentWithAuthor;
+  error?: string;
+};
+
+export type DeleteCommentResponse = {
+  success: boolean;
   error?: string;
 };
 
@@ -16,18 +35,15 @@ export async function createTaskComment(
   content: string,
 ): Promise<CreateCommentResponse> {
   try {
-    // Validate user authentication and authorization
     const { user } = await validateRequest();
     if (!user) throw new Error("Unauthorized access");
     if (!["CUSTOMER", "PROCUSTOMER", "ADMIN"].includes(user.role)) {
       return redirect("/login");
     }
 
-    // Validate inputs
     if (!taskId) throw new Error("Task ID is required");
     if (!content.trim()) throw new Error("Comment content is required");
 
-    // Verify task exists and user has access
     const task = await prisma.task.findFirst({
       where: {
         id: taskId,
@@ -41,7 +57,6 @@ export async function createTaskComment(
       throw new Error("Task not found or access denied");
     }
 
-    // Create comment
     const comment = await prisma.taskComment.create({
       data: {
         content: content.trim(),
@@ -60,7 +75,7 @@ export async function createTaskComment(
 
     return {
       success: true,
-      data: comment,
+      data: comment as CommentWithAuthor,
     };
   } catch (error) {
     console.error("Error creating comment:", error);
@@ -72,80 +87,19 @@ export async function createTaskComment(
   }
 }
 
-export type DeleteCommentResponse = {
-  success: boolean;
-  error?: string;
-};
-
-export async function deleteTaskComment(
-  commentId: string,
-): Promise<DeleteCommentResponse> {
-  try {
-    // Validate user authentication and authorization
-    const { user } = await validateRequest();
-    if (!user) throw new Error("Unauthorized access");
-    if (!["CUSTOMER", "PROCUSTOMER", "ADMIN"].includes(user.role)) {
-      return redirect("/login");
-    }
-
-    // Verify comment exists and user has access
-    const comment = await prisma.taskComment.findFirst({
-      where: {
-        id: commentId,
-        task: {
-          project: {
-            customerId: user.id,
-          },
-        },
-      },
-    });
-
-    if (!comment) {
-      throw new Error("Comment not found or access denied");
-    }
-
-    // Delete comment
-    await prisma.taskComment.delete({
-      where: {
-        id: commentId,
-      },
-    });
-
-    return {
-      success: true,
-    };
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to delete comment",
-    };
-  }
-}
-
-export type UpdateCommentResponse = {
-  success: boolean;
-  data?: TaskComment;
-  error?: string;
-};
-
 export async function updateTaskComment(
   commentId: string,
   content: string,
 ): Promise<UpdateCommentResponse> {
   try {
-    // Validate user authentication and authorization
     const { user } = await validateRequest();
     if (!user) throw new Error("Unauthorized access");
     if (!["CUSTOMER", "PROCUSTOMER", "ADMIN"].includes(user.role)) {
       return redirect("/login");
     }
 
-    // Validate input
     if (!content.trim()) throw new Error("Comment content is required");
 
-    // Verify comment exists and user has access
     const comment = await prisma.taskComment.findFirst({
       where: {
         id: commentId,
@@ -161,7 +115,6 @@ export async function updateTaskComment(
       throw new Error("Comment not found or access denied");
     }
 
-    // Update comment
     const updatedComment = await prisma.taskComment.update({
       where: {
         id: commentId,
@@ -182,7 +135,7 @@ export async function updateTaskComment(
 
     return {
       success: true,
-      data: updatedComment,
+      data: updatedComment as CommentWithAuthor,
     };
   } catch (error) {
     console.error("Error updating comment:", error);
@@ -190,6 +143,50 @@ export async function updateTaskComment(
       success: false,
       error:
         error instanceof Error ? error.message : "Failed to update comment",
+    };
+  }
+}
+
+export async function deleteTaskComment(
+  commentId: string,
+): Promise<DeleteCommentResponse> {
+  try {
+    const { user } = await validateRequest();
+    if (!user) throw new Error("Unauthorized access");
+    if (!["CUSTOMER", "PROCUSTOMER", "ADMIN"].includes(user.role)) {
+      return redirect("/login");
+    }
+
+    const comment = await prisma.taskComment.findFirst({
+      where: {
+        id: commentId,
+        task: {
+          project: {
+            customerId: user.id,
+          },
+        },
+      },
+    });
+
+    if (!comment) {
+      throw new Error("Comment not found or access denied");
+    }
+
+    await prisma.taskComment.delete({
+      where: {
+        id: commentId,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to delete comment",
     };
   }
 }

@@ -48,6 +48,10 @@ export type TaskComment = {
   updatedAt: Date;
   taskId: string;
   authorId: string;
+  author: {
+    id: string;
+    displayName: string;
+  };
 };
 
 export type Task = {

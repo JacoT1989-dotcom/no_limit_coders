@@ -77,6 +77,12 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                 updatedAt: true,
                 taskId: true,
                 authorId: true,
+                author: {
+                  select: {
+                    id: true,
+                    displayName: true,
+                  },
+                },
               },
             },
           },

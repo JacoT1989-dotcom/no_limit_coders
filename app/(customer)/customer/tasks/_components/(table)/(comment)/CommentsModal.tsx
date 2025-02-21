@@ -13,26 +13,26 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TaskComment } from "../../../types";
 import { toast } from "sonner";
 import { createTaskComment } from "./comment-actions";
 
-// Helper function to format date
-const formatDate = (date: Date): string => {
-  return new Date(date).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  });
+type Comment = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  taskId: string;
+  authorId: string;
+  author: {
+    id: string;
+    displayName: string;
+  };
 };
 
 interface CommentsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  comments: TaskComment[];
+  comments: Comment[];
   taskId: string;
   taskTitle: string;
   onCommentAdded: () => void;
@@ -49,6 +49,28 @@ const CommentsModal = ({
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const formatDate = (date: Date): string => {
+    return new Date(date).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+  };
+
+  const getInitials = (displayName: string = "") => {
+    if (!displayName) return "AU";
+
+    return displayName
+      .split(" ")
+      .map((name) => name[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
 
@@ -63,13 +85,19 @@ const CommentsModal = ({
 
       setNewComment("");
       onCommentAdded();
-
       toast.success("Comment added successfully");
     } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("Failed to add comment");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
@@ -93,18 +121,27 @@ const CommentsModal = ({
                   className="flex space-x-4 p-4 rounded-lg bg-muted/50"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {comment.authorId.slice(0, 2).toUpperCase()}
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getInitials(comment.author?.displayName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">{comment.authorId}</p>
-                      <time className="text-sm text-muted-foreground">
-                        {formatDate(comment.createdAt)}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium leading-none">
+                          {comment.author?.displayName || "Anonymous User"}
+                        </p>
+                        {comment.updatedAt > comment.createdAt && (
+                          <span className="text-xs text-muted-foreground">
+                            (edited)
+                          </span>
+                        )}
+                      </div>
+                      <time className="text-xs text-muted-foreground">
+                        {formatDate(new Date(comment.createdAt))}
                       </time>
                     </div>
-                    <p className="text-sm text-foreground/90">
+                    <p className="text-sm text-foreground/90 whitespace-pre-wrap">
                       {comment.content}
                     </p>
                   </div>
@@ -119,19 +156,22 @@ const CommentsModal = ({
             placeholder="Add a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[100px]"
+            onKeyDown={handleKeyDown}
+            className="min-h-[100px] resize-none"
           />
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              disabled={!newComment.trim() || isSubmitting}
-            >
-              {isSubmitting ? "Adding..." : "Add Comment"}
-            </Button>
+          <DialogFooter className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={!newComment.trim() || isSubmitting}
+              >
+                {isSubmitting ? "Adding..." : "Add Comment"}
+              </Button>
+            </div>
           </DialogFooter>
         </div>
       </DialogContent>
@@ -139,14 +179,13 @@ const CommentsModal = ({
   );
 };
 
-// Comment Badge Component
 export const CommentsBadge = ({
   comments,
   taskId,
   taskTitle,
   onRefresh,
 }: {
-  comments: TaskComment[];
+  comments: Comment[];
   taskId: string;
   taskTitle: string;
   onRefresh: () => void;
@@ -171,7 +210,10 @@ export const CommentsBadge = ({
         comments={comments}
         taskId={taskId}
         taskTitle={taskTitle}
-        onCommentAdded={onRefresh}
+        onCommentAdded={() => {
+          onRefresh();
+          setIsOpen(false);
+        }}
       />
     </>
   );
