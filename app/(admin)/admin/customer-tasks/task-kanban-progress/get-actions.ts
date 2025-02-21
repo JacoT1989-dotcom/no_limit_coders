@@ -117,14 +117,29 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
               },
             },
             attachments: true,
-            comments: true,
+            comments: {
+              select: {
+                id: true,
+                content: true,
+                createdAt: true,
+                updatedAt: true,
+                taskId: true,
+                authorId: true,
+                author: {
+                  select: {
+                    id: true,
+                    displayName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
     });
 
     // Process projects to add available developers
-    const projectsWithDevelopers: ProjectOption[] = projects.map((project) => {
+    const projectsWithDevelopers = projects.map((project) => {
       return {
         id: project.id,
         name: project.name,
@@ -152,7 +167,7 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
       };
     });
 
-    return { projects: projectsWithDevelopers };
+    return { projects: projectsWithDevelopers as ProjectOption[] };
   } catch (error) {
     return { error: "Failed to fetch projects" };
   }

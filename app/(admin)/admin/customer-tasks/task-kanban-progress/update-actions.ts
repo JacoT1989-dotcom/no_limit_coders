@@ -11,26 +11,25 @@ const getTaskStatusFromColumn = (columnState: ColumnState): TaskStatus => {
   switch (columnState) {
     case ColumnState.TODO:
       return TaskStatus.TODO;
-    case ColumnState.BACKLOG: // When task moves to BACKLOG column
-      return TaskStatus.REVIEW; // Set task status to REVIEW
+    case ColumnState.BACKLOG:
+      return TaskStatus.REVIEW;
     case ColumnState.IN_PROGRESS:
       return TaskStatus.IN_PROGRESS;
-    case ColumnState.DONE: // When task moves to DONE column
-      return TaskStatus.COMPLETED; // Set task status to COMPLETED
+    case ColumnState.DONE:
+      return TaskStatus.COMPLETED;
   }
 };
 
-// Get column state from task status (reverse mapping)
 const getColumnFromTaskStatus = (status: TaskStatus): ColumnState => {
   switch (status) {
     case TaskStatus.TODO:
       return ColumnState.TODO;
-    case TaskStatus.REVIEW: // Tasks with REVIEW status
-      return ColumnState.BACKLOG; // Go to BACKLOG column
+    case TaskStatus.REVIEW:
+      return ColumnState.BACKLOG;
     case TaskStatus.IN_PROGRESS:
       return ColumnState.IN_PROGRESS;
-    case TaskStatus.COMPLETED: // Tasks with COMPLETED status
-      return ColumnState.DONE; // Go to DONE column
+    case TaskStatus.COMPLETED:
+      return ColumnState.DONE;
   }
 };
 
@@ -73,7 +72,6 @@ export async function updateTaskColumn(
     });
 
     if (!targetColumn) {
-      // Get the max order from existing columns
       const maxOrderColumn = await prisma.taskColumn.findFirst({
         where: { projectId: currentTask.projectId },
         orderBy: { order: "desc" },
@@ -81,7 +79,6 @@ export async function updateTaskColumn(
 
       const newOrder = maxOrderColumn ? maxOrderColumn.order + 1 : 0;
 
-      // Create the column if it doesn't exist
       targetColumn = await prisma.taskColumn.create({
         data: {
           projectId: currentTask.projectId,
@@ -167,6 +164,13 @@ export async function updateTaskColumn(
             updatedAt: true,
             taskId: true,
             authorId: true,
+            author: {
+              // Added author selection
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
