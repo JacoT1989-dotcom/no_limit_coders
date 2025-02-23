@@ -41,6 +41,15 @@ export const isWithinDueDate = (
       );
     case "month":
       return (dueDate && isThisMonth(dueDate)) || isThisMonth(createdAt);
+    case "next-month":
+      if (!dueDate) return false;
+      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextMonthEnd = new Date(
+        today.getFullYear(),
+        today.getMonth() + 2,
+        0,
+      );
+      return dueDate >= nextMonth && dueDate <= nextMonthEnd;
     default:
       return true;
   }

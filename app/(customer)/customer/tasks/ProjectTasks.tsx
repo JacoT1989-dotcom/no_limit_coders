@@ -243,7 +243,9 @@ const ProjectTasks = () => {
                         ? "This week"
                         : selectedDueDate === "month"
                           ? "This month"
-                          : selectedDueDate}
+                          : selectedDueDate === "next-month"
+                            ? "Next month"
+                            : selectedDueDate}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -251,6 +253,7 @@ const ProjectTasks = () => {
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">This week</SelectItem>
                 <SelectItem value="month">This month</SelectItem>
+                <SelectItem value="next-month">Next month</SelectItem>
               </SelectContent>
             </Select>
           </div>
