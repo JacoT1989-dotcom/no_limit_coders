@@ -181,6 +181,15 @@ export const CommentsModal = ({
                             </AvatarFallback>
                           </Avatar>
                         )}
+                        {!isCurrentUser && (
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarFallback
+                              className={`text-white ${userColor}`}
+                            >
+                              {getInitials(comment.author?.displayName)}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
                         <div
                           className={`max-w-[70%] space-y-1 p-3 rounded-lg text-white ${userColor}`}
                         >
@@ -203,15 +212,6 @@ export const CommentsModal = ({
                             )}
                           </div>
                         </div>
-                        {!isCurrentUser && (
-                          <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarFallback
-                              className={`text-white ${userColor}`}
-                            >
-                              {getInitials(comment.author?.displayName)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
                       </div>
                     );
                   })}
