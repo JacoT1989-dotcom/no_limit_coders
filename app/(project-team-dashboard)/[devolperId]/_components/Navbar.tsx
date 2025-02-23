@@ -24,7 +24,9 @@ const Navbar = () => {
                 alt="Genius Humans Logo"
                 width={250}
                 height={45}
-                className="object-contain"
+                priority // Add priority prop for LCP optimization
+                className="w-auto h-[45px]" // Maintain aspect ratio with auto width
+                quality={90} // Optional: Increase image quality
               />
             </Link>
 

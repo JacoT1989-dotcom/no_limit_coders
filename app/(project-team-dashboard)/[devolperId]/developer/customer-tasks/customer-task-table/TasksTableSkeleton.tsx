@@ -1,75 +1,83 @@
 "use client";
+
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const TasksTableSkeleton = () => {
-  // Generate 5 skeleton rows
   const skeletonRows = Array(5).fill(null);
 
   return (
-    <div className="w-full p-6">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <div className="h-4 w-4 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-            <TableHead className="min-w-[200px]">
-              <div className="h-4 w-32 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-            <TableHead className="min-w-[200px]">
-              <div className="h-4 w-24 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-            <TableHead>
-              <div className="h-4 w-20 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-            <TableHead>
-              <div className="h-4 w-24 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-            <TableHead>
-              <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {skeletonRows.map((_, index) => (
-            <TableRow key={index} className="group">
-              <TableCell>
+    <div className="w-full">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="h-4 w-48 bg-gray-200 rounded animate-pulse" />
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </div>
+
+      <div className="border rounded-lg overflow-x-auto">
+        <table className="w-full caption-bottom text-sm border-collapse">
+          <thead>
+            <tr className="border-b">
+              <th className="h-12 px-4 text-left align-middle w-[50px]">
                 <div className="h-4 w-4 rounded bg-gray-200 animate-pulse" />
-              </TableCell>
-              <TableCell>
-                <div className="h-4 w-48 rounded bg-gray-200 animate-pulse" />
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded bg-gray-200 animate-pulse" />
-                  <div className="h-4 w-32 rounded bg-gray-200 animate-pulse" />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full bg-gray-200 animate-pulse" />
-                  <div className="h-4 w-24 rounded bg-gray-200 animate-pulse" />
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="h-4 w-28 rounded bg-gray-200 animate-pulse" />
-              </TableCell>
-              <TableCell>
-                <div className="h-6 w-20 rounded-full bg-gray-200 animate-pulse" />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[180px]">
+                <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[200px]">
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[100px]">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[100px]">
+                <div className="h-4 w-14 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[100px]">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[100px]">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              </th>
+              <th className="h-12 px-4 text-left align-middle w-[100px]">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {skeletonRows.map((_, index) => (
+              <tr key={index} className="border-b">
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-4 rounded bg-gray-200 animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-6 w-16 bg-gray-200 rounded-full animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                </td>
+                <td className="p-4 align-middle">
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

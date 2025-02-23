@@ -1,19 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
+import { MessageSquare, Paperclip, Users } from "lucide-react";
+import TasksTableSkeleton from "./TasksTableSkeleton";
 import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
 import { getDeveloperProjects } from "./actions";
-import TasksTableSkeleton from "./TasksTableSkeleton";
 
 const TasksTable = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
@@ -66,15 +56,15 @@ const TasksTable = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "review":
-        return "bg-purple-100 text-purple-700";
+        return "dark:bg-purple-900 dark:text-purple-100 bg-purple-100 text-purple-700";
       case "todo":
-        return "bg-red-100 text-red-700";
+        return "dark:bg-red-900 dark:text-red-100 bg-red-100 text-red-700";
       case "in_progress":
-        return "bg-yellow-100 text-yellow-700";
+        return "dark:bg-yellow-900 dark:text-yellow-100 bg-yellow-100 text-yellow-700";
       case "completed":
-        return "bg-green-100 text-green-700";
+        return "dark:bg-green-900 dark:text-green-100 bg-green-100 text-green-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "dark:bg-gray-800 dark:text-gray-100 bg-gray-100 text-gray-700";
     }
   };
 
@@ -83,76 +73,113 @@ const TasksTable = () => {
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div className="text-red-500 dark:text-red-400">Error: {error}</div>;
   }
 
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   return (
-    <div className="w-full p-6">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                checked={selectedTasks.length === tasks.length}
-                onCheckedChange={toggleAllTasks}
-              />
-            </TableHead>
-            <TableHead className="min-w-[200px]">Task Name</TableHead>
-            <TableHead className="min-w-[200px]">Project</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Due Date</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id} className="group hover:bg-muted/50">
-              <TableCell>
-                <Checkbox
-                  checked={selectedTasks.includes(task.id)}
-                  onCheckedChange={() => toggleTaskSelection(task.id)}
+    <div className="w-full p-6" role="region" aria-label="Tasks List">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b dark:border-gray-700">
+            <th className="w-12 p-4 text-left">
+              <div className="flex items-center">
+                <input
+                  id="select-all-tasks"
+                  type="checkbox"
+                  checked={selectedTasks.length === tasks.length}
+                  onChange={toggleAllTasks}
+                  className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                  aria-label="Select all tasks"
                 />
-              </TableCell>
-              <TableCell className="font-medium">{task.title}</TableCell>
-              <TableCell>
+                <label htmlFor="select-all-tasks" className="sr-only">
+                  Select all tasks
+                </label>
+              </div>
+            </th>
+            <th className="min-w-[200px] p-4 text-left">Task Name</th>
+            <th className="min-w-[200px] p-4 text-left">Project</th>
+            <th className="p-4 text-left">Assignees</th>
+            <th className="p-4 text-left">Due Date</th>
+            <th className="p-4 text-left">Status</th>
+            <th className="p-4 text-left">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((task) => (
+            <tr
+              key={task.id}
+              className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+            >
+              <td className="p-4">
+                <div className="flex items-center">
+                  <input
+                    id={`select-task-${task.id}`}
+                    type="checkbox"
+                    checked={selectedTasks.includes(task.id)}
+                    onChange={() => toggleTaskSelection(task.id)}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700"
+                    aria-label={`Select ${task.title}`}
+                  />
+                  <label htmlFor={`select-task-${task.id}`} className="sr-only">
+                    Select {task.title}
+                  </label>
+                </div>
+              </td>
+              <td className="p-4 font-medium dark:text-white">{task.title}</td>
+              <td className="p-4">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-blue-700">
+                  <span
+                    className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100"
+                    aria-hidden="true"
+                  >
                     {task.projectName[0]}
                   </span>
-                  {task.projectName}
+                  <span className="dark:text-gray-200">{task.projectName}</span>
                 </div>
-              </TableCell>
-              <TableCell>
+              </td>
+              <td className="p-4">
                 <div className="flex items-center gap-2">
                   {task.assignees.length > 0 ? (
                     <>
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage
-                          src={`/avatars/${task.assignees[0].displayName.toLowerCase()}.png`}
-                          alt={task.assignees[0].displayName}
-                        />
-                        <AvatarFallback>
+                      <div
+                        className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <span className="dark:text-gray-200">
                           {task.assignees[0].displayName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      {task.assignees[0].displayName}
+                        </span>
+                      </div>
+                      <span className="dark:text-gray-200">
+                        {task.assignees[0].displayName}
+                      </span>
                       {task.assignees.length > 1 && (
-                        <span className="text-xs text-muted-foreground">
+                        <span
+                          className="text-xs text-gray-500 dark:text-gray-400"
+                          aria-label={`and ${task.assignees.length - 1} more assignees`}
+                        >
                           +{task.assignees.length - 1}
                         </span>
                       )}
                     </>
                   ) : (
-                    <span className="text-muted-foreground">Unassigned</span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Unassigned
+                    </span>
                   )}
                 </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {task.dueDate
-                  ? format(new Date(task.dueDate), "MMM dd, yyyy")
-                  : "No due date"}
-              </TableCell>
-              <TableCell>
+              </td>
+              <td className="p-4 text-gray-500 dark:text-gray-400">
+                {task.dueDate ? formatDate(task.dueDate) : "No due date"}
+              </td>
+              <td className="p-4">
                 <span
                   className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(
                     task.status,
@@ -160,13 +187,41 @@ const TasksTable = () => {
                 >
                   {task.status.replace("_", " ")}
                 </span>
-              </TableCell>
-            </TableRow>
+              </td>
+              <td className="p-4">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
+                    aria-label={`${task.comments.length} comments`}
+                  >
+                    <MessageSquare className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-xs">{task.comments.length}</span>
+                  </div>
+                  <div
+                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
+                    aria-label={`${task.attachments.length} attachments`}
+                  >
+                    <Paperclip className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-xs">{task.attachments.length}</span>
+                  </div>
+                  <div
+                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
+                    aria-label={`${task.assignees.length} assignees`}
+                  >
+                    <Users className="h-4 w-4" aria-hidden="true" />
+                    <span className="text-xs">{task.assignees.length}</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
 
-      <div className="mt-4 text-sm text-muted-foreground">
+      <div
+        className="mt-4 text-sm text-gray-500 dark:text-gray-400"
+        role="status"
+      >
         {selectedTasks.length} of {tasks.length} row(s) selected
       </div>
     </div>
