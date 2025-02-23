@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { createTaskComment } from "./comment-actions";
+import { useSession } from "@/app/(customer)/SessionProvider";
 
 type Comment = {
   id: string;
@@ -38,7 +39,7 @@ interface CommentsModalProps {
   onCommentAdded: () => void;
 }
 
-const CommentsModal = ({
+export const CommentsModal = ({
   isOpen,
   onClose,
   comments,
@@ -46,14 +47,40 @@ const CommentsModal = ({
   taskTitle,
   onCommentAdded,
 }: CommentsModalProps) => {
+  const { user } = useSession();
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Generate a consistent color based on user ID
+  const generateUserColor = (authorId: string = "") => {
+    if (!authorId) return "bg-gray-600";
+
+    const colors = [
+      "bg-blue-600",
+      "bg-purple-600",
+      "bg-green-600",
+      "bg-pink-600",
+      "bg-indigo-600",
+      "bg-teal-600",
+      "bg-orange-600",
+      "bg-cyan-600",
+    ];
+
+    const charCodes = authorId.split("").map((char) => char.charCodeAt(0));
+    const sum = charCodes.reduce((acc, code) => acc + code, 0);
+    return colors[sum % colors.length];
+  };
 
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
+    });
+  };
+
+  const formatTime = (date: Date): string => {
+    return new Date(date).toLocaleString("en-US", {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
@@ -62,7 +89,6 @@ const CommentsModal = ({
 
   const getInitials = (displayName: string = "") => {
     if (!displayName) return "AU";
-
     return displayName
       .split(" ")
       .map((name) => name[0])
@@ -84,7 +110,7 @@ const CommentsModal = ({
       }
 
       setNewComment("");
-      onCommentAdded();
+      onCommentAdded(); // This will refresh the comments
       toast.success("Comment added successfully");
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -101,6 +127,19 @@ const CommentsModal = ({
     }
   };
 
+  // Group comments by date
+  const groupedComments = comments.reduce(
+    (groups: Record<string, Comment[]>, comment) => {
+      const date = formatDate(new Date(comment.createdAt));
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(comment);
+      return groups;
+    },
+    {},
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] h-[600px] flex flex-col bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
@@ -109,42 +148,73 @@ const CommentsModal = ({
         </DialogHeader>
 
         <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+          <div className="space-y-6">
             {comments.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
                 No comments yet
               </p>
             ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="flex space-x-4 p-4 rounded-lg bg-muted/50"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {getInitials(comment.author?.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium leading-none">
-                          {comment.author?.displayName || "Anonymous User"}
-                        </p>
-                        {comment.updatedAt > comment.createdAt && (
-                          <span className="text-xs text-muted-foreground">
-                            (edited)
-                          </span>
+              Object.entries(groupedComments).map(([date, dateComments]) => (
+                <div key={date} className="space-y-4">
+                  <div className="flex justify-center">
+                    <span className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
+                      {date}
+                    </span>
+                  </div>
+                  {dateComments.map((comment) => {
+                    const isCurrentUser = comment.authorId === user.id;
+                    const userColor = generateUserColor(comment.authorId);
+
+                    return (
+                      <div
+                        key={comment.id}
+                        className={`flex space-x-2 ${
+                          isCurrentUser ? "justify-start" : "justify-end"
+                        }`}
+                      >
+                        {isCurrentUser && (
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarFallback
+                              className={`text-white ${userColor}`}
+                            >
+                              {getInitials(comment.author?.displayName)}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div
+                          className={`max-w-[70%] space-y-1 p-3 rounded-lg text-white ${userColor}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium leading-none">
+                              {comment.author?.displayName || "Anonymous User"}
+                            </p>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {comment.content}
+                          </p>
+                          <div className="flex items-center justify-end gap-2">
+                            <time className="text-xs opacity-70">
+                              {formatTime(new Date(comment.createdAt))}
+                            </time>
+                            {comment.updatedAt > comment.createdAt && (
+                              <span className="text-xs opacity-70">
+                                (edited)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {!isCurrentUser && (
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarFallback
+                              className={`text-white ${userColor}`}
+                            >
+                              {getInitials(comment.author?.displayName)}
+                            </AvatarFallback>
+                          </Avatar>
                         )}
                       </div>
-                      <time className="text-xs text-muted-foreground">
-                        {formatDate(new Date(comment.createdAt))}
-                      </time>
-                    </div>
-                    <p className="text-sm text-foreground/90 whitespace-pre-wrap">
-                      {comment.content}
-                    </p>
-                  </div>
+                    );
+                  })}
                 </div>
               ))
             )}
@@ -153,7 +223,7 @@ const CommentsModal = ({
 
         <div className="mt-4 space-y-4">
           <Textarea
-            placeholder="Add a comment..."
+            placeholder="Type a message..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -169,7 +239,7 @@ const CommentsModal = ({
                 onClick={handleSubmit}
                 disabled={!newComment.trim() || isSubmitting}
               >
-                {isSubmitting ? "Adding..." : "Add Comment"}
+                {isSubmitting ? "Sending..." : "Send"}
               </Button>
             </div>
           </DialogFooter>
@@ -212,7 +282,6 @@ export const CommentsBadge = ({
         taskTitle={taskTitle}
         onCommentAdded={() => {
           onRefresh();
-          setIsOpen(false);
         }}
       />
     </>

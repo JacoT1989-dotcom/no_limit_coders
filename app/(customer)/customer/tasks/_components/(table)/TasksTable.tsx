@@ -38,16 +38,21 @@ const TasksTable = ({
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentProject, setCurrentProject] = useState<ProjectOption | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!project || project === "all") {
       setTasks([]);
+      setCurrentProject(null);
       return;
     }
 
     const selectedProject = projects.find((p) => p.id === project);
     if (selectedProject) {
       setTasks(selectedProject.tasks);
+      setCurrentProject(selectedProject);
     }
   }, [project, projects]);
 
@@ -80,6 +85,7 @@ const TasksTable = ({
         const updatedProject = result.projects.find((p) => p.id === project);
         if (updatedProject) {
           setTasks(updatedProject.tasks);
+          setCurrentProject(updatedProject);
         }
       }
     } catch (error) {
