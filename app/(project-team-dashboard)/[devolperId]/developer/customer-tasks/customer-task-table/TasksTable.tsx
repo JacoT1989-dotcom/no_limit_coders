@@ -4,6 +4,9 @@ import { MessageSquare, Paperclip, Users } from "lucide-react";
 import TasksTableSkeleton from "./TasksTableSkeleton";
 import { ProjectOption } from "@/app/(customer)/customer/tasks/types";
 import { getDeveloperProjects } from "./actions";
+import AssigneesModal from "./AssigneesModal";
+import CommentsModal from "./CommentsModal";
+import AttachmentsModal from "./AttachmentsModal";
 
 const TasksTable = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
@@ -16,7 +19,6 @@ const TasksTable = () => {
     project.tasks.map((task) => ({
       ...task,
       projectName: project.name,
-      assignees: task.assignees.map((assignee) => assignee.user),
     })),
   );
 
@@ -106,7 +108,6 @@ const TasksTable = () => {
             </th>
             <th className="min-w-[200px] p-4 text-left">Task Name</th>
             <th className="min-w-[200px] p-4 text-left">Project</th>
-            <th className="p-4 text-left">Assignees</th>
             <th className="p-4 text-left">Due Date</th>
             <th className="p-4 text-left">Status</th>
             <th className="p-4 text-left">Details</th>
@@ -137,43 +138,12 @@ const TasksTable = () => {
               <td className="p-4">
                 <div className="flex items-center gap-2">
                   <span
-                    className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100"
+                    className="flex h-6 w-6 items-center justify-center rounded bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-100"
                     aria-hidden="true"
                   >
                     {task.projectName[0]}
                   </span>
                   <span className="dark:text-gray-200">{task.projectName}</span>
-                </div>
-              </td>
-              <td className="p-4">
-                <div className="flex items-center gap-2">
-                  {task.assignees.length > 0 ? (
-                    <>
-                      <div
-                        className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
-                        aria-hidden="true"
-                      >
-                        <span className="dark:text-gray-200">
-                          {task.assignees[0].displayName[0]}
-                        </span>
-                      </div>
-                      <span className="dark:text-gray-200">
-                        {task.assignees[0].displayName}
-                      </span>
-                      {task.assignees.length > 1 && (
-                        <span
-                          className="text-xs text-gray-500 dark:text-gray-400"
-                          aria-label={`and ${task.assignees.length - 1} more assignees`}
-                        >
-                          +{task.assignees.length - 1}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Unassigned
-                    </span>
-                  )}
                 </div>
               </td>
               <td className="p-4 text-gray-500 dark:text-gray-400">
@@ -190,27 +160,9 @@ const TasksTable = () => {
               </td>
               <td className="p-4">
                 <div className="flex items-center gap-4">
-                  <div
-                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
-                    aria-label={`${task.comments.length} comments`}
-                  >
-                    <MessageSquare className="h-4 w-4" aria-hidden="true" />
-                    <span className="text-xs">{task.comments.length}</span>
-                  </div>
-                  <div
-                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
-                    aria-label={`${task.attachments.length} attachments`}
-                  >
-                    <Paperclip className="h-4 w-4" aria-hidden="true" />
-                    <span className="text-xs">{task.attachments.length}</span>
-                  </div>
-                  <div
-                    className="flex items-center gap-1 text-gray-500 dark:text-gray-400"
-                    aria-label={`${task.assignees.length} assignees`}
-                  >
-                    <Users className="h-4 w-4" aria-hidden="true" />
-                    <span className="text-xs">{task.assignees.length}</span>
-                  </div>
+                  <CommentsModal task={task} />
+                  <AttachmentsModal task={task} />
+                  <AssigneesModal task={task} />
                 </div>
               </td>
             </tr>
@@ -228,4 +180,4 @@ const TasksTable = () => {
   );
 };
 
-export default TasksTable;
+export default React.memo(TasksTable);
