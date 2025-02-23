@@ -26,65 +26,8 @@ import { Button } from "@/components/ui/button";
 import { BookingFormValues } from "./types";
 import { bookingSchema } from "./validations";
 import { Loader2 } from "lucide-react";
-import { countries } from "../_components/(section-1)/types";
 import { submitBooking } from "./actions";
-
-function CountrySelect({
-  field,
-  searchQuery,
-  setSearchQuery,
-}: {
-  field: any;
-  searchQuery: string;
-  setSearchQuery: (value: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  const filteredCountries = countries.filter((country) =>
-    country.label.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  return (
-    <Select
-      open={open}
-      onOpenChange={setOpen}
-      onValueChange={(value) => {
-        field.onChange(value);
-        setSearchQuery("");
-        setOpen(false);
-      }}
-      value={field.value}
-    >
-      <SelectTrigger className="bg-background">
-        <SelectValue placeholder="Select a country" />
-      </SelectTrigger>
-      <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
-        <div className="sticky top-0 bg-background px-3 pb-2">
-          <Input
-            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            placeholder="Search country..."
-            value={searchQuery}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setSearchQuery(e.target.value);
-            }}
-            autoFocus
-          />
-        </div>
-        <div className="max-h-[200px] overflow-auto">
-          {filteredCountries.map((country) => (
-            <SelectItem key={country.value} value={country.value}>
-              {country.label}
-            </SelectItem>
-          ))}
-        </div>
-      </SelectContent>
-    </Select>
-  );
-}
+import CountrySearch from "../_components/(section-1)/CountrySelect";
 
 const packages = [
   { value: "STARTUPTEAM", label: "Startup Team" },
@@ -216,7 +159,7 @@ export function BookingSection() {
                       <FormItem>
                         <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <CountrySelect
+                          <CountrySearch
                             field={field}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}

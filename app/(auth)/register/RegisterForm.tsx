@@ -19,8 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { registerSchema, type RegisterFormValues } from "./validation";
 import { signUp } from "./actions";
 import { toast } from "sonner";
-import { CountrySelect } from "@/app/(public)/_components/(section-1)/CountrySelect";
 import { PackageSelect } from "@/app/(public)/_components/(section-1)/PackageSelect";
+import CountrySelect from "@/app/(public)/_components/(section-1)/CountrySelect";
 
 const RegisterForm = () => {
   const router = useRouter();
