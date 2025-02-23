@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -29,19 +29,11 @@ export function CountrySelect({
     country.label.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleInputClick = (e: React.MouseEvent) => {
+  // Prevent select closing when input is interacted with
+  const handleInputInteraction = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSearchQuery(e.target.value);
-  };
+  }, []);
 
   return (
     <Select
@@ -58,32 +50,50 @@ export function CountrySelect({
       <SelectTrigger className="bg-background border-input hover:bg-accent hover:text-accent-foreground">
         <SelectValue placeholder="Select a country" />
       </SelectTrigger>
-      <SelectContent className="bg-background border-input">
+      <SelectContent
+        className="bg-background border-input"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         <div
           className="sticky top-0 bg-background px-3 pb-2 z-50"
-          onClick={(e) => e.stopPropagation()}
+          onPointerDown={handleInputInteraction}
+          onMouseDown={handleInputInteraction}
+          onClick={handleInputInteraction}
+          onTouchStart={handleInputInteraction}
         >
           <Input
             ref={inputRef}
             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-background text-foreground placeholder:text-muted-foreground"
             placeholder="Search country..."
             value={searchQuery}
-            onClick={handleInputClick}
-            onChange={handleInputChange}
+            onPointerDown={handleInputInteraction}
+            onMouseDown={handleInputInteraction}
+            onClick={handleInputInteraction}
+            onTouchStart={handleInputInteraction}
             onKeyDown={(e) => {
               e.stopPropagation();
               if (e.key === "Enter") {
                 e.preventDefault();
               }
             }}
+            onChange={(e) => {
+              handleInputInteraction(e);
+              setSearchQuery(e.target.value);
+            }}
+            onFocus={handleInputInteraction}
+            onBlur={handleInputInteraction}
             autoComplete="off"
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            type="search"
+            type="text"
+            inputMode="text"
           />
         </div>
-        <div className="max-h-[200px] overflow-auto">
+        <div
+          className="max-h-[200px] overflow-auto"
+          onTouchStart={handleInputInteraction}
+        >
           {filteredCountries.map((country) => (
             <SelectItem
               key={country.value}
