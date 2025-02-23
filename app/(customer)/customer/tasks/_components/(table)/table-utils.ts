@@ -2,6 +2,7 @@
 
 import { isThisWeek, isThisMonth } from "date-fns";
 import { Priority } from "../../types";
+import { TaskStatus } from "@prisma/client";
 
 // Helper function to check if a task is within the selected due date range
 export const isWithinDueDate = (
@@ -45,31 +46,45 @@ export const isWithinDueDate = (
   }
 };
 
+// Helper function to convert column state to task status
+export const mapColumnStateToTaskStatus = (columnState: string): TaskStatus => {
+  const statusMap: { [key: string]: TaskStatus } = {
+    todo: TaskStatus.TODO,
+    backlog: TaskStatus.REVIEW,
+    "in-progress": TaskStatus.IN_PROGRESS,
+    done: TaskStatus.COMPLETED,
+  };
+  return statusMap[columnState.toLowerCase()] || TaskStatus.TODO;
+};
+
 // Style helper functions
-export const getStatusColor = (status: string) => {
-  switch (status) {
-    case "TODO":
-      return "bg-red-100 text-red-700";
-    case "IN_PROGRESS":
-      return "bg-yellow-100 text-yellow-700";
-    case "REVIEW":
-      return "bg-blue-100 text-blue-700";
-    case "COMPLETED":
-      return "bg-green-100 text-green-700";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
+export const getStatusColor = (status: TaskStatus) => {
+  const statusColors = {
+    [TaskStatus.TODO]: "bg-red-100 text-red-700",
+    [TaskStatus.IN_PROGRESS]: "bg-yellow-100 text-yellow-700",
+    [TaskStatus.REVIEW]: "bg-blue-100 text-blue-700",
+    [TaskStatus.COMPLETED]: "bg-green-100 text-green-700",
+  };
+  return statusColors[status] || "bg-gray-100 text-gray-700";
 };
 
 export const getPriorityColor = (priority: Priority) => {
-  switch (priority) {
-    case "URGENT":
-      return "bg-red-100 text-red-700";
-    case "HIGH":
-      return "bg-orange-100 text-orange-700";
-    case "MEDIUM":
-      return "bg-yellow-100 text-yellow-700";
-    case "LOW":
-      return "bg-green-100 text-green-700";
-  }
+  const priorityColors = {
+    URGENT: "bg-red-100 text-red-700",
+    HIGH: "bg-orange-100 text-orange-700",
+    MEDIUM: "bg-yellow-100 text-yellow-700",
+    LOW: "bg-green-100 text-green-700",
+  };
+  return priorityColors[priority] || priorityColors.MEDIUM;
+};
+
+// Helper function to check if task matches selected status
+export const matchesTaskStatus = (
+  taskStatus: TaskStatus,
+  selectedStatus: string,
+): boolean => {
+  if (!selectedStatus || selectedStatus === "all") return true;
+
+  const mappedStatus = mapColumnStateToTaskStatus(selectedStatus);
+  return taskStatus === mappedStatus;
 };

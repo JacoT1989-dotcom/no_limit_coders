@@ -11,7 +11,7 @@ import {
 import TasksTable from "./_components/(table)/TasksTable";
 import TasksKanban from "./_components/TasksKanban";
 import { getCustomerProjects } from "./actions";
-import { ProjectOption } from "./types";
+import { ProjectOption, ProjectTeamMember } from "./types";
 import { CreateTaskDialog } from "./(create_task)/CreateTaskDialog";
 import TasksCalendar from "./_components/(calendar)/TaskCalendar";
 
@@ -194,10 +194,10 @@ const ProjectTasks = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="todo">Todo</SelectItem>
-                <SelectItem value="backlog">Backlog</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="done">Done</SelectItem>
+                <SelectItem value="TODO">Todo</SelectItem>
+                <SelectItem value="REVIEW">Review</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
               </SelectContent>
             </Select>
 
@@ -209,11 +209,26 @@ const ProjectTasks = () => {
                 <SelectValue>
                   {selectedAssignee === "all"
                     ? "All assignees"
-                    : selectedAssignee}
+                    : selectedProjectData?.tasks
+                        .flatMap((task) => task.assignees)
+                        .find((member) => member.user.id === selectedAssignee)
+                        ?.user.displayName || "All assignees"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All assignees</SelectItem>
+                {selectedProjectData?.tasks
+                  .flatMap((task) => task.assignees)
+                  .filter(
+                    (member, index, self) =>
+                      index ===
+                      self.findIndex((m) => m.user.id === member.user.id),
+                  )
+                  .map((member: ProjectTeamMember) => (
+                    <SelectItem key={member.user.id} value={member.user.id}>
+                      {member.user.displayName}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
 
