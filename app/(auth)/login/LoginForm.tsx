@@ -1,3 +1,4 @@
+// LoginForm.tsx
 "use client";
 
 import React from "react";
@@ -50,8 +51,6 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
       setIsPending(true);
       const result = await login(data);
 
-      console.log("Login result:", result);
-
       if (result?.error) {
         toast.error(result.error);
         if (result.error.includes("Invalid email or password")) {
@@ -62,18 +61,11 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
       }
 
       if (result?.redirectTo) {
-        // Show success message if needed
         if (result.redirectTo !== "/register-success") {
           toast.success("Logged in successfully!");
         }
-
-        // Instead of closing the dialog, show loading state until navigation completes
         setIsPending(true);
-
-        // Start the navigation while keeping the form visible
         await router.replace(result.redirectTo);
-
-        // The dialog will stay visible with the loading state until the new page loads
         return;
       }
     } catch (error) {
@@ -85,12 +77,12 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
   };
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-lg">
+    <div className="space-y-6 bg-background dark:bg-black/40 dark:backdrop-blur-sm p-6 rounded-lg">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 pt-3">
+        <h2 className="text-2xl font-bold text-foreground dark:text-white pt-3">
           Welcome to Genius Humans
         </h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground dark:text-white/60">
           Please sign in with your account credentials
         </p>
       </div>
@@ -103,7 +95,7 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">
+                  <FormLabel className="text-foreground dark:text-white font-medium">
                     Email*
                   </FormLabel>
                   <FormControl>
@@ -113,14 +105,16 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
                       disabled={isPending}
                       autoComplete="email"
                       type="email"
-                      className="bg-white border-gray-200 
-                               focus:border-red-500 focus:ring-red-500 
-                               text-gray-900 placeholder-gray-400
-                               shadow-sm hover:border-red-300 
-                               transition-colors"
+                      className="bg-background dark:bg-black/40 
+                               border-input dark:border-white/10
+                               focus:border-accent focus:ring-accent 
+                               text-foreground dark:text-white 
+                               placeholder:text-muted-foreground dark:placeholder:text-white/40
+                               shadow-sm hover:border-accent/50 
+                               transition-colors dark:backdrop-blur-sm"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage className="text-destructive dark:text-red-300" />
                 </FormItem>
               )}
             />
@@ -131,19 +125,19 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-gray-700 font-medium">
+                    <FormLabel className="text-foreground dark:text-white font-medium">
                       Password*
                     </FormLabel>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-gray-400 hover:text-red-500 transition-colors" />
+                          <Info className="h-4 w-4 text-muted-foreground dark:text-white/60 hover:text-accent dark:hover:text-white transition-colors" />
                         </TooltipTrigger>
-                        <TooltipContent className="bg-white text-gray-700 border-gray-100 shadow-lg">
+                        <TooltipContent className="bg-background dark:bg-black/80 text-foreground dark:text-white border-border dark:border-white/10">
                           <p className="font-medium mb-2">
                             Password must contain:
                           </p>
-                          <ul className="space-y-1 text-sm text-gray-600">
+                          <ul className="space-y-1 text-sm text-muted-foreground dark:text-white/60">
                             <li>- At least 8 characters</li>
                             <li>- One uppercase letter</li>
                             <li>- One lowercase letter</li>
@@ -160,14 +154,15 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
                       {...field}
                       disabled={isPending}
                       autoComplete="current-password"
-                      className="bg-white border-gray-200 
-                               focus:border-red-500 focus:ring-red-500 
-                               text-gray-900
-                               shadow-sm hover:border-red-300
-                               transition-colors"
+                      className="bg-background dark:bg-black/40 
+                               border-input dark:border-white/10
+                               focus:border-accent focus:ring-accent 
+                               text-foreground dark:text-white
+                               shadow-sm hover:border-accent/50
+                               transition-colors dark:backdrop-blur-sm"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage className="text-destructive dark:text-red-300" />
                 </FormItem>
               )}
             />
@@ -184,14 +179,15 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isPending}
-                      className="border-gray-200 text-red-500 
-                               focus:ring-red-500 
-                               bg-white hover:border-red-300
+                      className="border-input dark:border-white/10 
+                               text-accent dark:text-white 
+                               focus:ring-accent 
+                               bg-background dark:bg-black/40 hover:border-accent/50
                                transition-colors"
                     />
                   </FormControl>
                   <div className="pb-2 leading-none">
-                    <FormLabel className="text-sm text-gray-600">
+                    <FormLabel className="text-sm text-muted-foreground dark:text-white/60">
                       Remember me
                     </FormLabel>
                   </div>
@@ -200,7 +196,8 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
             />
             <Link
               href="/forgot-password"
-              className="text-sm text-red-600 hover:text-red-700 
+              className="text-accent dark:text-white hover:text-accent/90 
+                       dark:hover:text-white/90 
                        font-medium transition-colors"
             >
               Forgot password?
@@ -209,16 +206,15 @@ const LoginForm = ({ onClose, onLoginSuccess }: LoginFormProps) => {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-red-600 to-red-500 
-                     hover:from-red-700 hover:to-red-600 
-                     text-white font-medium
-                     shadow-md hover:shadow-lg
+            className="w-full bg-accent hover:bg-accent/90 
+                     dark:bg-white dark:text-black dark:hover:bg-white/90
+                     font-medium shadow-md hover:shadow-lg
                      transition-all duration-200"
             disabled={isPending}
           >
             {isPending ? (
               <div className="flex items-center justify-center">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <div className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin mr-2" />
                 Signing in...
               </div>
             ) : (

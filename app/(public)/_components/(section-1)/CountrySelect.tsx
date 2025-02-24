@@ -1,3 +1,4 @@
+// CountrySelect.tsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -8,7 +9,7 @@ interface CountrySelectProps {
   field: any;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
-  disabled?: boolean; // Add disabled prop
+  disabled?: boolean;
 }
 
 const CountrySelect = ({
@@ -76,11 +77,11 @@ const CountrySelect = ({
         onChange={(e) => handleChange(e.target.value)}
         onFocus={() => setShowSuggestions(true)}
         placeholder="Search country..."
-        className="bg-white border-gray-200 
-                  focus:border-red-500 focus:ring-red-500 
-                  text-gray-900 placeholder-gray-400
-                  shadow-sm hover:border-red-300 
-                  transition-colors"
+        className="dark:bg-black/40 dark:border-white/10 
+                  focus:border-accent focus:ring-accent 
+                  dark:text-white dark:placeholder-white/60
+                  shadow-sm hover:border-accent/50 
+                  transition-colors backdrop-blur-sm"
         disabled={disabled}
       />
 
@@ -88,14 +89,15 @@ const CountrySelect = ({
         showSuggestions &&
         searchQuery &&
         filteredCountries.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg">
-            <div className="max-h-[200px] overflow-y-auto py-1">
+          <div className="absolute z-50 w-full mt-1 bg-background dark:bg-black/40 border dark:border-white/10 rounded-md shadow-lg backdrop-blur-sm">
+            <div className="max-h-48 overflow-y-auto py-1">
               {filteredCountries.map((country) => (
                 <button
                   key={country.value}
                   onClick={() => handleSelectCountry(country)}
-                  className="w-full px-3 py-2 text-left text-gray-900
-                         hover:bg-red-50 hover:text-red-700
+                  className="w-full px-3 py-2 text-left text-foreground
+                         dark:text-white dark:hover:bg-white/10 
+                         hover:bg-accent/10 hover:text-accent
                          transition-colors"
                   type="button"
                   disabled={disabled}

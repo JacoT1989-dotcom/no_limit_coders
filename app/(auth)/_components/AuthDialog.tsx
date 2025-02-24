@@ -1,3 +1,4 @@
+// AuthDialog.tsx
 import { User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -18,7 +19,6 @@ export function AuthDialog() {
 
   const handleLoginSuccess = async (redirectPath: string) => {
     setIsRedirecting(true);
-    // Wait longer to ensure navigation has started
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsOpen(false);
     setIsRedirecting(false);
@@ -30,16 +30,16 @@ export function AuthDialog() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(true)}
-        className="hover:bg-red-50 transition-colors"
+        className="hover:bg-accent/10 dark:hover:bg-white/10 transition-colors"
       >
-        <User className="h-5 w-5 text-red-600" />
+        <User className="h-5 w-5 text-accent dark:text-white" />
       </Button>
 
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent
           className="max-w-lg max-h-[90vh] overflow-y-auto p-0 
-                  bg-gradient-to-br from-red-50 to-white 
-                  border border-red-100/50 shadow-xl"
+                  bg-background dark:bg-black
+                  border-border dark:border-white/10 shadow-xl"
         >
           <div className="flex flex-col h-full">
             <div className="flex justify-end p-2">
@@ -47,9 +47,9 @@ export function AuthDialog() {
                 variant="ghost"
                 size="icon"
                 onClick={handleClose}
-                className="h-8 w-8 p-0 hover:bg-red-100/50 transition-colors"
+                className="h-8 w-8 p-0 hover:bg-accent/10 dark:hover:bg-white/10 transition-colors"
               >
-                <X className="h-4 w-4 text-red-600" />
+                <X className="h-4 w-4 text-accent dark:text-white" />
                 <span className="sr-only">Close</span>
               </Button>
             </div>
@@ -57,28 +57,32 @@ export function AuthDialog() {
             <Tabs defaultValue="login" className="w-full">
               <TabsList
                 className="grid w-full grid-cols-2 
-                       bg-white/80 backdrop-blur-sm
+                       bg-background/80 dark:bg-black/80
                        p-1 gap-2"
               >
                 <TabsTrigger
                   value="login"
-                  className="data-[state=active]:bg-red-600 
+                  className="data-[state=active]:bg-accent 
                          data-[state=active]:text-white 
+                         dark:data-[state=active]:bg-white
+                         dark:data-[state=active]:text-black
                          py-3 
-                         text-red-600
+                         text-accent dark:text-white
                          transition-colors
-                         hover:bg-red-50"
+                         hover:bg-accent/10 dark:hover:bg-white/10"
                 >
                   Login
                 </TabsTrigger>
                 <TabsTrigger
                   value="register"
-                  className="data-[state=active]:bg-red-600 
+                  className="data-[state=active]:bg-accent 
                          data-[state=active]:text-white 
+                         dark:data-[state=active]:bg-white
+                         dark:data-[state=active]:text-black
                          py-3 
-                         text-red-600
+                         text-accent dark:text-white
                          transition-colors
-                         hover:bg-red-50"
+                         hover:bg-accent/10 dark:hover:bg-white/10"
                 >
                   Register
                 </TabsTrigger>

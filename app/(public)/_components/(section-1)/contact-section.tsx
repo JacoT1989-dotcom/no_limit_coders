@@ -1,3 +1,4 @@
+// ContactSection.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -48,7 +49,7 @@ export function ContactSection() {
       } else {
         toast.success("Message sent successfully");
         form.reset();
-        setSearchQuery(""); // Clear the search query
+        setSearchQuery("");
       }
     } catch (error) {
       console.error("Form submission error:", error);
@@ -63,7 +64,7 @@ export function ContactSection() {
       id="contact"
       className="py-10 md:py-20 flex justify-center px-4 md:px-0"
     >
-      <div className="section-block">
+      <div className="bg-background dark:bg-black/40 backdrop-blur-sm border dark:border-white/10 rounded-2xl p-8 w-full max-w-4xl">
         <div className="container-block relative z-10">
           <motion.div
             initial={{ opacity: 0 }}
@@ -71,10 +72,10 @@ export function ContactSection() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12 md:mb-16"
           >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-foreground">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-foreground dark:text-white">
               Contact Us
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground dark:text-white/60 max-w-2xl mx-auto">
               Ready to start your project? Get in touch with us today.
             </p>
           </motion.div>
@@ -91,15 +92,17 @@ export function ContactSection() {
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Full Name
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="John Doe"
                             {...field}
-                            className="bg-background"
+                            className="dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -108,16 +111,16 @@ export function ContactSection() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="dark:text-white">Email</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="john@example.com"
                             {...field}
                             type="email"
-                            className="bg-background"
+                            className="dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -126,15 +129,17 @@ export function ContactSection() {
                     name="mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Mobile Number
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="+1234567890"
                             {...field}
-                            className="bg-background"
+                            className="dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -143,7 +148,9 @@ export function ContactSection() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Country
+                        </FormLabel>
                         <FormControl>
                           <CountrySearch
                             field={field}
@@ -151,7 +158,7 @@ export function ContactSection() {
                             setSearchQuery={setSearchQuery}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -162,16 +169,16 @@ export function ContactSection() {
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Message</FormLabel>
+                      <FormLabel className="dark:text-white">Message</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about your project..."
-                          className="resize-none bg-background"
+                          className="resize-none dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           {...field}
                           rows={6}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="dark:text-red-300" />
                     </FormItem>
                   )}
                 />
@@ -181,7 +188,7 @@ export function ContactSection() {
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto bg-red-700 text-white hover:bg-black"
+                    className="w-full md:w-auto bg-accent hover:bg-accent/90 text-white dark:bg-white dark:text-black dark:hover:bg-white/90"
                   >
                     {isSubmitting ? (
                       <>

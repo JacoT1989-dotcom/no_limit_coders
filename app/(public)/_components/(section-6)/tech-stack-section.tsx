@@ -6,7 +6,7 @@ import { techCategories } from "./types";
 export function TechStackSection() {
   return (
     <section id="tech-stack" className="py-10 flex justify-center">
-      <div className="section-block">
+      <div className="bg-background dark:bg-black/40 dark:backdrop-blur-sm border dark:border-white/10 rounded-2xl p-8 w-full max-w-7xl">
         <div className="container-block relative z-10">
           <motion.div
             initial={{ opacity: 0 }}
@@ -14,10 +14,10 @@ export function TechStackSection() {
             transition={{ duration: 0.5 }}
             className="text-center mb-16"
           >
-            <h2 className="text-5xl font-bold mb-4 text-foreground">
+            <h2 className="text-5xl font-bold mb-4 text-foreground dark:text-white">
               Our Tech Stack
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground dark:text-white/60 max-w-2xl mx-auto">
               We use cutting-edge technologies to build robust and scalable
               solutions
             </p>
@@ -30,9 +30,11 @@ export function TechStackSection() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="rounded-3xl border border-border/30 p-8 hover-lift"
+                className="rounded-3xl border dark:border-white/10 
+                          bg-background dark:bg-black/40 dark:backdrop-blur-sm 
+                          p-8 hover-lift"
               >
-                <h3 className="text-x1 font-semibold mb-4 text-foreground">
+                <h3 className="text-xl font-semibold mb-4 text-foreground dark:text-white">
                   {category.title}
                 </h3>
                 <div className="grid grid-cols-3 gap-4">
@@ -42,12 +44,20 @@ export function TechStackSection() {
                       initial={{ opacity: 0, scale: 0.8 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3, delay: techIndex * 0.1 }}
-                      className="flex flex-col items-center text-center gap-2"
+                      className="flex flex-col items-center text-center gap-2 group"
                     >
-                      <div className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-red-500 transition-colors duration-300">
+                      <div
+                        className="w-10 h-10 flex items-center justify-center 
+                                    text-muted-foreground dark:text-white/60 
+                                    group-hover:text-accent dark:group-hover:text-white 
+                                    transition-colors duration-300"
+                      >
                         <tech.icon className="w-8 h-8" />
                       </div>
-                      <span className="text-sm text-muted-foreground">
+                      <span
+                        className="text-sm text-muted-foreground dark:text-white/60 
+                                     group-hover:text-accent dark:group-hover:text-white"
+                      >
                         {tech.name}
                       </span>
                     </motion.div>
