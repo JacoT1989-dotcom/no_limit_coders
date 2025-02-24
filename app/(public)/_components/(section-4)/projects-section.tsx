@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CheckCircle, ArrowUpRight } from "lucide-react";
+import { CheckCircle, Server } from "lucide-react";
 import { Card } from "./Card";
 import { portfolioProjects } from "./types";
 
@@ -9,7 +9,7 @@ export const ProjectsSection = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-center flex-col items-center mb-10">
           <h2 className="text-5xl font-bold mb-4 text-foreground text-center">
-            Featured Projects
+            Featured Projects of 2024
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto text-center text-black">
             CRMs, Blogs, Admin Panels, Marketing Sites, E-commerce, AI, and more
@@ -34,23 +34,40 @@ export const ProjectsSection = () => {
                     {project.title}
                   </h3>
                   <hr className="border-t border-white/10 my-6" />
-                  <ul className="flex flex-col gap-4 mt-4 md:mt-5">
-                    {project.results.map((result, index) => (
-                      <li
-                        key={index}
-                        className="flex gap-2 text-sm md:text-base text-white/50"
-                      >
-                        <CheckCircle className="size-5 md:size-6" />
-                        <span>{result}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a href={project.link}>
-                    <button className="bg-red-700 hover:bg-black text-white py-2 md:py-3 h-12 w-full md:w-auto px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2 mt-8">
-                      <span>View Live Site</span>
-                      <ArrowUpRight className="size-4" />
-                    </button>
-                  </a>
+
+                  {/* Frontend Results */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle className="size-4 text-white/70" />
+                      <span className="text-sm font-medium text-white/70">
+                        Frontend
+                      </span>
+                    </div>
+                    <ul className="flex flex-col gap-2">
+                      {project.results.slice(0, 3).map((result, index) => (
+                        <li key={index} className="text-sm text-white/50 pl-6">
+                          {result}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Backend Systems */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Server className="size-4 text-white/70" />
+                      <span className="text-sm font-medium text-white/70">
+                        Backend
+                      </span>
+                    </div>
+                    <ul className="flex flex-col gap-2">
+                      {project.backend.slice(0, 2).map((system, index) => (
+                        <li key={index} className="text-sm text-white/50 pl-6">
+                          {system}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
                 <div className="relative">
                   <Image
