@@ -154,12 +154,6 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
               </div>
             )}
           </div>
-
-          <div className="p-4 border-t bg-muted/10">
-            <Button className="w-full bg-accent text-accent-foreground">
-              Reply to Customer
-            </Button>
-          </div>
         </>
       ) : (
         <div className="flex items-center justify-center h-full text-muted-foreground">

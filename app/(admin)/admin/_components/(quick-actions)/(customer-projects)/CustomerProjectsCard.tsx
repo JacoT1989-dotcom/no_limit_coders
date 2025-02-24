@@ -114,7 +114,7 @@ const CustomerMessageReplyCard = () => {
                 <MessageSquare className="h-6 w-6 text-accent" />
               </div>
               <div className="flex flex-col">
-                <span>Customer Messages</span>
+                <span>Reply to customer</span>
                 {unreadCount > 0 && (
                   <span className="text-xs text-accent font-normal">
                     {unreadCount} unread messages
@@ -124,9 +124,7 @@ const CustomerMessageReplyCard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              Reply to customer inquiries and view message history
-            </p>
+            <p className="text-muted-foreground">Reply to customer Messages</p>
           </CardContent>
         </Card>
       </DialogTrigger>
