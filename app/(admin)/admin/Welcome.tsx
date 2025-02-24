@@ -16,7 +16,7 @@ import { useSession } from "../SessionProvider";
 import CustomerProjectsCard from "./_components/(quick-actions)/(customer-projects)/CustomerProjectsCard";
 import ConsultationsCard from "./_components/(quick-actions)/(public-consultations)/ConsultationsCard";
 import MessagesCard from "./_components/(quick-actions)/(public-messages)/MessagesCard";
-import TaskAlertCard from "./_components/(quick-actions)/(customers-task-alerts)/TaskAlertCard";
+import CustomerMessageCard from "./_components/(quick-actions)/(customers-task-alerts)/CustomerMessageCard";
 
 const WelcomePage = () => {
   const { user } = useSession();
@@ -49,7 +49,7 @@ const WelcomePage = () => {
           <CustomerProjectsCard />
           <ConsultationsCard />
           <MessagesCard />
-          <TaskAlertCard />
+          <CustomerMessageCard />
         </div>
       </section>
 

@@ -233,19 +233,6 @@ model TechTeamMessage {
   @@map("tech_team_messages")
 }
 
-model TechTeamMessageAttachment {
-  id        String   @id @default(uuid())
-  fileName  String
-  fileUrl   String
-  createdAt DateTime @default(now())
-
-  // Relations
-  message   TechTeamMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  messageId String
-
-  @@map("tech_team_message_attachments")
-}
-
 model UserMessage {
   id            String          @id @default(uuid())
   sender        String
@@ -262,6 +249,19 @@ model UserMessage {
   attachments MessageAttachment[]
 
   @@map("user_messages")
+}
+
+model TechTeamMessageAttachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileUrl   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  message   TechTeamMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+
+  @@map("tech_team_message_attachments")
 }
 
 model MessageAttachment {
