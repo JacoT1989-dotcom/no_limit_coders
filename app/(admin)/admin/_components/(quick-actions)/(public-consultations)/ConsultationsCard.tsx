@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +10,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Calendar, Loader2 } from "lucide-react";
-import { format, differenceInDays, differenceInWeeks } from "date-fns";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Calendar,
+  Loader2,
+  Star,
+  Archive,
+  Flag,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
 import { getBookingMessages } from "./get-public-bookings-actions";
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { countries } from "@/app/(public)/_components/(section-1)/types";
 
 // Define the booking type based on the returned data
@@ -33,6 +41,21 @@ const ConsultationsCard = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("recent");
+  const [filterType, setFilterType] = useState<
+    "all" | "priority" | "completed" | "pending"
+  >("all");
+
+  // State for booking statuses
+  const [priorityBookings, setPriorityBookings] = useState<Set<string>>(
+    new Set(),
+  );
+  const [completedBookings, setCompletedBookings] = useState<Set<string>>(
+    new Set(),
+  );
+  const [pendingBookings, setPendingBookings] = useState<Set<string>>(
+    new Set(),
+  );
+  const [viewedBookings, setViewedBookings] = useState<Set<string>>(new Set());
 
   // Function to load booking data
   const loadBookings = async () => {
@@ -59,11 +82,21 @@ const ConsultationsCard = () => {
     }
   };
 
+  // Function to get full country name from country code
+  const getCountryName = (countryCode: string): string => {
+    const country = countries.find(
+      (c) => c.value === countryCode.toLowerCase(),
+    );
+    return country ? country.label : countryCode;
+  };
+
   // Filter bookings by recency
   const getFilteredBookings = (filter: string) => {
     const now = new Date();
+    let filtered = bookings;
 
-    return bookings.filter((booking) => {
+    // First apply time filter
+    filtered = filtered.filter((booking) => {
       const bookingDate = new Date(booking.createdAt);
       const daysDiff = differenceInDays(now, bookingDate);
 
@@ -81,9 +114,78 @@ const ConsultationsCard = () => {
           return true;
       }
     });
+
+    // Then apply category filter
+    if (filterType !== "all") {
+      filtered = filtered.filter((booking) => {
+        if (filterType === "priority") return priorityBookings.has(booking.id);
+        if (filterType === "completed")
+          return completedBookings.has(booking.id);
+        if (filterType === "pending") return pendingBookings.has(booking.id);
+        return true;
+      });
+    }
+
+    return filtered;
   };
 
-  // Get counts for tabs
+  // Toggle booking flags
+  const toggleBookingFlag = (
+    id: string,
+    flag: "priority" | "completed" | "pending" | "viewed",
+  ) => {
+    if (flag === "priority") {
+      setPriorityBookings((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+        }
+        return newSet;
+      });
+    } else if (flag === "completed") {
+      setCompletedBookings((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+          // Remove from pending when marked as completed
+          setPendingBookings((prev) => {
+            const pendingSet = new Set(prev);
+            pendingSet.delete(id);
+            return pendingSet;
+          });
+        }
+        return newSet;
+      });
+    } else if (flag === "pending") {
+      setPendingBookings((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+          newSet.delete(id);
+        } else {
+          newSet.add(id);
+          // Remove from completed when marked as pending
+          setCompletedBookings((prev) => {
+            const completedSet = new Set(prev);
+            completedSet.delete(id);
+            return completedSet;
+          });
+        }
+        return newSet;
+      });
+    } else if (flag === "viewed") {
+      setViewedBookings((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(id);
+        return newSet;
+      });
+    }
+  };
+
+  // Get counts
   const getTabCounts = () => {
     const recentCount = getFilteredBookings("recent").length;
     const weekCount = getFilteredBookings("week").length;
@@ -93,6 +195,8 @@ const ConsultationsCard = () => {
   };
 
   const { recentCount, weekCount, olderCount } = getTabCounts();
+  const filteredBookings = getFilteredBookings(activeTab);
+  const newCount = bookings.filter((b) => !viewedBookings.has(b.id)).length;
 
   return (
     <Dialog onOpenChange={handleDialogOpen}>
@@ -138,6 +242,52 @@ const ConsultationsCard = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              <button
+                onClick={() => setFilterType("all")}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  filterType === "all"
+                    ? "bg-accent text-accent-foreground"
+                    : "border hover:bg-accent/5"
+                }`}
+              >
+                <span>All</span>
+              </button>
+              <button
+                onClick={() => setFilterType("priority")}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  filterType === "priority"
+                    ? "bg-accent text-accent-foreground"
+                    : "border hover:bg-accent/5"
+                }`}
+              >
+                <Star className="h-4 w-4" />
+                <span>Priority</span>
+              </button>
+              <button
+                onClick={() => setFilterType("completed")}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  filterType === "completed"
+                    ? "bg-accent text-accent-foreground"
+                    : "border hover:bg-accent/5"
+                }`}
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span>Completed</span>
+              </button>
+              <button
+                onClick={() => setFilterType("pending")}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                  filterType === "pending"
+                    ? "bg-accent text-accent-foreground"
+                    : "border hover:bg-accent/5"
+                }`}
+              >
+                <Clock className="h-4 w-4" />
+                <span>Pending</span>
+              </button>
+            </div>
+
             <Tabs
               defaultValue="recent"
               value={activeTab}
@@ -170,28 +320,104 @@ const ConsultationsCard = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="recent">
-                <BookingList
-                  bookings={getFilteredBookings("recent")}
-                  title="Most Recent Bookings"
-                  emptyMessage="No recent booking requests found."
-                />
-              </TabsContent>
-
-              <TabsContent value="week">
-                <BookingList
-                  bookings={getFilteredBookings("week")}
-                  title="Bookings From Last Week"
-                  emptyMessage="No bookings from last week."
-                />
-              </TabsContent>
-
-              <TabsContent value="older">
-                <BookingList
-                  bookings={getFilteredBookings("older")}
-                  title="Older Bookings"
-                  emptyMessage="No older booking requests found."
-                />
+              <TabsContent value={activeTab}>
+                <div className="space-y-4 max-h-80 overflow-y-auto">
+                  {filteredBookings.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">
+                      No bookings found.
+                    </p>
+                  ) : (
+                    filteredBookings.map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="rounded-lg border p-4 hover:bg-accent/5 cursor-pointer"
+                        onClick={() => toggleBookingFlag(booking.id, "viewed")}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium">
+                            Booking from {booking.fullName}
+                          </h3>
+                          <span className="text-xs text-accent">
+                            {formatDistanceToNow(new Date(booking.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {booking.message}
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="text-sm font-medium">
+                              {booking.email}
+                            </span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {booking.package}
+                            </span>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              {getCountryName(booking.country)} (
+                              {booking.country.toUpperCase()})
+                            </span>
+                          </div>
+                          <div className="flex space-x-2">
+                            {priorityBookings.has(booking.id) && (
+                              <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700">
+                                Priority
+                              </span>
+                            )}
+                            {completedBookings.has(booking.id) && (
+                              <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                                Completed
+                              </span>
+                            )}
+                            {pendingBookings.has(booking.id) && (
+                              <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                                Pending
+                              </span>
+                            )}
+                            {!viewedBookings.has(booking.id) && (
+                              <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+                                New
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2 mt-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookingFlag(booking.id, "priority");
+                            }}
+                            className={`p-1 rounded-full ${priorityBookings.has(booking.id) ? "bg-yellow-100 text-yellow-700" : "hover:bg-accent/10"}`}
+                            title="Mark as Priority"
+                          >
+                            <Star className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookingFlag(booking.id, "completed");
+                            }}
+                            className={`p-1 rounded-full ${completedBookings.has(booking.id) ? "bg-green-100 text-green-700" : "hover:bg-accent/10"}`}
+                            title="Mark as Completed"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookingFlag(booking.id, "pending");
+                            }}
+                            className={`p-1 rounded-full ${pendingBookings.has(booking.id) ? "bg-blue-100 text-blue-700" : "hover:bg-accent/10"}`}
+                            title="Mark as Pending"
+                          >
+                            <Clock className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
 
@@ -203,6 +429,30 @@ const ConsultationsCard = () => {
                     <span className="text-sm">Total Bookings</span>
                     <span className="font-medium">{bookings.length}</span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">New</span>
+                    <span className="font-medium">{newCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Priority</span>
+                    <span className="font-medium">{priorityBookings.size}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Completed</span>
+                    <span className="font-medium">
+                      {completedBookings.size}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Pending</span>
+                    <span className="font-medium">{pendingBookings.size}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-4">
+                <h3 className="font-semibold mb-2">Package Statistics</h3>
+                <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Professional Team</span>
                     <span className="font-medium">
@@ -238,84 +488,23 @@ const ConsultationsCard = () => {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="rounded-lg border p-4">
-                <h3 className="font-semibold mb-2">Quick Actions</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={loadBookings}
-                    className="w-full text-sm text-accent hover:text-accent/80"
-                  >
-                    Refresh Data
-                  </button>
-                  <button className="w-full text-sm text-accent hover:text-accent/80">
-                    Export to CSV
-                  </button>
-                </div>
-              </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={loadBookings}
+                className="px-4 py-2 bg-accent/10 text-accent rounded-md hover:bg-accent/20 transition-colors"
+              >
+                Refresh Data
+              </button>
+              <button className="px-4 py-2 bg-accent/10 text-accent rounded-md hover:bg-accent/20 transition-colors">
+                Export to CSV
+              </button>
             </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
-  );
-};
-
-// BookingList component for each tab
-type BookingListProps = {
-  bookings: Booking[];
-  title: string;
-  emptyMessage: string;
-};
-
-const BookingList = ({ bookings, title, emptyMessage }: BookingListProps) => {
-  // Function to get full country name from country code
-  const getCountryName = (countryCode: string): string => {
-    const country = countries.find(
-      (c) => c.value === countryCode.toLowerCase(),
-    );
-    return country ? country.label : countryCode;
-  };
-
-  return (
-    <div className="rounded-lg border p-4">
-      <h3 className="font-semibold mb-4">{title}</h3>
-      <div className="space-y-4 max-h-80 overflow-y-auto">
-        {bookings.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4">
-            {emptyMessage}
-          </p>
-        ) : (
-          bookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="flex justify-between items-start p-3 rounded-lg bg-accent/5"
-            >
-              <div>
-                <p className="font-medium">{booking.fullName}</p>
-                <p className="text-sm text-muted-foreground">{booking.email}</p>
-                <p className="text-sm text-muted-foreground">
-                  {booking.mobile}
-                </p>
-                <p className="text-sm text-accent">
-                  {format(new Date(booking.createdAt), "PPP")}
-                </p>
-                <p className="text-sm mt-2 line-clamp-2">{booking.message}</p>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 mb-2">
-                  {booking.package}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {getCountryName(booking.country)} (
-                  {booking.country.toUpperCase()})
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
   );
 };
 
