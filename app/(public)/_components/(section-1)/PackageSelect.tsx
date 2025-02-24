@@ -23,7 +23,7 @@ export function PackageSelect({ field, disabled }: PackageSelectProps) {
       defaultValue={field.value}
       disabled={disabled}
     >
-      <SelectTrigger className="bg-white border-gray-200 focus:border-red-500 focus:ring-red-500">
+      <SelectTrigger className=" border-gray-200 focus:border-red-500 focus:ring-red-500">
         <SelectValue placeholder="Select a package" />
       </SelectTrigger>
       <SelectContent>

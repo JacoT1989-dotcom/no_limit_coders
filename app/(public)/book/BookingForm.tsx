@@ -77,7 +77,7 @@ export function BookingSection() {
       id="booking"
       className="py-10 md:py-20 flex justify-center px-4 md:px-0"
     >
-      <div className="section-block">
+      <div className="bg-background dark:bg-black/40 backdrop-blur-sm border dark:border-white/10 rounded-2xl p-8 w-full max-w-4xl">
         <div className="container-block relative z-10">
           <motion.div
             initial={{ opacity: 0 }}
@@ -85,10 +85,10 @@ export function BookingSection() {
             transition={{ duration: 0.5 }}
             className="text-center mb-12 md:mb-16"
           >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-foreground">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-foreground dark:text-white">
               Book a Consultation
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-muted-foreground dark:text-white/60 max-w-2xl mx-auto">
               Choose your package and schedule a consultation with our team.
             </p>
           </motion.div>
@@ -105,15 +105,17 @@ export function BookingSection() {
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Full Name
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="John Doe"
                             {...field}
-                            className="bg-background"
+                            className="bg-background dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -122,16 +124,16 @@ export function BookingSection() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="dark:text-white">Email</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="john@example.com"
                             {...field}
                             type="email"
-                            className="bg-background"
+                            className="bg-background dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -140,15 +142,17 @@ export function BookingSection() {
                     name="mobile"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Mobile Number
+                        </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="+1234567890"
                             {...field}
-                            className="bg-background"
+                            className="bg-background dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -157,7 +161,9 @@ export function BookingSection() {
                     name="country"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Country
+                        </FormLabel>
                         <FormControl>
                           <CountrySearch
                             field={field}
@@ -165,7 +171,7 @@ export function BookingSection() {
                             setSearchQuery={setSearchQuery}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="dark:text-red-300" />
                       </FormItem>
                     )}
                   />
@@ -177,10 +183,12 @@ export function BookingSection() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel>Package</FormLabel>
+                        <FormLabel className="dark:text-white">
+                          Package
+                        </FormLabel>
                         <a
                           href="http://localhost:3000/#pricing"
-                          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                          className="text-xs text-muted-foreground hover:text-primary transition-colors dark:text-white/60 dark:hover:text-white"
                         >
                           See pricing →
                         </a>
@@ -190,20 +198,26 @@ export function BookingSection() {
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-background">
+                          <SelectTrigger className="bg-background dark:bg-black/40 dark:border-white/10 dark:text-white">
                             <SelectValue placeholder="Select your package type" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="NONE">Select a package</SelectItem>
+                        <SelectContent className="dark:bg-black/90 dark:border-white/10">
+                          <SelectItem value="NONE" className="dark:text-white">
+                            Select a package
+                          </SelectItem>
                           {packages.map((pkg) => (
-                            <SelectItem key={pkg.value} value={pkg.value}>
+                            <SelectItem
+                              key={pkg.value}
+                              value={pkg.value}
+                              className="dark:text-white"
+                            >
                               {pkg.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
+                      <FormMessage className="dark:text-red-300" />
                     </FormItem>
                   )}
                 />
@@ -213,16 +227,16 @@ export function BookingSection() {
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Message</FormLabel>
+                      <FormLabel className="dark:text-white">Message</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about your project requirements..."
-                          className="resize-none bg-background"
+                          className="resize-none bg-background dark:bg-black/40 dark:border-white/10 dark:text-white dark:placeholder-white/60"
                           {...field}
                           rows={6}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="dark:text-red-300" />
                     </FormItem>
                   )}
                 />
@@ -232,7 +246,7 @@ export function BookingSection() {
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto bg-red-700 text-white hover:bg-black"
+                    className="w-full md:w-auto bg-red-700 text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-white/90"
                   >
                     {isSubmitting ? (
                       <>
