@@ -230,6 +230,10 @@ model TechTeamMessage {
   user   User   @relation(fields: [userId], references: [id])
   userId String
 
+  // New relation to UserMessage
+  userMessage   UserMessage? @relation(fields: [userMessageId], references: [id])
+  userMessageId String?      @unique
+
   @@map("tech_team_messages")
 }
 
@@ -247,6 +251,9 @@ model UserMessage {
   user        User                @relation(fields: [userId], references: [id])
   userId      String
   attachments MessageAttachment[]
+
+  // New relationship with TechTeamMessage - one user message can have one tech team response
+  techTeamResponse TechTeamMessage?
 
   @@map("user_messages")
 }
