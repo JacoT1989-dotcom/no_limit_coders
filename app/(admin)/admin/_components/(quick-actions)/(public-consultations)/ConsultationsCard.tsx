@@ -21,7 +21,7 @@ const ConsultationsCard = () => {
               <div className="rounded-lg bg-accent/10 p-2">
                 <Calendar className="h-6 w-6 text-accent" />
               </div>
-              <span>Consultations Booked</span>
+              <span>Public Consultations Booked</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

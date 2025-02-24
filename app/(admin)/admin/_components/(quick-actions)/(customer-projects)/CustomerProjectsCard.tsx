@@ -21,12 +21,12 @@ const CustomerProjectsCard = () => {
               <div className="rounded-lg bg-accent/10 p-2">
                 <FolderPlus className="h-6 w-6 text-accent" />
               </div>
-              <span>Customer Projects</span>
+              <span>Reply to customer</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Stay up to date with our project inbox
+              Directly inbox a customer, or reply to customer messages received
             </p>
           </CardContent>
         </Card>

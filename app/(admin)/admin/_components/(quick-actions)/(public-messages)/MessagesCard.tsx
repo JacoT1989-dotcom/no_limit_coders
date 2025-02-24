@@ -21,7 +21,7 @@ const MessagesCard = () => {
               <div className="rounded-lg bg-accent/10 p-2">
                 <FileText className="h-6 w-6 text-accent" />
               </div>
-              <span>Messages Received</span>
+              <span>Public Messages Received</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
