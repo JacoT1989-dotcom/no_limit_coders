@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from "react";
+import React, { useState, ReactNode, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,33 +7,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MessageSquare, Filter, Loader2, X } from "lucide-react";
+import { MessageSquare, Filter, Loader2, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import MessageList from "./MessageList";
 import MessageDetail from "./MessageDetail";
+import { MessageCategory } from "@prisma/client";
+import { getUserMessages } from "./get-admin-messages";
 
-// Define types
+// Define types based on the data returned from the server
 interface Attachment {
   id: string;
   fileName: string;
   fileUrl: string;
+  createdAt: Date;
+  messageId: string;
 }
 
-interface User {
+interface TechTeamAttachment {
   id: string;
-  displayName: string;
-  email: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: Date;
 }
 
-interface Message {
+interface TechTeamResponse {
   id: string;
   subject: string;
   message: string;
@@ -41,11 +39,23 @@ interface Message {
   messageType: string;
   priority: string;
   createdAt: Date;
-  attachments: Attachment[];
-  user: User;
+  updatedAt: Date;
+  attachments: TechTeamAttachment[];
 }
 
-// No longer need Customer interface
+interface UserMessage {
+  id: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  category: MessageCategory;
+  isUnread: boolean;
+  hasAttachment: boolean;
+  createdAt: Date;
+  userId: string;
+  attachments: Attachment[];
+  techTeamResponse: TechTeamResponse | null;
+}
 
 interface ViewMessagesModalProps {
   children: ReactNode;
@@ -59,67 +69,94 @@ const PRIORITY_OPTIONS = [
   { label: "Urgent", value: "URGENT" },
 ];
 
-// Dummy data for the component
-const DUMMY_MESSAGES: Message[] = [
-  {
-    id: "msg1",
-    subject: "Login Page Issue",
-    message:
-      "I'm having trouble with the login page. It keeps showing an error when I enter my credentials.",
-    category: "bug",
-    messageType: "INQUIRY",
-    priority: "HIGH",
-    createdAt: new Date(Date.now() - 3600000), // 1 hour ago
-    attachments: [{ id: "att1", fileName: "screenshot.png", fileUrl: "#" }],
+// Helper function to format a date for display in the message list
+const formatTimestamp = (date: Date): string => {
+  const now = new Date();
+  const messageDate = new Date(date);
+  const diffMs = now.getTime() - messageDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 1) {
+    return `Today at ${messageDate.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  } else if (diffDays === 1) {
+    return "Yesterday";
+  } else if (diffDays < 7) {
+    return messageDate.toLocaleDateString(undefined, { weekday: "long" });
+  } else {
+    return messageDate.toLocaleDateString();
+  }
+};
+
+// Convert user messages to the format expected by MessageList
+const convertToMessageListFormat = (messages: UserMessage[]) => {
+  return messages.map((msg) => ({
+    id: msg.id,
+    subject: msg.subject,
+    message: msg.preview, // Using preview field for message content in the list
+    category: msg.category as string,
+    priority: msg.techTeamResponse?.priority || "MEDIUM", // Use priority from tech team response if available
+    timestamp: formatTimestamp(msg.createdAt),
+    attachments: msg.attachments,
+  }));
+};
+
+// Create a detailed message object for MessageDetail component
+const createDetailedMessage = (message: UserMessage) => {
+  // If there's a tech team response, use that for the message details
+  if (message.techTeamResponse) {
+    return {
+      id: message.id,
+      subject: message.subject,
+      message: message.techTeamResponse.message,
+      category: message.techTeamResponse.category,
+      messageType: message.techTeamResponse.messageType,
+      priority: message.techTeamResponse.priority,
+      createdAt: message.techTeamResponse.createdAt,
+      attachments: message.techTeamResponse.attachments.map((att) => ({
+        id: att.id,
+        fileName: att.fileName,
+        fileUrl: att.fileUrl,
+      })),
+      user: {
+        id: "admin", // Tech team/admin is always the sender for customer view
+        displayName: message.sender,
+        email: "admin@example.com", // This is a placeholder as we don't have admin email
+      },
+    };
+  }
+
+  // If there's no tech team response, use the user message data
+  return {
+    id: message.id,
+    subject: message.subject,
+    message: message.preview,
+    category: message.category as string,
+    messageType: "MESSAGE",
+    priority: "MEDIUM", // Default priority
+    createdAt: message.createdAt,
+    attachments: message.attachments.map((att) => ({
+      id: att.id,
+      fileName: att.fileName,
+      fileUrl: att.fileUrl,
+    })),
     user: {
-      id: "user1",
-      displayName: "John Doe",
-      email: "john.doe@example.com",
+      id: "admin",
+      displayName: message.sender,
+      email: "admin@example.com", // Placeholder
     },
-  },
-  {
-    id: "msg2",
-    subject: "Feature Request: Dark Mode",
-    message:
-      "Could you add a dark mode feature to the dashboard? It would be easier on the eyes when working late.",
-    category: "feature",
-    messageType: "REQUEST",
-    priority: "MEDIUM",
-    createdAt: new Date(Date.now() - 86400000), // 1 day ago
-    attachments: [],
-    user: {
-      id: "user1",
-      displayName: "John Doe",
-      email: "john.doe@example.com",
-    },
-  },
-  {
-    id: "msg3",
-    subject: "Security Alert",
-    message:
-      "I noticed that my password is being sent in plain text. This seems like a security concern.",
-    category: "security",
-    messageType: "ALERT",
-    priority: "URGENT",
-    createdAt: new Date(Date.now() - 7200000), // 2 hours ago
-    attachments: [
-      { id: "att2", fileName: "security_log.txt", fileUrl: "#" },
-      { id: "att3", fileName: "network_trace.pcap", fileUrl: "#" },
-    ],
-    user: {
-      id: "user2",
-      displayName: "Jane Smith",
-      email: "jane.smith@example.com",
-    },
-  },
-];
+  };
+};
 
 const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  // No longer need customer selection state
+  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<UserMessage[]>([]);
 
   // Set up filter functions
   const handleFilterChange = (newFilter: string): void => {
@@ -130,23 +167,56 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
     setFilter(null);
   };
 
-  // Simulate loading messages
-  const fetchMessages = (): void => {
+  // Fetch messages from the server
+  const fetchMessages = async (): Promise<void> => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const response = await getUserMessages();
+
+      if (response.error) {
+        setError(response.error);
+        return;
+      }
+
+      if (response.success && response.messages) {
+        setMessages(response.messages);
+      }
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      setError("Failed to load messages. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  // Filter messages based on selected priority only
-  const filteredMessages = DUMMY_MESSAGES.filter((msg) => {
-    return filter ? msg.priority === filter : true;
+  // Fetch messages when dialog opens
+  useEffect(() => {
+    if (dialogOpen) {
+      fetchMessages();
+    }
+  }, [dialogOpen]);
+
+  // Filter messages based on selected priority
+  const filteredMessages = messages.filter((msg) => {
+    if (!filter) return true;
+
+    // Check if tech team response exists and matches the priority filter
+    return msg.techTeamResponse && msg.techTeamResponse.priority === filter;
   });
+
+  // Convert messages to the format expected by the components
+  const displayMessages = convertToMessageListFormat(filteredMessages);
 
   // Get the current selected message object
   const currentMessage = selectedMessage
-    ? DUMMY_MESSAGES.find((msg) => msg.id === selectedMessage)
+    ? messages.find((msg) => msg.id === selectedMessage)
+    : null;
+
+  // Convert the current message to the format expected by MessageDetail
+  const detailedMessage = currentMessage
+    ? createDetailedMessage(currentMessage)
     : null;
 
   return (
@@ -154,9 +224,9 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-4xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Messages</DialogTitle>
+          <DialogTitle className="text-2xl">My Messages</DialogTitle>
           <DialogDescription>
-            Review and respond to messages from your customers
+            View messages from the support team
           </DialogDescription>
         </DialogHeader>
 
@@ -164,6 +234,13 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
           <div className="flex items-center justify-center h-[500px]">
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
             <span className="ml-2">Loading messages...</span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-[500px] text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={fetchMessages}>Try Again</Button>
           </div>
         ) : (
           <>
@@ -191,10 +268,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
             <div className="flex h-[500px] gap-4">
               {/* Message List Panel */}
               <MessageList
-                messages={filteredMessages.map((msg) => ({
-                  ...msg,
-                  timestamp: msg.createdAt.toLocaleDateString(),
-                }))}
+                messages={displayMessages}
                 selectedMessageId={selectedMessage}
                 onSelectMessage={setSelectedMessage}
                 currentFilter={filter}
@@ -203,7 +277,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
 
               {/* Message Detail Panel */}
               <MessageDetail
-                message={currentMessage}
+                message={detailedMessage}
                 onClose={() => setSelectedMessage(null)}
               />
             </div>
@@ -217,7 +291,10 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
             <span>
               {
                 filteredMessages.filter(
-                  (m) => m.priority === "URGENT" || m.priority === "HIGH",
+                  (m) =>
+                    m.techTeamResponse &&
+                    (m.techTeamResponse.priority === "URGENT" ||
+                      m.techTeamResponse.priority === "HIGH"),
                 ).length
               }{" "}
               high priority

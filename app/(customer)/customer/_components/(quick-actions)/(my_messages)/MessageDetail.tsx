@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reply, X, RefreshCw, Paperclip } from "lucide-react";
+import CustomerReplyDialog from "./CustomerReplyDialog";
+import AttachmentsModal from "../../../tasks/_components/(table)/(attachment)/AttachmentModal";
 
 interface Attachment {
   id: string;
@@ -30,9 +32,14 @@ interface Message {
 interface MessageDetailProps {
   message: Message | null | undefined;
   onClose: () => void;
+  onMessageReplied?: () => void;
 }
 
-const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
+const MessageDetail: React.FC<MessageDetailProps> = ({
+  message,
+  onClose,
+  onMessageReplied,
+}) => {
   const [replyDialogOpen, setReplyDialogOpen] = useState<boolean>(false);
 
   const formatDate = (date: Date): string => {
@@ -48,6 +55,24 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
     } else {
       const days = Math.floor(diffMins / (60 * 24));
       return `${days} ${days === 1 ? "day" : "days"} ago`;
+    }
+  };
+
+  // Convert attachments to the format expected by AttachmentsModal
+  const convertAttachments = (attachments: Attachment[]) => {
+    return attachments.map((att) => ({
+      id: att.id,
+      name: att.fileName,
+      url: att.fileUrl,
+      createdAt: new Date(), // Use current date as fallback if not available
+      taskId: "message", // Use placeholder since this isn't a task
+      uploaderId: "admin", // Use placeholder for uploader
+    }));
+  };
+
+  const handleMessageSent = () => {
+    if (onMessageReplied) {
+      onMessageReplied();
     }
   };
 
@@ -122,17 +147,9 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
         {message.attachments.length > 0 && (
           <div className="mt-6">
             <h4 className="text-sm font-medium mb-2">Attachments</h4>
-            <div className="flex flex-wrap gap-2">
-              {message.attachments.map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className="flex items-center gap-1 bg-muted p-2 rounded-md text-sm"
-                >
-                  <Paperclip className="h-4 w-4" />
-                  <span>{attachment.fileName}</span>
-                </div>
-              ))}
-            </div>
+            <AttachmentsModal
+              attachments={convertAttachments(message.attachments)}
+            />
           </div>
         )}
 
@@ -149,6 +166,19 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Reply Dialog */}
+      <CustomerReplyDialog
+        open={replyDialogOpen}
+        onOpenChange={setReplyDialogOpen}
+        message={{
+          id: message.id,
+          subject: message.subject,
+          sender: message.user.displayName,
+          message: message.message,
+        }}
+        onMessageSent={handleMessageSent}
+      />
     </div>
   );
 };
