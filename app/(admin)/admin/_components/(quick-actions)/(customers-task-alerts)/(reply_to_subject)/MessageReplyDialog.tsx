@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Paperclip, Send, Loader2 } from "lucide-react";
+import { Paperclip, Send, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -31,28 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { MessageCategory } from "@prisma/client";
 import { MessageWithUser } from "../CustomerMessageCard";
-import {
-  RespondToMessageFormValues,
-  respondToMessageSchema,
-} from "./validations";
 import { respondToMessage } from "./reply-message-actions";
-
-// FileUpload component
-const FileUpload = ({ onChange }: { onChange: (files: File[]) => void }) => (
-  <div className="border border-dashed border-gray-300 rounded-md p-4 text-center">
-    <input
-      type="file"
-      multiple
-      onChange={(e) => onChange(Array.from(e.target.files || []))}
-      className="hidden"
-      id="file-upload"
-    />
-    <label htmlFor="file-upload" className="cursor-pointer text-primary">
-      <Paperclip className="h-4 w-4 inline mr-2" />
-      Attach files
-    </label>
-  </div>
-);
 
 interface MessageReplyDialogProps {
   open: boolean;
@@ -68,57 +38,64 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
   onMessageResponded,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [subject, setSubject] = useState("");
+  const [preview, setPreview] = useState("");
+  const [messageText, setMessageText] = useState("");
+  const [category, setCategory] = useState<MessageCategory>(
+    MessageCategory.SUPPORT,
+  );
 
-  // Set up form with initial values and validation
-  const form = useForm<RespondToMessageFormValues>({
-    resolver: zodResolver(respondToMessageSchema),
-    defaultValues: {
-      techTeamMessageId: message?.id || "",
-      subject: message ? `Re: ${message.subject}` : "",
-      preview: "",
-      message: "",
-      category: MessageCategory.SUPPORT,
-      attachments: [],
-    },
-  });
-
-  // Update form values when selected message changes
+  // Reset form when message changes
   useEffect(() => {
     if (message) {
-      form.reset({
-        techTeamMessageId: message.id,
-        subject: `Re: ${message.subject}`,
-        preview: "",
-        message: "",
-        category: MessageCategory.SUPPORT,
-        attachments: [],
-      });
+      setSubject(`Re: ${message.subject}`);
+      setPreview("");
+      setMessageText("");
+      setCategory(MessageCategory.SUPPORT);
+      setFiles([]);
     }
-  }, [message, form]);
+  }, [message]);
 
-  // Handle form submission
-  const onSubmit = async (data: RespondToMessageFormValues) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!subject || !messageText || !category) {
+      toast("Error", { description: "Please fill all required fields" });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // This is just a placeholder, as the actual file upload logic would depend on your system
-      // Normally you'd upload files first, then pass the URLs to the server action
-      const attachmentsData = uploadedFiles.map((file) => ({
-        fileName: file.name,
-        fileUrl: URL.createObjectURL(file), // This is temporary, in reality you'd upload the file and get a URL
-      }));
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      formData.append("techTeamMessageId", message.id);
+      formData.append("subject", subject);
+      formData.append("preview", preview);
+      formData.append("message", messageText);
+      formData.append("category", category);
 
-      const result = await respondToMessage({
-        ...data,
-        techTeamMessageId: message.id,
-        attachments: attachmentsData,
+      // Append files
+      files.forEach((file) => {
+        formData.append("attachments", file);
       });
 
-      // TypeScript safeguard: Check if result has an error property
+      // Call the server action directly with FormData
+      const result = await respondToMessage(formData);
+
       if ("error" in result && result.error) {
-        toast("Error", { description: result.error });
-        return;
+        throw new Error(result.error);
       }
 
       // Success!
@@ -128,8 +105,11 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
       // Close the dialog and reset the form
       onOpenChange(false);
-      form.reset();
-      setUploadedFiles([]);
+      setSubject("");
+      setPreview("");
+      setMessageText("");
+      setCategory(MessageCategory.SUPPORT);
+      setFiles([]);
 
       // Notify parent component that a response was sent
       if (onMessageResponded) {
@@ -138,16 +118,14 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
     } catch (error) {
       console.error("Error sending response:", error);
       toast("Error", {
-        description: "An unexpected error occurred. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Handle file uploads
-  const handleFileUpload = (files: File[]) => {
-    setUploadedFiles(files);
   };
 
   return (
@@ -156,121 +134,128 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Reply to Customer</DialogTitle>
           <DialogDescription>
-            Send a direct response to {message.user.displayName}
+            Send a direct response to {message?.user?.displayName}
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="subject">Subject</Label>
+            <Input
+              id="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="preview"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Preview (shows in inbox)</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="preview">Preview (shows in inbox)</Label>
+            <Input
+              id="preview"
+              value={preview}
+              onChange={(e) => setPreview(e.target.value)}
+              placeholder="Brief summary of your message"
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={6} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="message">Message</Label>
+            <Textarea
+              id="message"
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              rows={6}
+              required
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={MessageCategory.DESIGN}>
-                        Design
-                      </SelectItem>
-                      <SelectItem value={MessageCategory.SUPPORT}>
-                        Support
-                      </SelectItem>
-                      <SelectItem value={MessageCategory.MEETING}>
-                        Meeting
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value as MessageCategory)}
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={MessageCategory.DESIGN}>Design</SelectItem>
+                <SelectItem value={MessageCategory.SUPPORT}>Support</SelectItem>
+                <SelectItem value={MessageCategory.MEETING}>Meeting</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div>
-              <FormLabel>Attachments</FormLabel>
-              <FileUpload onChange={handleFileUpload} />
-              {uploadedFiles.length > 0 && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  {uploadedFiles.length} file(s) selected
-                </div>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="file-upload">Attachments</Label>
+            <div className="border border-dashed border-gray-300 rounded-md p-4 text-center">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer text-primary"
+              >
+                <Paperclip className="h-4 w-4 inline mr-2" />
+                Attach files
+              </label>
             </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Send Response
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            {files.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-800 p-2 rounded"
+                  >
+                    <div className="flex items-center">
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      <span className="text-sm truncate">{file.name}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send Response
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
