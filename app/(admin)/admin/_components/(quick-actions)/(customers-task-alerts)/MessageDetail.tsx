@@ -1,16 +1,15 @@
-import React from "react";
-import { Download, Paperclip, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Reply, X, RefreshCw } from "lucide-react";
+import { MessageWithUser } from "./CustomerMessageCard";
 import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
-import { MessageWithUser } from "./CustomerMessageCard";
 import AttachmentsModal from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
-
-interface MessageDetailProps {
-  message: MessageWithUser | undefined;
-  onClose: () => void;
-}
+import MessageReplyDialog from "./(reply_to_subject)/MessageReplyDialog";
+import { toast } from "sonner";
+import { getMessageThread } from "./(reply_to_subject)/getMessageThread";
+import MessageThreadView from "./(reply_to_subject)/MessageThreadView";
 
 // Priority badge component for better visualization
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
@@ -75,7 +74,7 @@ interface TechTeamMessageAttachment {
   fileUrl: string;
 }
 
-// Properly typed function to convert TechTeamMessageAttachment to the format expected by your AttachmentsModal
+// Properly typed function to convert TechTeamMessageAttachment to the format expected by AttachmentsModal
 const convertAttachments = (
   attachments: TechTeamMessageAttachment[],
 ): {
@@ -96,7 +95,125 @@ const convertAttachments = (
   }));
 };
 
-const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
+interface MessageDetailProps {
+  message: MessageWithUser | undefined;
+  onClose: () => void;
+  onMessageResponded?: () => void;
+}
+
+const MessageDetail: React.FC<MessageDetailProps> = ({
+  message,
+  onClose,
+  onMessageResponded,
+}) => {
+  const [replyDialogOpen, setReplyDialogOpen] = useState(false);
+  const [threadResponses, setThreadResponses] = useState<
+    Array<{
+      id: string;
+      sender: string;
+      subject: string;
+      preview: string;
+      category: string;
+      createdAt: Date;
+      attachments: Array<{
+        id: string;
+        fileName: string;
+        fileUrl: string;
+      }>;
+    }>
+  >([]);
+  const [isLoadingThread, setIsLoadingThread] = useState(false);
+
+  // Using useCallback to memoize the function to avoid ESLint warnings
+  const fetchMessageThread = React.useCallback(async () => {
+    if (!message) return;
+
+    setIsLoadingThread(true);
+    try {
+      const response = await getMessageThread(message.id);
+
+      if (response.error) {
+        console.error("Error fetching thread:", response.error);
+        return;
+      }
+
+      // For debugging purposes
+      console.log("Thread response:", response);
+
+      // Properly handle the response structure from getMessageThread
+      if (response.success) {
+        // The server action returns responses within the object, but they're empty
+        // Let's check if there's a userMessage in the response and include it
+        const threadResponses = [];
+
+        // If there's a userMessage, add it to our thread responses
+        if (response.original && response.original.userMessage) {
+          const userMessage = response.original.userMessage;
+          console.log("Found user message in response:", userMessage);
+
+          // Create a response object in the format expected by MessageThreadView
+          threadResponses.push({
+            id: userMessage.id,
+            sender: userMessage.sender,
+            subject: userMessage.subject,
+            preview: userMessage.preview || "", // Use preview directly, message isn't available
+            category: userMessage.category,
+            createdAt: new Date(userMessage.createdAt),
+            attachments: userMessage.attachments || [],
+          });
+        }
+
+        // Also add any responses from the responses array (though it seems empty now)
+        if (
+          Array.isArray(response.responses) &&
+          response.responses.length > 0
+        ) {
+          console.log("Adding responses from array:", response.responses);
+          threadResponses.push(...response.responses);
+        }
+
+        console.log("Final thread responses:", threadResponses);
+        setThreadResponses(threadResponses);
+      } else {
+        // If no success or empty array, set empty array
+        console.log("No success in response");
+        setThreadResponses([]);
+      }
+    } catch (error) {
+      console.error("Error fetching message thread:", error);
+      toast("Error", {
+        description: "Failed to load message history",
+      });
+      // Set empty array on error
+      setThreadResponses([]);
+    } finally {
+      setIsLoadingThread(false);
+    }
+  }, [message]);
+
+  // Fetch message thread when message changes
+  useEffect(() => {
+    if (message) {
+      fetchMessageThread();
+    }
+  }, [message, fetchMessageThread]);
+
+  const handleMessageResponded = () => {
+    // Log that the callback was triggered
+    console.log("Message responded callback triggered");
+
+    // Add a small delay before fetching to allow the database to update
+    setTimeout(() => {
+      console.log("Refreshing thread after response");
+      fetchMessageThread();
+    }, 500);
+
+    // Call parent callback if provided
+    if (onMessageResponded) {
+      onMessageResponded();
+    }
+  };
+
   return (
     <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col">
       {message ? (
@@ -127,15 +244,27 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
                 />
               </div>
             </div>
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 ml-2"
-              title="Clear message view"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setReplyDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="h-8"
+                title="Reply to message"
+              >
+                <Reply className="h-4 w-4 mr-1" />
+                Reply
+              </Button>
+              <Button
+                onClick={onClose}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Clear message view"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="p-4 flex-1 overflow-y-auto">
@@ -146,14 +275,27 @@ const MessageDetail: React.FC<MessageDetailProps> = ({ message, onClose }) => {
             {message.attachments.length > 0 && (
               <div className="mt-6">
                 <h4 className="text-sm font-medium mb-2">Attachments</h4>
-
-                {/* Simply use your AttachmentsModal here */}
                 <AttachmentsModal
                   attachments={convertAttachments(message.attachments)}
                 />
               </div>
             )}
+
+            {/* Display message thread */}
+            <MessageThreadView
+              responses={threadResponses}
+              isLoading={isLoadingThread}
+              onRefresh={fetchMessageThread}
+            />
           </div>
+
+          {/* Reply Dialog */}
+          <MessageReplyDialog
+            open={replyDialogOpen}
+            onOpenChange={setReplyDialogOpen}
+            message={message}
+            onMessageResponded={handleMessageResponded}
+          />
         </>
       ) : (
         <div className="flex items-center justify-center h-full text-muted-foreground">
