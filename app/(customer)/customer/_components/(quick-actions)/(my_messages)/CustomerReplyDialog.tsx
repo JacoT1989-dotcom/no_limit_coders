@@ -74,7 +74,8 @@ const CustomerReplyDialog: React.FC<CustomerReplyDialogProps> = ({
   // Reset form when message changes
   useEffect(() => {
     if (message) {
-      setSubject(`Re: ${message.subject}`);
+      // Use the preview as the subject if available, otherwise use the original subject
+      setSubject(message.preview || message.subject);
       setMessageText("");
       setCategory("support");
       setMessageType("RESPONSE");
@@ -202,7 +203,12 @@ const CustomerReplyDialog: React.FC<CustomerReplyDialogProps> = ({
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               required
+              disabled={true} // Disable the subject field so customer can't modify it
+              className="bg-muted/30"
             />
+            <p className="text-xs text-muted-foreground">
+              The subject cannot be changed
+            </p>
           </div>
 
           <div className="space-y-2">

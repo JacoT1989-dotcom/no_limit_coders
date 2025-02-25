@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reply, X, RefreshCw, Paperclip } from "lucide-react";
 import CustomerReplyDialog from "./CustomerReplyDialog";
 import AttachmentsModal from "../../../tasks/_components/(table)/(attachment)/AttachmentModal";
+import CustomerMessageThreadView from "./CustomerMessageThreadView";
+import { getMessageThread } from "./getMessageThread";
+import { MessageCategory } from "@prisma/client";
 
 interface Attachment {
   id: string;
@@ -41,6 +44,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   onMessageReplied,
 }) => {
   const [replyDialogOpen, setReplyDialogOpen] = useState<boolean>(false);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
   const formatDate = (date: Date): string => {
     const now = new Date();
@@ -77,6 +81,37 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
     if (onMessageReplied) {
       onMessageReplied();
     }
+    // Refresh the thread view when a new message is sent
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // Handle thread refresh
+  const handleThreadRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  // Create an initial message object for the thread view
+  const createInitialThreadMessage = () => {
+    if (!message) return undefined;
+
+    return {
+      id: message.id,
+      sender: message.user.displayName,
+      subject: message.subject,
+      message: message.message,
+      category: message.category as unknown as MessageCategory, // Cast to MessageCategory
+      priority: message.priority,
+      messageType: message.messageType,
+      createdAt: message.createdAt,
+      isCustomerMessage: false, // This is from admin/tech team
+      attachments: message.attachments.map((att) => ({
+        id: att.id,
+        fileName: att.fileName,
+        fileUrl: att.fileUrl,
+        createdAt: new Date(),
+        messageId: message.id,
+      })),
+    };
   };
 
   if (!message) {
@@ -156,18 +191,13 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
           </div>
         )}
 
-        {/* Message thread/history section */}
-        <div className="mt-6 border-t pt-4">
-          <div className="flex justify-between items-center mb-3">
-            <h4 className="text-sm font-medium">Message History</h4>
-            <Button variant="ghost" size="sm" className="h-7 gap-1">
-              <RefreshCw className="h-3 w-3" /> Refresh
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground italic">
-            No previous messages in this thread.
-          </div>
-        </div>
+        {/* Message thread/history section - Now using the new component */}
+        <CustomerMessageThreadView
+          key={`thread-${message.id}-${refreshKey}`}
+          messageId={message.id}
+          initialMessage={createInitialThreadMessage()}
+          onRefresh={handleThreadRefresh}
+        />
       </div>
 
       {/* Reply Dialog */}
