@@ -1,5 +1,5 @@
 import React from "react";
-import { Paperclip, RefreshCw, MessageSquare } from "lucide-react";
+import { RefreshCw, MessageSquare, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -7,6 +7,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import AttachmentsModal, {
+  AttachmentsBadge,
+} from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
 
 interface MessageThreadViewProps {
   responses: Array<{
@@ -20,6 +23,9 @@ interface MessageThreadViewProps {
       id: string;
       fileName: string;
       fileUrl: string;
+      createdAt?: Date;
+      taskId?: string;
+      uploaderId?: string;
     }>;
   }>;
   isLoading: boolean;
@@ -67,6 +73,38 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
 
   // Handle empty or undefined responses
   const validResponses = Array.isArray(responses) ? responses : [];
+
+  // Convert attachments format to match what AttachmentsModal expects
+  const convertAttachmentsFormat = (
+    attachments:
+      | Array<{
+          id: string;
+          fileName: string;
+          fileUrl: string;
+          createdAt?: Date;
+          taskId?: string;
+          uploaderId?: string;
+        }>
+      | undefined,
+  ): Array<{
+    id: string;
+    name: string;
+    url: string;
+    createdAt: Date;
+    taskId: string;
+    uploaderId: string;
+  }> => {
+    if (!attachments || !Array.isArray(attachments)) return [];
+
+    return attachments.map((attachment) => ({
+      id: attachment.id,
+      name: attachment.fileName,
+      url: attachment.fileUrl,
+      createdAt: attachment.createdAt || new Date(),
+      taskId: attachment.taskId || "default-task",
+      uploaderId: attachment.uploaderId || "default-uploader",
+    }));
+  };
 
   if (validResponses.length === 0) {
     return (
@@ -133,10 +171,11 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
                       response.attachments.length > 0 && (
                         <>
                           <span>•</span>
-                          <span className="flex items-center">
-                            <Paperclip className="h-3 w-3 mr-1" />
-                            {response.attachments.length}
-                          </span>
+                          <AttachmentsBadge
+                            attachments={convertAttachmentsFormat(
+                              response.attachments,
+                            )}
+                          />
                         </>
                       )}
                   </div>
@@ -152,16 +191,20 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
                     <div className="text-xs font-medium mb-2">Attachments</div>
                     <div className="space-y-2">
                       {response.attachments.map((attachment, i) => (
-                        <a
+                        <div
                           key={attachment.id || `attachment-${i}`}
-                          href={attachment.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs flex items-center p-2 border rounded hover:bg-muted/20 transition-colors"
+                          className="flex items-center justify-between p-2 rounded-lg border bg-card/80 hover:bg-muted/50 transition-colors"
                         >
-                          <Paperclip className="h-3 w-3 mr-2" />
-                          {attachment.fileName}
-                        </a>
+                          <div className="flex items-center gap-2">
+                            <Paperclip className="h-4 w-4 text-primary" />
+                            <span className="text-xs truncate">
+                              {attachment.fileName}
+                            </span>
+                          </div>
+                          <AttachmentsModal
+                            attachments={convertAttachmentsFormat([attachment])}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>

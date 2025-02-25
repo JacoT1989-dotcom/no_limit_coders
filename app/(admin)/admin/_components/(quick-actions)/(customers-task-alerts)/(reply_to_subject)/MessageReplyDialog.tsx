@@ -152,7 +152,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl !bg-black !border-gray-800 text-white">
         <DialogHeader>
           <DialogTitle>Reply to Customer</DialogTitle>
           <DialogDescription>

@@ -119,6 +119,9 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
         id: string;
         fileName: string;
         fileUrl: string;
+        createdAt: Date;
+        taskId: string;
+        uploaderId: string;
       }>;
     }>
   >([]);
@@ -159,7 +162,14 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
             preview: userMessage.preview || "", // Use preview directly, message isn't available
             category: userMessage.category,
             createdAt: new Date(userMessage.createdAt),
-            attachments: userMessage.attachments || [],
+            attachments: (userMessage.attachments || []).map((att) => ({
+              id: att.id || String(Math.random()),
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              createdAt: new Date(),
+              taskId: "message",
+              uploaderId: "user",
+            })),
           });
         }
 
@@ -169,7 +179,18 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
           response.responses.length > 0
         ) {
           console.log("Adding responses from array:", response.responses);
-          threadResponses.push(...response.responses);
+          const formattedResponses = response.responses.map((resp) => ({
+            ...resp,
+            attachments: (resp.attachments || []).map((att) => ({
+              id: att.id || String(Math.random()),
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              createdAt: new Date(),
+              taskId: "message",
+              uploaderId: "user",
+            })),
+          }));
+          threadResponses.push(...formattedResponses);
         }
 
         console.log("Final thread responses:", threadResponses);
