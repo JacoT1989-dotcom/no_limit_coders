@@ -57,14 +57,6 @@ export async function replyToUserMessage(formData: FormData) {
       return { error: "Original message not found" };
     }
 
-    // Check if there's already a tech team response linked to this user message
-    if (userMessage.techTeamResponse) {
-      return {
-        error:
-          "This message already has a response. Please start a new conversation instead.",
-      };
-    }
-
     // Handle file uploads
     const files = formData.getAll("attachments") as File[];
 
@@ -113,58 +105,103 @@ export async function replyToUserMessage(formData: FormData) {
 
     // Create a transaction to ensure all operations succeed or fail together
     const result = await prisma.$transaction(async (tx) => {
-      // First, create the tech team message
-      const techTeamMessage = await tx.techTeamMessage.create({
-        data: {
-          subject: subject || `Re: ${userMessage.subject}`,
-          message: message,
-          category: category,
-          messageType: messageType,
-          priority: priority,
-          userId: user.id,
-          userMessageId: userMessageId, // Directly set the foreign key
-        },
-        include: {
-          user: true,
-        },
-      });
-
-      // Then create attachments separately
-      if (attachments.length > 0) {
-        await tx.techTeamMessageAttachment.createMany({
-          data: attachments.map((attachment) => ({
-            fileName: attachment.fileName,
-            fileUrl: attachment.fileUrl,
-            messageId: techTeamMessage.id,
-          })),
+      // MODIFICATION: If there's already a linked tech team response to this user message,
+      // create a new tech team message WITHOUT linking it to the user message
+      if (userMessage.techTeamResponse) {
+        // Create a new "follow-up" tech team message without setting userMessageId
+        const techTeamMessage = await tx.techTeamMessage.create({
+          data: {
+            subject: `Re: ${userMessage.subject}`, // Use a "Re:" prefix to indicate it's a reply
+            message: message,
+            category: category,
+            messageType: messageType,
+            priority: priority,
+            userId: user.id,
+            // Don't set userMessageId to avoid the unique constraint error
+          },
+          include: {
+            user: true,
+          },
         });
-      }
 
-      // Fetch the created attachments to return them
-      const createdAttachments = await tx.techTeamMessageAttachment.findMany({
-        where: {
+        // Then create attachments separately
+        if (attachments.length > 0) {
+          await tx.techTeamMessageAttachment.createMany({
+            data: attachments.map((attachment) => ({
+              fileName: attachment.fileName,
+              fileUrl: attachment.fileUrl,
+              messageId: techTeamMessage.id,
+            })),
+          });
+        }
+
+        // Fetch the created attachments to return them
+        const createdAttachments = await tx.techTeamMessageAttachment.findMany({
+          where: {
+            messageId: techTeamMessage.id,
+          },
+        });
+
+        return {
+          success: true,
           messageId: techTeamMessage.id,
-        },
-      });
+          attachments: createdAttachments,
+          isFollowUp: true, // Indicate this is a follow-up message
+        };
+      } else {
+        // Original behavior: If there's no existing response, link the new one to the user message
+        const techTeamMessage = await tx.techTeamMessage.create({
+          data: {
+            subject: subject || `Re: ${userMessage.subject}`,
+            message: message,
+            category: category,
+            messageType: messageType,
+            priority: priority,
+            userId: user.id,
+            userMessageId: userMessageId, // Set the userMessageId for the first response
+          },
+          include: {
+            user: true,
+          },
+        });
 
-      // Mark the user message as read
-      await tx.userMessage.update({
-        where: { id: userMessageId },
-        data: { isUnread: false },
-      });
+        // Then create attachments separately
+        if (attachments.length > 0) {
+          await tx.techTeamMessageAttachment.createMany({
+            data: attachments.map((attachment) => ({
+              fileName: attachment.fileName,
+              fileUrl: attachment.fileUrl,
+              messageId: techTeamMessage.id,
+            })),
+          });
+        }
 
-      return {
-        success: true,
-        messageId: techTeamMessage.id,
-        attachments: createdAttachments,
-      };
+        // Fetch the created attachments to return them
+        const createdAttachments = await tx.techTeamMessageAttachment.findMany({
+          where: {
+            messageId: techTeamMessage.id,
+          },
+        });
+
+        // Mark the user message as read
+        await tx.userMessage.update({
+          where: { id: userMessageId },
+          data: { isUnread: false },
+        });
+
+        return {
+          success: true,
+          messageId: techTeamMessage.id,
+          attachments: createdAttachments,
+        };
+      }
     });
 
     return result;
   } catch (error) {
     console.error("Error sending tech team response:", error);
 
-    // Provide more detailed error information
+    // Your existing error handling code
     if (error && typeof error === "object" && "code" in error) {
       if (error.code === "P2002") {
         return {

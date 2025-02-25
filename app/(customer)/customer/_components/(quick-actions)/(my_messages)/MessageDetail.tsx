@@ -90,30 +90,6 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
     setRefreshKey((prev) => prev + 1);
   };
 
-  // Create an initial message object for the thread view
-  const createInitialThreadMessage = () => {
-    if (!message) return undefined;
-
-    return {
-      id: message.id,
-      sender: message.user.displayName,
-      subject: message.subject,
-      message: message.message,
-      category: message.category as unknown as MessageCategory, // Cast to MessageCategory
-      priority: message.priority,
-      messageType: message.messageType,
-      createdAt: message.createdAt,
-      isCustomerMessage: false, // This is from admin/tech team
-      attachments: message.attachments.map((att) => ({
-        id: att.id,
-        fileName: att.fileName,
-        fileUrl: att.fileUrl,
-        createdAt: new Date(),
-        messageId: message.id,
-      })),
-    };
-  };
-
   if (!message) {
     return (
       <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col">
@@ -195,7 +171,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
         <CustomerMessageThreadView
           key={`thread-${message.id}-${refreshKey}`}
           messageId={message.id}
-          initialMessage={createInitialThreadMessage()}
+          // Removed initialMessage to prevent admin messages from showing
           onRefresh={handleThreadRefresh}
         />
       </div>

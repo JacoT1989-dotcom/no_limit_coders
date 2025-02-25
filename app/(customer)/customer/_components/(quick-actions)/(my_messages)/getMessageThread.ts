@@ -17,7 +17,6 @@ export async function getMessageThread(messageId: string) {
         userId: user.id,
       },
       include: {
-        attachments: true,
         techTeamResponse: {
           include: {
             attachments: true,
@@ -32,48 +31,82 @@ export async function getMessageThread(messageId: string) {
       };
     }
 
-    // Create the thread responses array, starting with the original user message
-    const threadResponses = [
-      {
-        id: originalMessage.id,
-        sender: "You", // Changed to indicate this is the customer's message
-        subject: originalMessage.subject,
-        message: originalMessage.preview,
-        category: originalMessage.category, // This is already a MessageCategory enum
-        priority: "MEDIUM", // Default priority for user messages
-        messageType: "MESSAGE",
-        createdAt: originalMessage.createdAt,
-        isCustomerMessage: true, // Set to true for customer's message
-        attachments: originalMessage.attachments.map((attachment) => ({
-          id: attachment.id,
-          fileName: attachment.fileName,
-          fileUrl: attachment.fileUrl,
-          createdAt: attachment.createdAt,
-          messageId: originalMessage.id,
-        })),
-      },
-    ];
+    // Create the thread responses array
+    const threadResponses = [];
 
-    // If there's a tech team response, add it to the thread
+    // Only add the customer's direct reply (techTeamResponse) if it exists
     if (originalMessage.techTeamResponse) {
-      const techResponse = originalMessage.techTeamResponse; // Assign to a constant to satisfy TypeScript
+      const customerReply = originalMessage.techTeamResponse;
 
       threadResponses.push({
-        id: techResponse.id,
-        sender: "Tech Support Team",
-        subject: techResponse.subject,
-        message: techResponse.message,
-        category: techResponse.category as unknown as MessageCategory, // Cast to MessageCategory
-        priority: techResponse.priority,
-        messageType: techResponse.messageType,
-        createdAt: techResponse.createdAt,
-        isCustomerMessage: false, // Set to false for tech team messages
-        attachments: techResponse.attachments.map((attachment) => ({
+        id: customerReply.id,
+        sender: "You", // This is the customer's reply
+        subject: customerReply.subject,
+        message: customerReply.message,
+        category: customerReply.category as unknown as MessageCategory,
+        priority: customerReply.priority,
+        messageType: customerReply.messageType,
+        createdAt: customerReply.createdAt,
+        isCustomerMessage: true, // This is from the customer
+        attachments: customerReply.attachments.map((attachment) => ({
           id: attachment.id,
           fileName: attachment.fileName,
           fileUrl: attachment.fileUrl,
           createdAt: attachment.createdAt,
-          messageId: techResponse.id,
+          messageId: customerReply.id,
+        })),
+      });
+    }
+
+    // Find ANY TechTeamMessages from this user (remove all filtering first for debugging)
+    const allUserReplies = await prisma.techTeamMessage.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        attachments: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    // Now apply our actual filtering
+    const relatedReplies = allUserReplies.filter((reply) => {
+      // If this is already added as the direct response, skip it
+      if (
+        originalMessage.techTeamResponse &&
+        reply.id === originalMessage.techTeamResponse.id
+      ) {
+        return false;
+      }
+
+      // Check if subject contains the original subject
+      const subjectMatches =
+        reply.subject.includes(originalMessage.subject) ||
+        reply.subject.includes(`Re: ${originalMessage.subject}`);
+
+      return subjectMatches;
+    });
+
+    // Add all related customer replies to the thread
+    for (const reply of relatedReplies) {
+      threadResponses.push({
+        id: reply.id,
+        sender: "You", // Customer's message
+        subject: reply.subject,
+        message: reply.message,
+        category: reply.category as unknown as MessageCategory,
+        priority: reply.priority,
+        messageType: reply.messageType,
+        createdAt: reply.createdAt,
+        isCustomerMessage: true, // This is from the customer
+        attachments: reply.attachments.map((attachment) => ({
+          id: attachment.id,
+          fileName: attachment.fileName,
+          fileUrl: attachment.fileUrl,
+          createdAt: attachment.createdAt,
+          messageId: reply.id,
         })),
       });
     }

@@ -11,6 +11,7 @@ import AttachmentsModal, {
   AttachmentsBadge,
 } from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
 import { Priority, MessageCategory } from "@prisma/client";
+import { getMessageThread } from "./getMessageThread";
 
 // Define the types for our responses and attachments
 interface ThreadResponseAttachment {
@@ -116,22 +117,17 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/messages/${messageId}/thread`);
+      // Use server action directly instead of fetch
+      const result = await getMessageThread(messageId);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch message thread");
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.messages) {
-        setResponses(data.messages);
+      if (result.success && result.messages) {
+        setResponses(result.messages);
       } else {
-        // If we have an initial message but the API failed, at least show that
+        // If we have an initial message but the server action failed, at least show that
         if (initialMessage && responses.length === 0) {
           setResponses([initialMessage]);
         }
-        console.error("Error fetching message thread:", data.error);
+        console.error("Error fetching message thread:", result.error);
       }
     } catch (error) {
       console.error("Error fetching message thread:", error);
