@@ -130,9 +130,9 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl !bg-black !border-gray-800 text-white">
+      <DialogContent className="sm:max-w-xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader>
-          <DialogTitle>Reply to Customer</DialogTitle>
+          <DialogTitle className="text-xl">Reply to Customer</DialogTitle>
           <DialogDescription>
             Send a direct response to {message?.user?.displayName}
           </DialogDescription>
@@ -189,7 +189,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="file-upload">Attachments</Label>
-            <div className="border border-dashed border-gray-300 rounded-md p-4 text-center">
+            <div className="border border-dashed border-border rounded-md p-4 text-center hover:bg-accent/5 transition-colors">
               <input
                 type="file"
                 multiple
@@ -199,7 +199,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
               />
               <label
                 htmlFor="file-upload"
-                className="cursor-pointer text-primary"
+                className="cursor-pointer text-accent"
               >
                 <Paperclip className="h-4 w-4 inline mr-2" />
                 Attach files
@@ -211,10 +211,10 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
                 {files.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-gray-800 p-2 rounded"
+                    className="flex items-center justify-between bg-background dark:bg-card border border-border p-2 rounded"
                   >
                     <div className="flex items-center">
-                      <Paperclip className="h-4 w-4 mr-2" />
+                      <Paperclip className="h-4 w-4 mr-2 text-accent" />
                       <span className="text-sm truncate">{file.name}</span>
                     </div>
                     <Button
@@ -238,18 +238,19 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="border-border"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="gap-2">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
+                  <Send className="h-4 w-4" />
                   Send Response
                 </>
               )}
