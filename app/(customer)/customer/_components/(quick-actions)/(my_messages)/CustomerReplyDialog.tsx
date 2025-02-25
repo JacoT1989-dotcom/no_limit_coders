@@ -92,44 +92,27 @@ const CustomerReplyDialog: React.FC<CustomerReplyDialogProps> = ({
   }, [files]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input change event triggered");
-
     if (e.target.files && e.target.files.length > 0) {
-      // Convert FileList to Array and append to existing files
       const newFiles = Array.from(e.target.files);
-      console.log(
-        "Selected files:",
-        newFiles.map((f) => `${f.name} (${f.size} bytes)`),
-      );
 
-      // Add new files to state
-      setFiles((prev) => [...prev, ...newFiles]);
+      // Check for duplicates before adding files
+      const uniqueFiles = newFiles.filter((newFile) => {
+        return !files.some(
+          (existingFile) => existingFile.name === newFile.name,
+        );
+      });
 
-      // Alert for debugging
-      alert(
-        `Selected ${newFiles.length} files: ${newFiles.map((f) => f.name).join(", ")}`,
-      );
+      if (uniqueFiles.length > 0) {
+        setFiles((prev) => [...prev, ...uniqueFiles]);
+      } else {
+        toast("Warning", {
+          description: "Some files were already selected and were not added.",
+        });
+      }
 
-      // Reset the input value so the same file can be selected again if needed
+      // Reset the input value
       e.target.value = "";
-    } else {
-      console.log(
-        "No files selected or file input event triggered without files",
-      );
     }
-  };
-
-  const removeFile = (index: number) => {
-    console.log(`Removing file at index ${index}`);
-    setFiles((prevFiles) => {
-      const newFiles = [...prevFiles];
-      newFiles.splice(index, 1);
-      console.log(`Files after removal: ${newFiles.length}`);
-      return newFiles;
-    });
-
-    // Alert for debugging
-    alert(`Removed file at index ${index}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -341,16 +324,6 @@ const CustomerReplyDialog: React.FC<CustomerReplyDialogProps> = ({
                           ({(file.size / 1024).toFixed(1)} KB)
                         </span>
                       </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="ml-2"
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="ml-1">Remove</span>
-                      </Button>
                     </div>
                   ))}
                 </div>
@@ -389,6 +362,3 @@ const CustomerReplyDialog: React.FC<CustomerReplyDialogProps> = ({
 };
 
 export default CustomerReplyDialog;
-
-
-

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { RefreshCw, MessageSquare, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,23 +11,29 @@ import AttachmentsModal, {
   AttachmentsBadge,
 } from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
 
+// Define the types for our responses and attachments
+interface ThreadResponseAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: Date;
+  messageId?: string;
+  taskId: string;
+  uploaderId: string;
+}
+
+interface ThreadResponse {
+  id: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  category: string;
+  createdAt: Date;
+  attachments: ThreadResponseAttachment[];
+}
+
 interface MessageThreadViewProps {
-  responses: Array<{
-    id: string;
-    sender: string;
-    subject: string;
-    preview: string;
-    category: string;
-    createdAt: Date;
-    attachments: Array<{
-      id: string;
-      fileName: string;
-      fileUrl: string;
-      createdAt?: Date;
-      taskId?: string;
-      uploaderId?: string;
-    }>;
-  }>;
+  responses: ThreadResponse[];
   isLoading: boolean;
   onRefresh: () => void;
 }
@@ -67,25 +73,34 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
   onRefresh,
 }) => {
   // Debug the responses we received
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("MessageThreadView rendered with responses:", responses);
+  }, [responses]);
+
+  // Add debugging useEffect
+  useEffect(() => {
+    console.log("Each response with its attachments:");
+    responses.forEach((response, index) => {
+      console.log(`Response ${index} (${response.id}):`, response.subject);
+      console.log(
+        `Attachments:`,
+        response.attachments?.map((att) => ({
+          id: att.id,
+          fileName: att.fileName,
+          messageId: att.messageId || response.id,
+        })),
+      );
+    });
   }, [responses]);
 
   // Handle empty or undefined responses
   const validResponses = Array.isArray(responses) ? responses : [];
 
   // Convert attachments format to match what AttachmentsModal expects
+  // IMPORTANT: Only include attachments that belong to the current message
   const convertAttachmentsFormat = (
-    attachments:
-      | Array<{
-          id: string;
-          fileName: string;
-          fileUrl: string;
-          createdAt?: Date;
-          taskId?: string;
-          uploaderId?: string;
-        }>
-      | undefined,
+    attachments: ThreadResponseAttachment[] | undefined,
+    messageId: string,
   ): Array<{
     id: string;
     name: string;
@@ -96,7 +111,19 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
   }> => {
     if (!attachments || !Array.isArray(attachments)) return [];
 
-    return attachments.map((attachment) => ({
+    // Filter attachments to only include those belonging to this message
+    const filteredAttachments = attachments.filter((att) => {
+      // Ensure the attachment has a valid messageId and it matches the provided messageId
+      return att.messageId && att.messageId === messageId;
+    });
+
+    console.log(
+      `Filtered ${attachments.length} attachments for message ${messageId}, returned ${filteredAttachments.length}`,
+      filteredAttachments,
+    );
+
+    // Map the filtered attachments to the expected format
+    return filteredAttachments.map((attachment) => ({
       id: attachment.id,
       name: attachment.fileName,
       url: attachment.fileUrl,
@@ -168,12 +195,17 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
                     <span>•</span>
                     <span>{formatDate(response.createdAt)}</span>
                     {response.attachments &&
-                      response.attachments.length > 0 && (
+                      response.attachments.length > 0 &&
+                      response.attachments.some(
+                        (att) =>
+                          !att.messageId || att.messageId === response.id,
+                      ) && (
                         <>
                           <span>•</span>
                           <AttachmentsBadge
                             attachments={convertAttachmentsFormat(
                               response.attachments,
+                              response.id,
                             )}
                           />
                         </>
@@ -186,29 +218,43 @@ const MessageThreadView: React.FC<MessageThreadViewProps> = ({
               <div className="text-sm">
                 <p className="mb-3">{response.preview}</p>
 
-                {response.attachments && response.attachments.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <div className="text-xs font-medium mb-2">Attachments</div>
-                    <div className="space-y-2">
-                      {response.attachments.map((attachment, i) => (
-                        <div
-                          key={attachment.id || `attachment-${i}`}
-                          className="flex items-center justify-between p-2 rounded-lg border bg-card/80 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Paperclip className="h-4 w-4 text-primary" />
-                            <span className="text-xs truncate">
-                              {attachment.fileName}
-                            </span>
-                          </div>
-                          <AttachmentsModal
-                            attachments={convertAttachmentsFormat([attachment])}
-                          />
-                        </div>
-                      ))}
+                {response.attachments &&
+                  response.attachments.length > 0 &&
+                  response.attachments.some(
+                    (att) => !att.messageId || att.messageId === response.id,
+                  ) && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium mb-2">
+                        Attachments
+                      </div>
+                      <div className="space-y-2">
+                        {response.attachments
+                          .filter(
+                            (att) =>
+                              !att.messageId || att.messageId === response.id,
+                          )
+                          .map((attachment, i) => (
+                            <div
+                              key={attachment.id || `attachment-${i}`}
+                              className="flex items-center justify-between p-2 rounded-lg border bg-card/80 hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Paperclip className="h-4 w-4 text-primary" />
+                                <span className="text-xs truncate">
+                                  {attachment.fileName}
+                                </span>
+                              </div>
+                              <AttachmentsModal
+                                attachments={convertAttachmentsFormat(
+                                  [attachment],
+                                  response.id,
+                                )}
+                              />
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             </AccordionContent>
           </AccordionItem>

@@ -13,7 +13,7 @@ import MessageThreadView from "./(reply_to_subject)/MessageThreadView";
 
 // Priority badge component for better visualization
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
-  const styles = {
+  const styles: Record<Priority, string> = {
     LOW: "bg-blue-100 text-blue-700",
     MEDIUM: "bg-yellow-100 text-yellow-700",
     HIGH: "bg-orange-100 text-orange-700",
@@ -28,10 +28,7 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
 };
 
 const CategoryBadge = ({ category }: { category: TechTeamMessageCategory }) => {
-  const categoryMap: Record<
-    TechTeamMessageCategory,
-    { label: string; style: string }
-  > = {
+  const categoryMap: Record<string, { label: string; style: string }> = {
     bug: { label: "Bug", style: "bg-red-50 text-red-600" },
     feature: { label: "Feature", style: "bg-purple-50 text-purple-600" },
     support: { label: "Support", style: "bg-blue-50 text-blue-600" },
@@ -74,6 +71,28 @@ interface TechTeamMessageAttachment {
   fileUrl: string;
 }
 
+// Define the ThreadResponseAttachment interface for better type safety
+interface ThreadResponseAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: Date;
+  messageId?: string;
+  taskId: string;
+  uploaderId: string;
+}
+
+// Define the ThreadResponse interface for better type safety
+interface ThreadResponse {
+  id: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  category: string;
+  createdAt: Date;
+  attachments: ThreadResponseAttachment[];
+}
+
 // Properly typed function to convert TechTeamMessageAttachment to the format expected by AttachmentsModal
 const convertAttachments = (
   attachments: TechTeamMessageAttachment[],
@@ -107,24 +126,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   onMessageResponded,
 }) => {
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
-  const [threadResponses, setThreadResponses] = useState<
-    Array<{
-      id: string;
-      sender: string;
-      subject: string;
-      preview: string;
-      category: string;
-      createdAt: Date;
-      attachments: Array<{
-        id: string;
-        fileName: string;
-        fileUrl: string;
-        createdAt: Date;
-        taskId: string;
-        uploaderId: string;
-      }>;
-    }>
-  >([]);
+  const [threadResponses, setThreadResponses] = useState<ThreadResponse[]>([]);
   const [isLoadingThread, setIsLoadingThread] = useState(false);
 
   // Using useCallback to memoize the function to avoid ESLint warnings
@@ -145,56 +147,78 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
 
       // Properly handle the response structure from getMessageThread
       if (response.success) {
-        // The server action returns responses within the object, but they're empty
-        // Let's check if there's a userMessage in the response and include it
-        const threadResponses = [];
+        const responses: ThreadResponse[] = [];
 
         // If there's a userMessage, add it to our thread responses
         if (response.original && response.original.userMessage) {
           const userMessage = response.original.userMessage;
           console.log("Found user message in response:", userMessage);
 
-          // Create a response object in the format expected by MessageThreadView
-          threadResponses.push({
+          // IMPORTANT: Keep attachment's original messageId to maintain association
+          responses.push({
             id: userMessage.id,
             sender: userMessage.sender,
             subject: userMessage.subject,
-            preview: userMessage.preview || "", // Use preview directly, message isn't available
+            preview: userMessage.preview || "",
             category: userMessage.category,
             createdAt: new Date(userMessage.createdAt),
             attachments: (userMessage.attachments || []).map((att) => ({
-              id: att.id || String(Math.random()),
+              id: att.id,
               fileName: att.fileName,
               fileUrl: att.fileUrl,
-              createdAt: new Date(),
+              createdAt: new Date(att.createdAt || new Date()),
               taskId: "message",
               uploaderId: "user",
+              messageId: att.messageId || userMessage.id, // Ensure messageId is preserved
             })),
           });
         }
 
-        // Also add any responses from the responses array (though it seems empty now)
+        // Add responses from the responses array
         if (
           Array.isArray(response.responses) &&
           response.responses.length > 0
         ) {
           console.log("Adding responses from array:", response.responses);
-          const formattedResponses = response.responses.map((resp) => ({
-            ...resp,
-            attachments: (resp.attachments || []).map((att) => ({
-              id: att.id || String(Math.random()),
-              fileName: att.fileName,
-              fileUrl: att.fileUrl,
-              createdAt: new Date(),
-              taskId: "message",
-              uploaderId: "user",
-            })),
-          }));
-          threadResponses.push(...formattedResponses);
+          const formattedResponses = response.responses.map((resp) => {
+            // Create a clean response object
+            const formattedResponse: ThreadResponse = {
+              id: resp.id,
+              sender: resp.sender,
+              subject: resp.subject,
+              preview: resp.preview,
+              category: resp.category,
+              createdAt: new Date(resp.createdAt),
+              // IMPORTANT: Map attachments while preserving messageId
+              attachments: (resp.attachments || []).map((att) => ({
+                id: att.id,
+                fileName: att.fileName,
+                fileUrl: att.fileUrl,
+                createdAt: new Date(att.createdAt || new Date()),
+                taskId: "message",
+                uploaderId: "user",
+                messageId: att.messageId || resp.id, // Critical to preserve association
+              })),
+            };
+
+            // Add debugging to verify correct attachments
+            console.log(
+              `Formatted response ${resp.id} with ${formattedResponse.attachments.length} attachments:`,
+              formattedResponse.attachments.map((a) => ({
+                id: a.id,
+                fileName: a.fileName,
+                messageId: a.messageId,
+              })),
+            );
+
+            return formattedResponse;
+          });
+
+          responses.push(...formattedResponses);
         }
 
-        console.log("Final thread responses:", threadResponses);
-        setThreadResponses(threadResponses);
+        console.log("Final thread responses:", responses);
+        setThreadResponses(responses);
       } else {
         // If no success or empty array, set empty array
         console.log("No success in response");

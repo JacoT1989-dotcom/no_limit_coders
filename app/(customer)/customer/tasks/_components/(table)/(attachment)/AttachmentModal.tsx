@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Paperclip, Download, File, X } from "lucide-react";
+import { Paperclip, Download, File } from "lucide-react";
 
 interface TaskAttachment {
   id: string;
@@ -26,6 +26,7 @@ interface AttachmentsModalProps {
 }
 
 const AttachmentsModal = ({ attachments }: AttachmentsModalProps) => {
+  const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<TaskAttachment | null>(
     null,
   );
@@ -72,6 +73,15 @@ const AttachmentsModal = ({ attachments }: AttachmentsModalProps) => {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  // Handle dialog open/close events
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    // Reset selected image when dialog closes
+    if (!isOpen) {
+      setSelectedImage(null);
+    }
   };
 
   const renderAttachmentContent = () => {
@@ -170,8 +180,10 @@ const AttachmentsModal = ({ attachments }: AttachmentsModalProps) => {
   );
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{triggerElement}</DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild onClick={() => setOpen(true)}>
+        {triggerElement}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
         <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-xl font-semibold">

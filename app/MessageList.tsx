@@ -1,0 +1,97 @@
+import React from "react";
+import { Filter, Paperclip } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface Message {
+  id: string;
+  subject: string;
+  message: string;
+  category: string;
+  priority: string;
+  timestamp: string;
+  attachments?: Array<{
+    id: string;
+    fileName: string;
+    fileUrl: string;
+  }>;
+}
+
+interface MessageListProps {
+  messages: Message[];
+  selectedMessageId: string | null;
+  onSelectMessage: (id: string) => void;
+  currentFilter: string | null;
+  onClearFilter: () => void;
+}
+
+const MessageList: React.FC<MessageListProps> = ({
+  messages,
+  selectedMessageId,
+  onSelectMessage,
+  currentFilter,
+  onClearFilter,
+}) => {
+  return (
+    <div className="w-2/5 border rounded-lg overflow-hidden flex flex-col">
+      <div className="p-3 border-b bg-muted/30 flex justify-between items-center">
+        <h3 className="font-medium">Recent Messages</h3>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={onClearFilter}
+          >
+            <Filter className="h-4 w-4 mr-1" />
+            {currentFilter || "All"}
+          </Button>
+        </div>
+      </div>
+      <div className="overflow-y-auto flex-1">
+        {messages.length === 0 ? (
+          <div className="p-4 text-center text-muted-foreground">
+            No messages found
+          </div>
+        ) : (
+          <div className="divide-y">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-3 cursor-pointer hover:bg-accent/5 transition-colors ${
+                  selectedMessageId === msg.id ? "bg-accent/10" : ""
+                }`}
+                onClick={() => onSelectMessage(msg.id)}
+              >
+                <div className="flex justify-between items-start">
+                  <h4 className="font-medium truncate">{msg.subject}</h4>
+                  <div className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                    {msg.priority}
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  {msg.message}
+                </p>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="flex gap-2">
+                    <span className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-600">
+                      {msg.category}
+                    </span>
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <span className="flex items-center text-xs text-muted-foreground">
+                        <Paperclip className="h-3 w-3 mr-1" />
+                        {msg.attachments.length}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-accent">{msg.timestamp}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MessageList;

@@ -60,8 +60,11 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
 
   // Convert attachments to the format expected by AttachmentsModal
   const convertAttachments = (attachments: Attachment[]) => {
+    if (!attachments || !Array.isArray(attachments)) return [];
+
+    // Ensure each attachment has a unique ID and is correctly mapped
     return attachments.map((att) => ({
-      id: att.id,
+      id: att.id || String(Math.random()), // Fallback for missing IDs
       name: att.fileName,
       url: att.fileUrl,
       createdAt: new Date(), // Use current date as fallback if not available
