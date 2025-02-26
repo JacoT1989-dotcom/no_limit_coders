@@ -237,8 +237,8 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[95vh] h-[800px] overflow-hidden">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+      <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 shrink-0">
           <div>
             <DialogTitle className="text-2xl">My Messages</DialogTitle>
             <DialogDescription>
@@ -281,7 +281,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-end mb-4">
+            <div className="flex items-center justify-end mb-4 shrink-0">
               {/* Active filter display */}
               {(priorityFilter || subjectFilter) && (
                 <div className="flex items-center">
@@ -312,7 +312,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
               )}
             </div>
 
-            <div className="flex h-[650px] gap-4 overflow-hidden">
+            <div className="flex flex-1 gap-4 overflow-hidden min-h-0">
               {/* Message List Panel */}
               <MessageList
                 messages={displayMessages}
@@ -331,7 +331,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
           </>
         )}
 
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center mt-2 shrink-0">
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <span>{filteredMessages.length} messages</span>
             <span>•</span>
