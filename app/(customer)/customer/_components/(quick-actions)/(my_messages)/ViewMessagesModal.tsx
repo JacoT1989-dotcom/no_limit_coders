@@ -10,6 +10,13 @@ import {
 import { MessageSquare, Filter, Loader2, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import MessageList from "./MessageList";
 import MessageDetail from "./MessageDetail";
 import { MessageCategory } from "@prisma/client";
@@ -121,18 +128,25 @@ const createDetailedMessage = (message: UserMessage) => {
 const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<UserMessage[]>([]);
+  const [uniqueSubjects, setUniqueSubjects] = useState<string[]>([]);
 
   // Set up filter functions
-  const handleFilterChange = (newFilter: string): void => {
-    setFilter(filter === newFilter ? null : newFilter);
+  const handlePriorityFilterChange = (newFilter: string): void => {
+    setPriorityFilter(priorityFilter === newFilter ? null : newFilter);
+  };
+
+  const handleSubjectFilterChange = (value: string): void => {
+    setSubjectFilter(value === "all" ? null : value);
   };
 
   const clearAllFilters = (): void => {
-    setFilter(null);
+    setPriorityFilter(null);
+    setSubjectFilter(null);
   };
 
   // Fetch messages from the server
@@ -150,6 +164,19 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
 
       if (response.success && response.messages) {
         setMessages(response.messages);
+
+        // Extract unique subjects for the dropdown
+        const subjects = response.messages.map((msg) => msg.subject);
+        // Clean up subjects (remove Re: prefixes and reference numbers for comparison)
+        const cleanSubjects = subjects.map((subject) => {
+          // Remove Re: prefixes
+          const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
+          // Remove reference numbers
+          return withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
+        });
+        // Get unique cleaned subjects
+        const uniqueCleanSubjects = Array.from(new Set(cleanSubjects));
+        setUniqueSubjects(uniqueCleanSubjects);
       }
     } catch (err) {
       console.error("Error fetching messages:", err);
@@ -166,12 +193,32 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
     }
   }, [dialogOpen]);
 
-  // Filter messages based on selected priority
-  const filteredMessages = messages.filter((msg) => {
-    if (!filter) return true;
+  // Helper function to check if a message matches the subject filter
+  const matchesSubjectFilter = (messageSubject: string) => {
+    if (!subjectFilter) return true;
 
-    // Check priority from tech team response (original message)
-    return msg.techTeamResponse && msg.techTeamResponse.priority === filter;
+    // Clean the message subject (remove Re: and reference numbers)
+    const cleanSubject = messageSubject
+      .replace(/^(Re:\s*)+/i, "")
+      .replace(/\[Ref:[^\]]+\]/g, "")
+      .trim();
+
+    return cleanSubject === subjectFilter;
+  };
+
+  // Filter messages based on selected priority and subject
+  const filteredMessages = messages.filter((msg) => {
+    // First check priority filter
+    const passedPriorityFilter =
+      !priorityFilter ||
+      (msg.techTeamResponse &&
+        msg.techTeamResponse.priority === priorityFilter);
+
+    // Then check subject filter
+    const passedSubjectFilter = matchesSubjectFilter(msg.subject);
+
+    // Message must pass both filters
+    return passedPriorityFilter && passedSubjectFilter;
   });
 
   // Convert messages to the format expected by the components
@@ -191,11 +238,33 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[95vh] h-[800px] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">My Messages</DialogTitle>
-          <DialogDescription>
-            View messages from the support team
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <DialogTitle className="text-2xl">My Messages</DialogTitle>
+            <DialogDescription>
+              View messages from the support team
+            </DialogDescription>
+          </div>
+          <div className="w-64 mr-6">
+            <Select
+              value={subjectFilter || "all"}
+              onValueChange={handleSubjectFilterChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {uniqueSubjects.map((subject, index) => (
+                  <SelectItem key={index} value={subject}>
+                    {subject.length > 40
+                      ? subject.substring(0, 40) + "..."
+                      : subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </DialogHeader>
 
         {loading ? (
@@ -214,12 +283,22 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
           <>
             <div className="flex items-center justify-end mb-4">
               {/* Active filter display */}
-              {filter && (
+              {(priorityFilter || subjectFilter) && (
                 <div className="flex items-center">
-                  <span className="text-sm mr-2">Active filter:</span>
-                  <Badge variant="secondary" className="mr-2">
-                    Priority: {filter}
-                  </Badge>
+                  <span className="text-sm mr-2">Active filters:</span>
+                  {priorityFilter && (
+                    <Badge variant="secondary" className="mr-2">
+                      Priority: {priorityFilter}
+                    </Badge>
+                  )}
+                  {subjectFilter && (
+                    <Badge variant="secondary" className="mr-2">
+                      Subject:{" "}
+                      {subjectFilter.length > 20
+                        ? subjectFilter.substring(0, 20) + "..."
+                        : subjectFilter}
+                    </Badge>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -227,7 +306,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
                     onClick={clearAllFilters}
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Clear filter
+                    Clear filters
                   </Button>
                 </div>
               )}
@@ -239,7 +318,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
                 messages={displayMessages}
                 selectedMessageId={selectedMessage}
                 onSelectMessage={setSelectedMessage}
-                currentFilter={filter}
+                currentFilter={priorityFilter}
                 onClearFilter={clearAllFilters}
               />
 
@@ -274,9 +353,11 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
                 {PRIORITY_OPTIONS.map((option) => (
                   <Button
                     key={option.value}
-                    variant={filter === option.value ? "default" : "outline"}
+                    variant={
+                      priorityFilter === option.value ? "default" : "outline"
+                    }
                     size="sm"
-                    onClick={() => handleFilterChange(option.value)}
+                    onClick={() => handlePriorityFilterChange(option.value)}
                     className="text-xs px-2"
                   >
                     {option.value}
