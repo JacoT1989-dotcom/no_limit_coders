@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import TasksTable from "./_components/(table)/TasksTable";
-import TasksKanban from "./_components/TasksKanban";
+import TasksKanban from "./_components/(kanban)/TasksKanban";
 import { getCustomerProjects } from "./actions";
 import { ProjectOption, ProjectTeamMember } from "./types";
 import { CreateTaskDialog } from "./(create_task)/CreateTaskDialog";

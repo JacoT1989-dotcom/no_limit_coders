@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -7,8 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ProjectOption, ProjectTeamMember, Task } from "../types";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProjectOption, ProjectTeamMember, Task } from "../../types";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 interface TasksKanbanProps {
   status?: string;
@@ -16,6 +17,7 @@ interface TasksKanbanProps {
   project?: string;
   dueDate?: string;
   projects: ProjectOption[];
+  onTaskUpdated?: () => void;
 }
 
 interface Column {
@@ -80,25 +82,40 @@ const TasksKanban = ({
   project,
   dueDate,
   projects,
+  onTaskUpdated,
 }: TasksKanbanProps) => {
-  // Get tasks directly from the selected project using useMemo
-  const tasks = useMemo(() => {
-    if (!project || project === "all") return [];
-    const selectedProject = projects.find((p) => p.id === project);
+  // State to track when tasks are updated
+  const [refreshKey, setRefreshKey] = useState(0);
+  // State to store filtered tasks
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
 
-    // Filter out COMPLETED tasks immediately
+  // Get the current project data
+  const selectedProject = useMemo(() => {
+    if (!project || project === "all") return null;
+    return projects.find((p) => p.id === project);
+  }, [project, projects]);
+
+  // Update filtered tasks when dependencies change
+  useEffect(() => {
+    if (!project || project === "all") {
+      setFilteredTasks([]);
+      return;
+    }
+
+    const selectedProject = projects.find((p) => p.id === project);
     const nonCompletedTasks =
       selectedProject?.tasks.filter((task) => task.status !== "COMPLETED") ||
       [];
-    return nonCompletedTasks;
-  }, [project, projects]);
+
+    setFilteredTasks(nonCompletedTasks);
+  }, [project, projects, refreshKey]);
 
   // Define columns with memoization to prevent unnecessary recalculations
   const columns = useMemo(() => {
     const baseColumns = initialColumns();
 
     // Distribute tasks to columns
-    tasks.forEach((task) => {
+    filteredTasks.forEach((task) => {
       const column = baseColumns.find((col) => col.id === task.status);
       if (column) {
         const matchesAssignee =
@@ -118,7 +135,7 @@ const TasksKanban = ({
     });
 
     return baseColumns;
-  }, [tasks, assignee, dueDate]);
+  }, [filteredTasks, assignee, dueDate]);
 
   // Get color for a task's status badge
   const getStatusColor = (status: string) => {
@@ -154,6 +171,14 @@ const TasksKanban = ({
     return teamMember.user.displayName.slice(0, 2).toUpperCase();
   };
 
+  // Handler for task updates
+  const handleTaskUpdated = () => {
+    setRefreshKey((prev) => prev + 1);
+    if (onTaskUpdated) {
+      onTaskUpdated();
+    }
+  };
+
   if (!project || project === "all") {
     return (
       <div className="flex items-center justify-center h-[400px] text-muted-foreground">
@@ -185,13 +210,25 @@ const TasksKanban = ({
               {column.tasks.map((task) => (
                 <Card
                   key={task.id}
-                  className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border"
+                  className="hover-lift transition-all duration-300 bg-background/50 backdrop-blur-sm border-border group"
                 >
-                  <CardHeader className="p-4 pb-2">
-                    <CardTitle className="text-sm font-medium text-card-foreground">
-                      {task.title}
-                    </CardTitle>
-                    <CardDescription className="text-xs line-clamp-6 hover:line-clamp-none">
+                  <CardHeader className="p-4 pb-2 relative">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-sm font-medium text-card-foreground pr-8">
+                        {task.title}
+                      </CardTitle>
+                      {selectedProject && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <EditTaskDialog
+                            task={task}
+                            projectId={selectedProject.id}
+                            teamMembers={selectedProject.team || []}
+                            onTaskUpdated={handleTaskUpdated}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <CardDescription className="text-xs line-clamp-4 hover:line-clamp-none">
                       {task.description}
                     </CardDescription>
                   </CardHeader>

@@ -118,6 +118,19 @@ export interface TaskFormValues {
   status: TaskStatus;
 }
 
+// Server action response types
+export type CreateTaskResponse = {
+  success: boolean;
+  data?: Task;
+  error?: string;
+};
+
+export type UpdateTaskResponse = {
+  success: boolean;
+  data?: Task;
+  error?: string;
+};
+
 // Helper functions
 export const formatTaskForKanban = (task: Task) => ({
   ...task,
