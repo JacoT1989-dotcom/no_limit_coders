@@ -22,15 +22,57 @@ interface Column {
   id: string;
   title: string;
   tasks: Task[];
+  color: string;
+  textColor: string;
 }
 
-// Define column type with initial empty arrays
+// Keep all four columns, including Done, with colors
 const initialColumns = (): Column[] => [
-  { id: "TODO", title: "Todo", tasks: [] as Task[] },
-  { id: "BACKLOG", title: "Backlog", tasks: [] as Task[] },
-  { id: "IN_PROGRESS", title: "In Progress", tasks: [] as Task[] },
-  { id: "DONE", title: "Done", tasks: [] as Task[] },
+  {
+    id: "TODO",
+    title: "Todo",
+    tasks: [],
+    color: "bg-red-100",
+    textColor: "text-red-700",
+  },
+  {
+    id: "REVIEW",
+    title: "Backlog",
+    tasks: [],
+    color: "bg-purple-100",
+    textColor: "text-purple-700",
+  },
+  {
+    id: "IN_PROGRESS",
+    title: "In Progress",
+    tasks: [],
+    color: "bg-yellow-100",
+    textColor: "text-yellow-700",
+  },
+  {
+    id: "DONE",
+    title: "Done",
+    tasks: [],
+    color: "bg-green-100",
+    textColor: "text-green-700",
+  },
 ];
+
+// Helper function to map between status and display values
+const getStatusDisplayName = (status: string): string => {
+  switch (status) {
+    case "TODO":
+      return "Todo";
+    case "REVIEW":
+      return "Backlog";
+    case "IN_PROGRESS":
+      return "In Progress";
+    case "COMPLETED":
+      return "Done";
+    default:
+      return status;
+  }
+};
 
 const TasksKanban = ({
   status,
@@ -43,7 +85,12 @@ const TasksKanban = ({
   const tasks = useMemo(() => {
     if (!project || project === "all") return [];
     const selectedProject = projects.find((p) => p.id === project);
-    return selectedProject?.tasks || [];
+
+    // Filter out COMPLETED tasks immediately
+    const nonCompletedTasks =
+      selectedProject?.tasks.filter((task) => task.status !== "COMPLETED") ||
+      [];
+    return nonCompletedTasks;
   }, [project, projects]);
 
   // Define columns with memoization to prevent unnecessary recalculations
@@ -73,19 +120,13 @@ const TasksKanban = ({
     return baseColumns;
   }, [tasks, assignee, dueDate]);
 
+  // Get color for a task's status badge
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "BACKLOG":
-        return "bg-purple-100 text-purple-700";
-      case "TODO":
-        return "bg-red-100 text-red-700";
-      case "IN_PROGRESS":
-        return "bg-yellow-100 text-yellow-700";
-      case "DONE":
-        return "bg-green-100 text-green-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+    const column = initialColumns().find((col) => col.id === status);
+    if (column) {
+      return `${column.color} ${column.textColor}`;
     }
+    return "bg-gray-100 text-gray-700";
   };
 
   const isWithinDueDate = (dueDate: Date, selectedRange: string) => {
@@ -110,7 +151,7 @@ const TasksKanban = ({
 
   // Helper function to get initials from team member ID
   const getAssigneeInitials = (teamMember: ProjectTeamMember) => {
-    return teamMember.userId.slice(0, 2).toUpperCase();
+    return teamMember.user.displayName.slice(0, 2).toUpperCase();
   };
 
   if (!project || project === "all") {
@@ -129,12 +170,12 @@ const TasksKanban = ({
           className="flex flex-col rounded-lg red-gradient p-[1px] shadow-lg"
         >
           <div className="bg-card rounded-lg flex flex-col h-full">
-            <div className="p-4 border-b border-border">
+            <div
+              className={`p-4 border-b border-border rounded-t-lg ${column.color} ${column.textColor}`}
+            >
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-card-foreground">
-                  {column.title}
-                </h3>
-                <span className="rounded-full bg-accent/10 text-accent px-2 py-1 text-sm">
+                <h3 className="font-semibold">{column.title}</h3>
+                <span className="rounded-full bg-white/80 px-2 py-1 text-sm">
                   {column.tasks.length}
                 </span>
               </div>
@@ -150,9 +191,7 @@ const TasksKanban = ({
                     <CardTitle className="text-sm font-medium text-card-foreground">
                       {task.title}
                     </CardTitle>
-                    <CardDescription
-                      className="text-xs line-clamp-6 hover:line-clamp-none"
-                    >
+                    <CardDescription className="text-xs line-clamp-6 hover:line-clamp-none">
                       {task.description}
                     </CardDescription>
                   </CardHeader>
@@ -173,7 +212,7 @@ const TasksKanban = ({
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(task.status)}`}
                       >
-                        {task.status.replace("_", " ")}
+                        {getStatusDisplayName(task.status)}
                       </span>
                     </div>
                     {task.dueDate && (
