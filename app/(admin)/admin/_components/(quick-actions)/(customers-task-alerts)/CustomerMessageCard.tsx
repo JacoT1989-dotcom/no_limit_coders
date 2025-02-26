@@ -74,6 +74,9 @@ const CustomerMessageCard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  // New state for subject filtering
+  const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
+  const [uniqueSubjects, setUniqueSubjects] = useState<string[]>([]);
 
   // Define fetchMessages with useCallback
   const fetchMessages = useCallback(async () => {
@@ -112,6 +115,19 @@ const CustomerMessageCard = () => {
         if (uniqueCustomers.length > 0 && !selectedCustomer) {
           setSelectedCustomer(uniqueCustomers[0].id);
         }
+
+        // Extract unique subjects for dropdown
+        const subjects = allMessages.map((msg) => msg.subject);
+        // Clean up subjects (remove Re: prefixes and reference numbers for comparison)
+        const cleanSubjects = subjects.map((subject) => {
+          // Remove Re: prefixes
+          const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
+          // Remove reference numbers
+          return withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
+        });
+        // Get unique cleaned subjects
+        const uniqueCleanSubjects = Array.from(new Set(cleanSubjects));
+        setUniqueSubjects(uniqueCleanSubjects);
       } else {
         setMessages([]);
       }
@@ -130,7 +146,27 @@ const CustomerMessageCard = () => {
     }
   }, [dialogOpen, fetchMessages]);
 
-  // Filter messages by both priority and selected customer
+  // Helper function to check if a message matches the subject filter
+  const matchesSubjectFilter = (messageSubject: string) => {
+    if (!subjectFilter) return true;
+
+    // Clean the message subject (remove Re: and reference numbers)
+    const cleanSubject = messageSubject
+      .replace(/^(Re:\s*)+/i, "")
+      .replace(/\[Ref:[^\]]+\]/g, "")
+      .trim();
+
+    return cleanSubject === subjectFilter;
+  };
+
+  // Handler for subject filter change
+  const handleSubjectFilterChange = (value: string): void => {
+    setSubjectFilter(value === "all" ? null : value);
+    // Clear selected message when changing subjects
+    setSelectedMessage(null);
+  };
+
+  // Filter messages by priority, selected customer, and subject
   const filteredMessages = messages.filter((msg) => {
     // Filter by customer
     const customerMatch = selectedCustomer
@@ -138,8 +174,10 @@ const CustomerMessageCard = () => {
       : true;
     // Filter by priority
     const priorityMatch = filter ? msg.priority === filter : true;
+    // Filter by subject
+    const subjectMatch = matchesSubjectFilter(msg.subject);
 
-    return customerMatch && priorityMatch;
+    return customerMatch && priorityMatch && subjectMatch;
   });
 
   const currentMessage = selectedMessage
@@ -163,6 +201,7 @@ const CustomerMessageCard = () => {
   // Clear all filters
   const clearAllFilters = () => {
     setFilter(null);
+    setSubjectFilter(null);
   };
 
   return (
@@ -186,11 +225,33 @@ const CustomerMessageCard = () => {
         </Card>
       </DialogTrigger>
       <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[95vh] h-[800px] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Customer Messages</DialogTitle>
-          <DialogDescription>
-            Review and respond to messages from your customers
-          </DialogDescription>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <DialogTitle className="text-2xl">Customer Messages</DialogTitle>
+            <DialogDescription>
+              Review and respond to messages from your customers
+            </DialogDescription>
+          </div>
+          <div className="w-64 mr-6">
+            <Select
+              value={subjectFilter || "all"}
+              onValueChange={handleSubjectFilterChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {uniqueSubjects.map((subject, index) => (
+                  <SelectItem key={index} value={subject}>
+                    {subject.length > 40
+                      ? subject.substring(0, 40) + "..."
+                      : subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </DialogHeader>
 
         {loading ? (
@@ -227,13 +288,23 @@ const CustomerMessageCard = () => {
                 </Select>
               </div>
 
-              {/* Add active filter display if a filter is applied */}
-              {filter && (
+              {/* Active filters display */}
+              {(filter || subjectFilter) && (
                 <div className="mb-3 flex items-center">
-                  <span className="text-sm mr-2">Active filter:</span>
-                  <Badge variant="secondary" className="mr-2">
-                    Priority: {filter}
-                  </Badge>
+                  <span className="text-sm mr-2">Active filters:</span>
+                  {filter && (
+                    <Badge variant="secondary" className="mr-2">
+                      Priority: {filter}
+                    </Badge>
+                  )}
+                  {subjectFilter && (
+                    <Badge variant="secondary" className="mr-2">
+                      Subject:{" "}
+                      {subjectFilter.length > 20
+                        ? subjectFilter.substring(0, 20) + "..."
+                        : subjectFilter}
+                    </Badge>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
@@ -241,7 +312,7 @@ const CustomerMessageCard = () => {
                     onClick={clearAllFilters}
                   >
                     <X className="h-3 w-3 mr-1" />
-                    Clear filter
+                    Clear filters
                   </Button>
                 </div>
               )}
@@ -307,8 +378,6 @@ const CustomerMessageCard = () => {
                   </Button>
                 ))}
               </div>
-
-              {/* Removed duplicate clear filter button */}
             </div>
 
             <Button onClick={fetchMessages} variant="outline" className="gap-2">
