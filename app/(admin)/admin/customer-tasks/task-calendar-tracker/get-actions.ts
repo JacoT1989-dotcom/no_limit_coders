@@ -174,11 +174,6 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
       };
     });
 
-    // Debug the response
-    console.log(
-      `Fetched ${projectsWithDevelopers.length} projects for user with role ${user.role}`,
-    );
-
     return { projects: projectsWithDevelopers as ProjectOption[] };
   } catch (error) {
     console.error("Error in getCustomerProjects:", error);
