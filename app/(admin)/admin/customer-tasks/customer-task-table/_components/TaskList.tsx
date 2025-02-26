@@ -11,13 +11,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Paperclip } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import {
   Task,
   getPriorityColor,
   getStatusColor,
 } from "@/app/(customer)/customer/tasks/types";
+import AttachmentsModal from "../../../_components/(quick-actions)/(customers-task-alerts)/(reply_to_subject)/AttacmentModal";
+import { CommentsBadge } from "../(task-comments)/CommentsModal";
 
 interface TaskListProps {
   filteredTasks: Task[];
@@ -51,6 +53,13 @@ const TaskList: React.FC<TaskListProps> = ({
       return user.displayName[0];
     }
     return "U";
+  };
+
+  // Function to refresh tasks (this would be passed down from the parent)
+  const refreshTasks = () => {
+    // In a real implementation, this would trigger a refresh of the task list
+    console.log("Refreshing tasks...");
+    // This should be implemented in the parent component and passed down as a prop
   };
 
   return (
@@ -129,16 +138,16 @@ const TaskList: React.FC<TaskListProps> = ({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="flex items-center">
-                  <MessageSquare className="h-4 w-4 mr-1 text-gray-400" />
-                  <span>{task.comments.length}</span>
-                </div>
+                {/* Replace the static comment count with the CommentsBadge component */}
+                <CommentsBadge
+                  comments={task.comments}
+                  taskId={task.id}
+                  taskTitle={task.title}
+                  onRefresh={refreshTasks}
+                />
               </TableCell>
               <TableCell>
-                <div className="flex items-center">
-                  <Paperclip className="h-4 w-4 mr-1 text-gray-400" />
-                  <span>{task.attachments.length}</span>
-                </div>
+                <AttachmentsModal attachments={task.attachments} />
               </TableCell>
             </TableRow>
           ))}
