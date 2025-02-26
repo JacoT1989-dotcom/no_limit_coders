@@ -136,6 +136,7 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                   select: {
                     id: true,
                     displayName: true,
+                    role: true, // Add the role field here
                   },
                 },
               },

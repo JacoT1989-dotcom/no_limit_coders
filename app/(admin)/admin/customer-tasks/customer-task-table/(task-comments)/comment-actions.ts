@@ -10,6 +10,7 @@ type CommentWithAuthor = TaskComment & {
   author: {
     id: string;
     displayName: string;
+    role: string; // Add role to include in response
   };
 };
 
@@ -84,6 +85,7 @@ export async function createTaskComment(
           select: {
             id: true,
             displayName: true,
+            role: true, // Include user role
           },
         },
       },
@@ -159,6 +161,7 @@ export async function updateTaskComment(
           select: {
             id: true,
             displayName: true,
+            role: true, // Include user role
           },
         },
       },

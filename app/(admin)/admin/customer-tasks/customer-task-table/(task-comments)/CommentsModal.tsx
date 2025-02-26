@@ -27,6 +27,7 @@ type Comment = {
   author: {
     id: string;
     displayName: string;
+    role?: string; // Add optional role property
   };
 };
 
@@ -237,7 +238,12 @@ export const CommentsModal = ({
                         >
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-medium leading-none">
-                              {comment.author?.displayName || "Anonymous User"}
+                              {comment.author?.displayName || "Anonymous User"}{" "}
+                              {comment.author?.role && (
+                                <span className="opacity-70 text-[10px] bg-black/20 ml-1 px-1.5 py-0.5 rounded">
+                                  {comment.author.role}
+                                </span>
+                              )}
                             </p>
                           </div>
                           <p className="text-sm whitespace-pre-wrap break-words">
