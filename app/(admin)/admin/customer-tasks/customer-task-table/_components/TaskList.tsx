@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import {
   Task,
@@ -20,12 +19,15 @@ import {
 } from "@/app/(customer)/customer/tasks/types";
 import AttachmentsModal from "../../../_components/(quick-actions)/(customers-task-alerts)/(reply_to_subject)/AttacmentModal";
 import { CommentsBadge } from "../(task-comments)/CommentsModal";
+import { getCustomerProjects } from "../get-actions";
+import AssigneesModal from "./AssigneesModal";
 
 interface TaskListProps {
   filteredTasks: Task[];
   selectedTasks: string[];
   toggleTaskSelection: (taskId: string) => void;
   toggleSelectAll: () => void;
+  onTasksRefreshed?: (tasks: Task[]) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({
@@ -33,7 +35,10 @@ const TaskList: React.FC<TaskListProps> = ({
   selectedTasks,
   toggleTaskSelection,
   toggleSelectAll,
+  onTasksRefreshed,
 }) => {
+  const [refreshingTasks, setRefreshingTasks] = useState(false);
+
   // Format date for display
   const formatDate = (dateString: Date | null | undefined) => {
     if (!dateString) return "-";
@@ -55,11 +60,49 @@ const TaskList: React.FC<TaskListProps> = ({
     return "U";
   };
 
-  // Function to refresh tasks (this would be passed down from the parent)
-  const refreshTasks = () => {
-    // In a real implementation, this would trigger a refresh of the task list
-    console.log("Refreshing tasks...");
-    // This should be implemented in the parent component and passed down as a prop
+  // Function to refresh tasks
+  const refreshTasks = async () => {
+    setRefreshingTasks(true);
+    try {
+      const response = await getCustomerProjects();
+      if (response.projects && onTasksRefreshed) {
+        // Extract all tasks from all projects
+        const allTasks = response.projects.flatMap((project) => project.tasks);
+        onTasksRefreshed(allTasks);
+      }
+    } catch (error) {
+      console.error("Error refreshing tasks:", error);
+    } finally {
+      setRefreshingTasks(false);
+    }
+  };
+
+  // Prepare assignees for the modal
+  const formatAssignees = (
+    assignees: Array<{
+      id: string;
+      role: string;
+      user: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        displayName?: string;
+        email: string;
+        avatarUrl?: string;
+      };
+    }>,
+  ) => {
+    return assignees.map((assignee) => ({
+      id: assignee.id,
+      role: assignee.role,
+      user: {
+        id: assignee.user.id,
+        firstName: assignee.user.firstName,
+        lastName: assignee.user.lastName,
+        email: assignee.user.email,
+        imageUrl: assignee.user.avatarUrl, // Map avatarUrl to imageUrl if available
+      },
+    }));
   };
 
   return (
@@ -122,23 +165,13 @@ const TaskList: React.FC<TaskListProps> = ({
               <TableCell>{formatDate(task.updatedAt)}</TableCell>
               <TableCell>{formatDate(task.dueDate)}</TableCell>
               <TableCell>
-                <div className="flex items-center">
-                  {task.assignees.length > 0 ? (
-                    <>
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="text-xs">
-                          {getUserInitials(task.assignees[0].user)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="ml-2">{task.assignees.length}</span>
-                    </>
-                  ) : (
-                    <span>-</span>
-                  )}
-                </div>
+                {task.assignees.length > 0 ? (
+                  <AssigneesModal assignees={formatAssignees(task.assignees)} />
+                ) : (
+                  <span>-</span>
+                )}
               </TableCell>
               <TableCell>
-                {/* Replace the static comment count with the CommentsBadge component */}
                 <CommentsBadge
                   comments={task.comments}
                   taskId={task.id}
