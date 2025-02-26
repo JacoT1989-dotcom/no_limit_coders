@@ -5,6 +5,38 @@ import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 import { MessageWithUser } from "./CustomerMessageCard";
 
+// Helper function to format subjects and extract reference numbers
+const formatSubject = (
+  subject: string,
+): { main: string; reference: string | null } => {
+  // Check if the subject starts with multiple "Re:" prefixes
+  const rePattern = /^(Re:\s*)+/i;
+  let mainSubject = subject;
+
+  if (rePattern.test(subject)) {
+    // Replace multiple "Re:" with just one "Re:"
+    mainSubject = "Re: " + subject.replace(rePattern, "");
+  }
+
+  // Extract reference number if present
+  const refPattern = /\[Ref:([^\]]+)\]/;
+  const refMatch = subject.match(refPattern);
+
+  if (refMatch) {
+    // Remove reference from main subject
+    mainSubject = mainSubject.replace(refPattern, "").trim();
+    return {
+      main: mainSubject,
+      reference: refMatch[0],
+    };
+  }
+
+  return {
+    main: mainSubject,
+    reference: null,
+  };
+};
+
 interface MessageListProps {
   messages: MessageWithUser[];
   selectedMessageId: string | null;
@@ -108,7 +140,16 @@ const MessageList: React.FC<MessageListProps> = ({
                 onClick={() => onSelectMessage(msg.id)}
               >
                 <div className="flex justify-between items-start">
-                  <h4 className="font-medium truncate">{msg.subject}</h4>
+                  <div className="max-w-[80%]">
+                    <h4 className="font-medium">
+                      {formatSubject(msg.subject).main}
+                    </h4>
+                    {formatSubject(msg.subject).reference && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {formatSubject(msg.subject).reference}
+                      </div>
+                    )}
+                  </div>
                   <PriorityBadge priority={msg.priority} />
                 </div>
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

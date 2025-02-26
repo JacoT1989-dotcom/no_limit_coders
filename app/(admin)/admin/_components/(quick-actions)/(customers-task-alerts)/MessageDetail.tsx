@@ -11,6 +11,38 @@ import { toast } from "sonner";
 import { getMessageThread } from "./(reply_to_subject)/getMessageThread";
 import MessageThreadView from "./(reply_to_subject)/MessageThreadView";
 
+// Helper function to format subjects and extract reference numbers
+const formatSubject = (
+  subject: string,
+): { main: string; reference: string | null } => {
+  // Check if the subject starts with multiple "Re:" prefixes
+  const rePattern = /^(Re:\s*)+/i;
+  let mainSubject = subject;
+
+  if (rePattern.test(subject)) {
+    // Replace multiple "Re:" with just one "Re:"
+    mainSubject = "Re: " + subject.replace(rePattern, "");
+  }
+
+  // Extract reference number if present
+  const refPattern = /\[Ref:([^\]]+)\]/;
+  const refMatch = subject.match(refPattern);
+
+  if (refMatch) {
+    // Remove reference from main subject
+    mainSubject = mainSubject.replace(refPattern, "").trim();
+    return {
+      main: mainSubject,
+      reference: refMatch[0],
+    };
+  }
+
+  return {
+    main: mainSubject,
+    reference: null,
+  };
+};
+
 // Priority badge component for better visualization
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
   const styles: Record<Priority, string> = {
@@ -260,14 +292,23 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   };
 
   return (
-    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col">
+    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col max-h-full">
       {message ? (
         <>
-          <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
+          <div className="p-4 border-b bg-muted/30 flex justify-between items-center shrink-0">
             <div className="flex-1">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-lg">{message.subject}</h3>
-                <div className="flex items-center gap-2">
+              <div className="flex justify-between items-start">
+                <div className="max-w-[85%]">
+                  <h3 className="font-semibold text-lg">
+                    {formatSubject(message.subject).main}
+                  </h3>
+                  {formatSubject(message.subject).reference && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatSubject(message.subject).reference}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
                   <Badge variant="outline">{message.messageType}</Badge>
                   <PriorityBadge priority={message.priority} />
                 </div>
@@ -312,26 +353,28 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
             </div>
           </div>
 
-          <div className="p-4 flex-1 overflow-y-auto">
-            <div className="prose prose-sm max-w-none">
-              <p>{message.message}</p>
-            </div>
-
-            {message.attachments.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-medium mb-2">Attachments</h4>
-                <AttachmentsModal
-                  attachments={convertAttachments(message.attachments)}
-                />
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="p-4">
+              <div className="prose prose-sm max-w-none">
+                <p>{message.message}</p>
               </div>
-            )}
 
-            {/* Display message thread */}
-            <MessageThreadView
-              responses={threadResponses}
-              isLoading={isLoadingThread}
-              onRefresh={fetchMessageThread}
-            />
+              {message.attachments.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-medium mb-2">Attachments</h4>
+                  <AttachmentsModal
+                    attachments={convertAttachments(message.attachments)}
+                  />
+                </div>
+              )}
+
+              {/* Display message thread */}
+              <MessageThreadView
+                responses={threadResponses}
+                isLoading={isLoadingThread}
+                onRefresh={fetchMessageThread}
+              />
+            </div>
           </div>
 
           {/* Reply Dialog */}
