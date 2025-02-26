@@ -96,6 +96,36 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Helper function to simplify multiple "Re:" prefixes and format reference numbers
+  const formatSubject = (subject: string): { main: string, reference: string | null } => {
+    // Check if the subject starts with multiple "Re:" prefixes
+    const rePattern = /^(Re:\s*)+/i;
+    let mainSubject = subject;
+    
+    if (rePattern.test(subject)) {
+      // Replace multiple "Re:" with just one "Re:"
+      mainSubject = "Re: " + subject.replace(rePattern, "");
+    }
+    
+    // Extract reference number if present
+    const refPattern = /\[Ref:([^\]]+)\]/;
+    const refMatch = subject.match(refPattern);
+    
+    if (refMatch) {
+      // Remove reference from main subject
+      mainSubject = mainSubject.replace(refPattern, "").trim();
+      return {
+        main: mainSubject,
+        reference: refMatch[0]
+      };
+    }
+    
+    return {
+      main: mainSubject,
+      reference: null
+    };
+  };
+
   // Function to fetch message thread data - wrapped in useCallback to prevent infinite renders
   const fetchMessageThread = useCallback(async () => {
     if (!messageId) return;
@@ -173,7 +203,7 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
 
   if (responses.length === 0) {
     return (
-      <div className="mt-6 border-t pt-4 max-h-[300px] overflow-y-auto">
+      <div className="border-t mt-6 pt-4">
         <div className="flex items-center justify-between mb-4 sticky top-0 bg-background z-10">
           <h3 className="text-md font-medium">Message History</h3>
           <Button
@@ -200,7 +230,7 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
   }
 
   return (
-    <div className="mt-6 border-t pt-4 max-h-[300px] overflow-y-auto">
+    <div className="border-t pt-4">
       <div className="flex items-center justify-between mb-4 sticky top-0 bg-background z-10 py-2">
         <h3 className="text-md font-medium">
           Message History ({responses.length})
@@ -221,102 +251,107 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
         </Button>
       </div>
 
-      <Accordion type="single" collapsible className="w-full space-y-2">
-        {responses.map((response, index) => (
-          <AccordionItem
-            key={response.id || index}
-            value={response.id || `response-${index}`}
-            className={`border px-4 rounded-md ${
-              response.isCustomerMessage
-                ? "bg-muted/5"
-                : "bg-blue-50/30 dark:bg-blue-950/10"
-            } overflow-hidden`}
-          >
-            <AccordionTrigger className="py-3 hover:no-underline">
-              <div className="flex flex-1 text-left items-center">
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{response.subject}</div>
-                  <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-                    <span
-                      className={
-                        response.isCustomerMessage
-                          ? "font-semibold text-primary"
-                          : ""
-                      }
-                    >
-                      {response.isCustomerMessage ? "You" : response.sender}
-                    </span>
-                    <span>•</span>
-                    <span>{formatDate(response.createdAt)}</span>
-                    {response.messageType && (
-                      <>
-                        <span>•</span>
-                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                          {response.messageType}
-                        </span>
-                      </>
+      <div className="max-h-[350px] overflow-y-auto">
+        <Accordion type="single" collapsible className="w-full space-y-2">
+          {responses.map((response, index) => (
+            <AccordionItem
+              key={response.id || index}
+              value={response.id || `response-${index}`}
+              className={`border px-4 rounded-md ${
+                response.isCustomerMessage
+                  ? "bg-muted/5"
+                  : "bg-blue-50/30 dark:bg-blue-950/10"
+              } overflow-hidden`}
+            >
+              <AccordionTrigger className="py-3 hover:no-underline">
+                <div className="flex flex-1 text-left items-center">
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{formatSubject(response.subject).main}</div>
+                    {formatSubject(response.subject).reference && (
+                      <div className="text-xs text-muted-foreground">{formatSubject(response.subject).reference}</div>
                     )}
-                    {response.priority && (
-                      <>
-                        <span>•</span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full ${getPriorityBadgeClass(
-                            response.priority,
-                          )}`}
-                        >
-                          {response.priority}
-                        </span>
-                      </>
-                    )}
-                    {response.attachments &&
-                      response.attachments.length > 0 && (
+                    <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-2 mt-1">
+                      <span
+                        className={
+                          response.isCustomerMessage
+                            ? "font-semibold text-primary"
+                            : ""
+                        }
+                      >
+                        {response.isCustomerMessage ? "You" : response.sender}
+                      </span>
+                      <span>•</span>
+                      <span>{formatDate(response.createdAt)}</span>
+                      {response.messageType && (
                         <>
                           <span>•</span>
-                          <span className="flex items-center">
-                            <Paperclip className="h-3 w-3 mr-1" />
-                            {response.attachments.length}
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            {response.messageType}
                           </span>
                         </>
                       )}
-                  </div>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-3 pt-1">
-              <div className="text-sm">
-                <p className="mb-3 whitespace-pre-wrap">{response.message}</p>
-
-                {response.attachments && response.attachments.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <div className="text-xs font-medium mb-2">Attachments</div>
-                    <div className="space-y-2">
-                      {response.attachments.map((attachment, i) => (
-                        <div
-                          key={attachment.id || `attachment-${i}`}
-                          className="flex items-center justify-between p-2 rounded-lg border bg-card/80 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Paperclip className="h-4 w-4 text-primary" />
-                            <span className="text-xs truncate max-w-[300px]">
-                              {attachment.fileName}
+                      {response.priority && (
+                        <>
+                          <span>•</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full ${getPriorityBadgeClass(
+                              response.priority,
+                            )}`}
+                          >
+                            {response.priority}
+                          </span>
+                        </>
+                      )}
+                      {response.attachments &&
+                        response.attachments.length > 0 && (
+                          <>
+                            <span>•</span>
+                            <span className="flex items-center">
+                              <Paperclip className="h-3 w-3 mr-1" />
+                              {response.attachments.length}
                             </span>
-                          </div>
-                          <AttachmentsModal
-                            attachments={convertAttachmentsFormat(
-                              [attachment],
-                              response.id,
-                            )}
-                          />
-                        </div>
-                      ))}
+                          </>
+                        )}
                     </div>
                   </div>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-3 pt-1">
+                <div className="text-sm">
+                  <p className="mb-3 whitespace-pre-wrap break-words">{response.message}</p>
+
+                  {response.attachments && response.attachments.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="text-xs font-medium mb-2">Attachments</div>
+                      <div className="space-y-2">
+                        {response.attachments.map((attachment, i) => (
+                          <div
+                            key={attachment.id || `attachment-${i}`}
+                            className="flex items-center justify-between p-2 rounded-lg border bg-card/80 hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Paperclip className="h-4 w-4 text-primary" />
+                              <span className="text-xs truncate max-w-[200px]">
+                                {attachment.fileName}
+                              </span>
+                            </div>
+                            <AttachmentsModal
+                              attachments={convertAttachmentsFormat(
+                                [attachment],
+                                response.id,
+                              )}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
     </div>
   );
 };

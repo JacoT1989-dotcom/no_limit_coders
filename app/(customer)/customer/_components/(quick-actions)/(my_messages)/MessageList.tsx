@@ -31,6 +31,38 @@ const MessageList: React.FC<MessageListProps> = ({
   currentFilter,
   onClearFilter,
 }) => {
+  // Helper function to simplify multiple "Re:" prefixes and format reference numbers
+  const formatSubject = (
+    subject: string,
+  ): { main: string; reference: string | null } => {
+    // Check if the subject starts with multiple "Re:" prefixes
+    const rePattern = /^(Re:\s*)+/i;
+    let mainSubject = subject;
+
+    if (rePattern.test(subject)) {
+      // Replace multiple "Re:" with just one "Re:"
+      mainSubject = "Re: " + subject.replace(rePattern, "");
+    }
+
+    // Extract reference number if present
+    const refPattern = /\[Ref:([^\]]+)\]/;
+    const refMatch = subject.match(refPattern);
+
+    if (refMatch) {
+      // Remove reference from main subject
+      mainSubject = mainSubject.replace(refPattern, "").trim();
+      return {
+        main: mainSubject,
+        reference: refMatch[0],
+      };
+    }
+
+    return {
+      main: mainSubject,
+      reference: null,
+    };
+  };
+
   return (
     <div className="w-2/5 border rounded-lg overflow-hidden flex flex-col">
       <div className="p-3 border-b bg-muted/30 flex justify-between items-center">
@@ -63,7 +95,16 @@ const MessageList: React.FC<MessageListProps> = ({
                 onClick={() => onSelectMessage(msg.id)}
               >
                 <div className="flex justify-between items-start">
-                  <h4 className="font-medium truncate">{msg.subject}</h4>
+                  <div className="max-w-[80%]">
+                    <h4 className="font-medium">
+                      {formatSubject(msg.subject).main}
+                    </h4>
+                    {formatSubject(msg.subject).reference && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {formatSubject(msg.subject).reference}
+                      </div>
+                    )}
+                  </div>
                   <div className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
                     {msg.priority}
                   </div>

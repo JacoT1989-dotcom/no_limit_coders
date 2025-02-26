@@ -190,7 +190,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-4xl bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
+      <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[95vh] h-[800px] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-2xl">My Messages</DialogTitle>
           <DialogDescription>
@@ -233,7 +233,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
               )}
             </div>
 
-            <div className="flex h-[500px] gap-4">
+            <div className="flex h-[650px] gap-4 overflow-hidden">
               {/* Message List Panel */}
               <MessageList
                 messages={displayMessages}
