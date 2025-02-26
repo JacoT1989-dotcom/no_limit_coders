@@ -292,7 +292,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   };
 
   return (
-    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col max-h-full">
+    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col min-h-0">
       {message ? (
         <>
           <div className="p-4 border-b bg-muted/30 flex justify-between items-center shrink-0">

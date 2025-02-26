@@ -108,9 +108,19 @@ const MessageList: React.FC<MessageListProps> = ({
   currentFilter,
   onClearFilter,
 }) => {
+  // Add a reference to the messages container
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Function to scroll to bottom when needed
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="w-2/5 border rounded-lg overflow-hidden flex flex-col">
-      <div className="p-3 border-b bg-muted/30 flex justify-between items-center">
+    <div className="w-2/5 border rounded-lg overflow-hidden flex flex-col min-h-0">
+      <div className="p-3 border-b bg-muted/30 flex justify-between items-center shrink-0">
         <h3 className="font-medium">Recent Messages</h3>
         <div className="flex gap-2">
           <Button
@@ -173,6 +183,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 </div>
               </div>
             ))}
+            {/* Add an empty div at the end to scroll into view */}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
