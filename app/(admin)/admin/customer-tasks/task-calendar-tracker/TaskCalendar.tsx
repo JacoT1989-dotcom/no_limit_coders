@@ -172,7 +172,7 @@ const TasksCalendar = ({
         {createdTasks.length > 0 && (
           <div className="space-y-1">
             <p className="text-xs font-medium text-red-600/80 dark:text-red-400/80 truncate">
-              You created:
+              Customer created:
             </p>
             <Button
               variant="ghost"
