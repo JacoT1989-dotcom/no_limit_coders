@@ -24,7 +24,7 @@ export const navigation: NavItem[] = [
       },
       {
         name: "Task Calendar",
-        href: "/admin/customer-tasks/task-calendar-update",
+        href: "/admin/customer-tasks/task-calendar-tracker",
       },
     ],
   },
