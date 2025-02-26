@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -14,21 +14,30 @@ import {
 } from "date-fns";
 import DayTasksDialog from "./DayTasksDialog";
 import { ProjectOption, Task } from "@/app/(customer)/customer/tasks/types";
+import { getCustomerProjects } from "./get-actions";
+import { toast, Toaster } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
 
 interface TasksCalendarProps {
   status?: string;
   assignee?: string;
   project?: string;
   dueDate?: string;
-  projects: ProjectOption[];
 }
 
 const TasksCalendar = ({
   status,
   assignee,
-  project,
+  project: initialProject,
   dueDate,
-  projects,
 }: TasksCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -37,7 +46,12 @@ const TasksCalendar = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"created" | "due">("created");
 
-  // Gradient backgrounds array
+  // State for projects and selected project
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Gradient backgrounds array - KEEPING ORIGINAL COLORS
   const gradientBackgrounds = [
     "bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/70 dark:to-pink-900/70",
     "bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/70 dark:to-amber-900/70",
@@ -61,32 +75,62 @@ const TasksCalendar = ({
     };
   }, [currentMonth]);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      if (!project || project === "all") {
-        setTasks([]);
-        return;
-      }
+  // Load projects function
+  const loadProjects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getCustomerProjects();
+      if (response.projects) {
+        setProjects(response.projects);
 
-      setLoading(true);
-      try {
-        const selectedProject = projects.find((p) => p.id === project);
+        // If we already have a selected project, update its tasks
         if (selectedProject) {
-          setTasks(selectedProject.tasks);
+          const project = response.projects.find(
+            (p) => p.id === selectedProject,
+          );
+          if (project) {
+            setTasks(project.tasks);
+          }
         }
-      } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-        setTasks([]);
-      } finally {
-        setLoading(false);
+        // Otherwise, select the first project if available
+        else if (response.projects.length > 0) {
+          setSelectedProject(response.projects[0].id);
+          setTasks(response.projects[0].tasks);
+        }
+      } else if (response.error) {
+        setError(response.error);
+        toast.error(response.error);
       }
-    };
+    } catch (err) {
+      console.error("Error loading projects:", err);
+      setError("Failed to load projects. Please try again later.");
+      toast.error("Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedProject]);
 
-    fetchTasks();
-  }, [project, projects]);
+  // Initial load of projects
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
+
+  // Handle project selection change
+  const handleProjectChange = useCallback(
+    (projectId: string) => {
+      setSelectedProject(projectId);
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        setTasks(project.tasks);
+      } else {
+        setTasks([]);
+      }
+    },
+    [projects],
+  );
 
   const getGradientForDate = (date: Date) => {
-    // Use the date's day number to select a gradient
+    // Use the date's day number to select a gradient - KEEPING ORIGINAL FUNCTION
     const dayNumber = date.getDate();
     return gradientBackgrounds[dayNumber % gradientBackgrounds.length];
   };
@@ -119,6 +163,7 @@ const TasksCalendar = ({
     setIsDialogOpen(true);
   };
 
+  // KEEPING ORIGINAL renderDayContent FUNCTION
   const renderDayContent = (date: Date) => {
     const { createdTasks, dueTasks } = getTasksForDate(date);
 
@@ -137,15 +182,15 @@ const TasksCalendar = ({
                 openDayDialog(date, "created");
               }}
               className="w-full text-xs py-1.5 h-auto 
-                         bg-white/80 dark:bg-red-950/30
-                         hover:bg-red-100 dark:hover:bg-red-900/50 
-                         text-red-700 dark:text-red-300 
-                         hover:text-red-800 dark:hover:text-red-200
-                         font-medium 
-                         border border-red-200 dark:border-white
-                         hover:border-red-300 dark:hover:border-red-700
-                         transition-all duration-200
-                         shadow-sm"
+                       bg-white/80 dark:bg-red-950/30
+                       hover:bg-red-100 dark:hover:bg-red-900/50 
+                       text-red-700 dark:text-red-300 
+                       hover:text-red-800 dark:hover:text-red-200
+                       font-medium 
+                       border border-red-200 dark:border-white
+                       hover:border-red-300 dark:hover:border-red-700
+                       transition-all duration-200
+                       shadow-sm"
             >
               {createdTasks.length}{" "}
               {createdTasks.length === 1 ? "Task" : "Tasks"}
@@ -165,15 +210,15 @@ const TasksCalendar = ({
                 openDayDialog(date, "due");
               }}
               className="w-full text-xs py-1.5 h-auto 
-                         bg-white/80 dark:bg-red-950/30
-                         hover:bg-red-100 dark:hover:bg-red-900/50 
-                         text-red-700 dark:text-red-300 
-                         hover:text-red-800 dark:hover:text-red-200
-                         font-medium 
-                         border border-red-200 dark:border-white
-                         hover:border-red-300 dark:hover:border-red-700
-                         transition-all duration-200
-                         shadow-sm"
+                       bg-white/80 dark:bg-red-950/30
+                       hover:bg-red-100 dark:hover:bg-red-900/50 
+                       text-red-700 dark:text-red-300 
+                       hover:text-red-800 dark:hover:text-red-200
+                       font-medium 
+                       border border-red-200 dark:border-white
+                       hover:border-red-300 dark:hover:border-red-700
+                       transition-all duration-200
+                       shadow-sm"
             >
               {dueTasks.length} {dueTasks.length === 1 ? "Task" : "Tasks"}
             </Button>
@@ -183,7 +228,23 @@ const TasksCalendar = ({
     );
   };
 
-  if (!project || project === "all") {
+  if (loading && projects.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-muted-foreground border-2 border-red-100 dark:border-red-900 rounded-lg">
+        Loading projects...
+      </div>
+    );
+  }
+
+  if (error && projects.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[400px] text-red-600 border-2 border-red-100 dark:border-red-900 rounded-lg">
+        Error: {error}
+      </div>
+    );
+  }
+
+  if (!selectedProject) {
     return (
       <div className="flex items-center justify-center h-[400px] text-muted-foreground border-2 border-red-100 dark:border-red-900 rounded-lg">
         Please select a project to view tasks
@@ -195,35 +256,59 @@ const TasksCalendar = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-red-600 dark:text-red-500">
-          {format(currentMonth, "MMMM yyyy")}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentMonth(new Date())}
-            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded"
-          >
-            Today
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      <Toaster richColors position="top-right" />
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center justify-between w-full">
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-500">
+            {format(currentMonth, "MMMM yyyy")}
+          </h2>
+
+          <Select value={selectedProject} onValueChange={handleProjectChange}>
+            <SelectTrigger className="w-full sm:w-[280px] border-2 border-red-600 dark:border-gray-600">
+              <SelectValue placeholder="Select a project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Projects</SelectLabel>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}{" "}
+                    {project.customer?.displayName
+                      ? `[${project.customer.displayName}]`
+                      : ""}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentMonth(new Date())}
+              className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded"
+            >
+              Today
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              className="border-2 border-red-600 dark:border-gray-600 text-red-600 dark:text-white hover:bg-red-50 dark:hover:bg-red-950 rounded h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -293,7 +378,7 @@ const TasksCalendar = ({
               : getTasksForDate(selectedDay).dueTasks
           }
           date={selectedDay}
-          project={projects.find((p) => p.id === project)}
+          project={projects.find((p) => p.id === selectedProject)}
         />
       )}
     </div>
