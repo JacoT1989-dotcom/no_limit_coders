@@ -10,22 +10,18 @@ export async function getMessageThread(messageId: string) {
     const { user } = await validateRequest();
     if (!user) throw new Error("Unauthorized access");
 
-    // First, get the original message to ensure it belongs to the current user
-    const originalMessage = await prisma.userMessage.findUnique({
+    // Get the current message the user is viewing
+    const currentMessage = await prisma.userMessage.findUnique({
       where: {
         id: messageId,
         userId: user.id,
       },
       include: {
-        techTeamResponse: {
-          include: {
-            attachments: true,
-          },
-        },
+        techTeamResponse: true,
       },
     });
 
-    if (!originalMessage) {
+    if (!currentMessage) {
       return {
         error: "Message not found or you don't have permission to view it",
       };
@@ -34,34 +30,20 @@ export async function getMessageThread(messageId: string) {
     // Create the thread responses array
     const threadResponses = [];
 
-    // Only add the customer's direct reply (techTeamResponse) if it exists
-    if (originalMessage.techTeamResponse) {
-      const customerReply = originalMessage.techTeamResponse;
+    // Only include follow-up customer replies in the thread, not the original message
+    // This way, when viewing an admin message, we don't show the original subject again
 
-      threadResponses.push({
-        id: customerReply.id,
-        sender: "You", // This is the customer's reply
-        subject: customerReply.subject,
-        message: customerReply.message,
-        category: customerReply.category as unknown as MessageCategory,
-        priority: customerReply.priority,
-        messageType: customerReply.messageType,
-        createdAt: customerReply.createdAt,
-        isCustomerMessage: true, // This is from the customer
-        attachments: customerReply.attachments.map((attachment) => ({
-          id: attachment.id,
-          fileName: attachment.fileName,
-          fileUrl: attachment.fileUrl,
-          createdAt: attachment.createdAt,
-          messageId: customerReply.id,
-        })),
-      });
-    }
-
-    // Find ANY TechTeamMessages from this user (remove all filtering first for debugging)
-    const allUserReplies = await prisma.techTeamMessage.findMany({
+    // Find customer replies specifically for this message
+    const customerReplies = await prisma.techTeamMessage.findMany({
       where: {
         userId: user.id,
+        createdAt: { gt: currentMessage.createdAt },
+        OR: [
+          // Direct replies to this message
+          { userMessageId: messageId },
+          // Messages with reference to this message
+          { subject: { contains: `[Ref:${messageId}]` } },
+        ],
       },
       include: {
         attachments: true,
@@ -71,36 +53,18 @@ export async function getMessageThread(messageId: string) {
       },
     });
 
-    // Now apply our actual filtering
-    const relatedReplies = allUserReplies.filter((reply) => {
-      // If this is already added as the direct response, skip it
-      if (
-        originalMessage.techTeamResponse &&
-        reply.id === originalMessage.techTeamResponse.id
-      ) {
-        return false;
-      }
-
-      // Check if subject contains the original subject
-      const subjectMatches =
-        reply.subject.includes(originalMessage.subject) ||
-        reply.subject.includes(`Re: ${originalMessage.subject}`);
-
-      return subjectMatches;
-    });
-
-    // Add all related customer replies to the thread
-    for (const reply of relatedReplies) {
+    // Add these customer replies to the thread
+    for (const reply of customerReplies) {
       threadResponses.push({
         id: reply.id,
-        sender: "You", // Customer's message
+        sender: "You",
         subject: reply.subject,
         message: reply.message,
         category: reply.category as unknown as MessageCategory,
         priority: reply.priority,
         messageType: reply.messageType,
         createdAt: reply.createdAt,
-        isCustomerMessage: true, // This is from the customer
+        isCustomerMessage: true,
         attachments: reply.attachments.map((attachment) => ({
           id: attachment.id,
           fileName: attachment.fileName,
@@ -110,12 +74,6 @@ export async function getMessageThread(messageId: string) {
         })),
       });
     }
-
-    // Sort by createdAt ascending so oldest messages appear first
-    threadResponses.sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
 
     return {
       success: true,

@@ -109,15 +109,17 @@ export async function replyToUserMessage(formData: FormData) {
       // create a new tech team message WITHOUT linking it to the user message
       if (userMessage.techTeamResponse) {
         // Create a new "follow-up" tech team message without setting userMessageId
+        // In your replyToUserMessage function, when creating a follow-up:
         const techTeamMessage = await tx.techTeamMessage.create({
           data: {
-            subject: `Re: ${userMessage.subject}`, // Use a "Re:" prefix to indicate it's a reply
+            // Add the reference marker to the subject for follow-up messages
+            subject: `Re: ${userMessage.subject} [Ref:${userMessageId}]`,
             message: message,
             category: category,
             messageType: messageType,
             priority: priority,
             userId: user.id,
-            // Don't set userMessageId to avoid the unique constraint error
+            // No userMessageId for follow-ups to avoid unique constraint error
           },
           include: {
             user: true,

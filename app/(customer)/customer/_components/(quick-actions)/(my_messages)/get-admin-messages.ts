@@ -10,13 +10,13 @@ export async function getUserMessages() {
     if (!user) throw new Error("Unauthorized access");
 
     // Fetch all user messages for the current user with their attachments
-    // Explicitly select all fields to make it clear what's being fetched
+    // Here's the key fix: We want to show admin responses to the customer, not the customer's original messages
     const messages = await prisma.userMessage.findMany({
       where: {
         userId: user.id,
       },
       select: {
-        // All base UserMessage fields
+        // All base UserMessage fields - these will contain the ADMIN response data
         id: true,
         sender: true,
         subject: true,
@@ -38,25 +38,13 @@ export async function getUserMessages() {
           },
         },
 
-        // Include the related tech team response if it exists (one-to-one)
+        // Include the related tech team message (original customer message)
+        // Used for reference only, NOT for display in the message list
         techTeamResponse: {
           select: {
             id: true,
             subject: true,
-            message: true,
-            category: true,
-            messageType: true,
             priority: true,
-            createdAt: true,
-            updatedAt: true,
-            attachments: {
-              select: {
-                id: true,
-                fileName: true,
-                fileUrl: true,
-                createdAt: true,
-              },
-            },
           },
         },
       },

@@ -24,23 +24,10 @@ interface Attachment {
   messageId: string;
 }
 
-interface TechTeamAttachment {
-  id: string;
-  fileName: string;
-  fileUrl: string;
-  createdAt: Date;
-}
-
 interface TechTeamResponse {
   id: string;
   subject: string;
-  message: string;
-  category: string;
-  messageType: string;
   priority: string;
-  createdAt: Date;
-  updatedAt: Date;
-  attachments: TechTeamAttachment[];
 }
 
 interface UserMessage {
@@ -95,56 +82,37 @@ const convertToMessageListFormat = (messages: UserMessage[]) => {
   return messages.map((msg) => ({
     id: msg.id,
     subject: msg.subject,
-    message: msg.preview, // Using preview field for message content in the list
+    message: msg.preview || "No preview available", // Use the admin's preview text for the list
     category: msg.category as string,
-    priority: msg.techTeamResponse?.priority || "MEDIUM", // Use priority from tech team response if available
+    // For priority, use the admin's priority if available, otherwise medium
+    priority: msg.techTeamResponse?.priority || "MEDIUM",
     timestamp: formatTimestamp(msg.createdAt),
     attachments: msg.attachments,
+    // Add sender information to clarify it's from admin
+    sender: msg.sender || "Support Team",
   }));
 };
 
 // Create a detailed message object for MessageDetail component
 const createDetailedMessage = (message: UserMessage) => {
-  // If there's a tech team response, use that for the message details
-  if (message.techTeamResponse) {
-    return {
-      id: message.id,
-      subject: message.subject,
-      message: message.techTeamResponse.message,
-      category: message.techTeamResponse.category,
-      messageType: message.techTeamResponse.messageType,
-      priority: message.techTeamResponse.priority,
-      createdAt: message.techTeamResponse.createdAt,
-      attachments: message.techTeamResponse.attachments.map((att) => ({
-        id: att.id,
-        fileName: att.fileName,
-        fileUrl: att.fileUrl,
-      })),
-      user: {
-        id: "admin", // Tech team/admin is always the sender for customer view
-        displayName: message.sender,
-        email: "admin@example.com", // This is a placeholder as we don't have admin email
-      },
-    };
-  }
-
-  // If there's no tech team response, use the user message data
+  // This message IS the admin's response - display it directly
   return {
     id: message.id,
     subject: message.subject,
-    message: message.preview,
+    message: message.preview || "",
     category: message.category as string,
-    messageType: "MESSAGE",
-    priority: "MEDIUM", // Default priority
+    messageType: "RESPONSE", // This is always a response from admin
+    priority: message.techTeamResponse?.priority || "MEDIUM",
     createdAt: message.createdAt,
-    attachments: message.attachments.map((att) => ({
-      id: att.id,
-      fileName: att.fileName,
-      fileUrl: att.fileUrl,
-    })),
+    attachments:
+      message.attachments?.map((att) => ({
+        id: att.id,
+        fileName: att.fileName,
+        fileUrl: att.fileUrl,
+      })) || [], // Return empty array if attachments is undefined
     user: {
       id: "admin",
-      displayName: message.sender,
+      displayName: message.sender || "Support Team",
       email: "admin@example.com", // Placeholder
     },
   };
@@ -202,7 +170,7 @@ const ViewMessagesModal: React.FC<ViewMessagesModalProps> = ({ children }) => {
   const filteredMessages = messages.filter((msg) => {
     if (!filter) return true;
 
-    // Check if tech team response exists and matches the priority filter
+    // Check priority from tech team response (original message)
     return msg.techTeamResponse && msg.techTeamResponse.priority === filter;
   });
 

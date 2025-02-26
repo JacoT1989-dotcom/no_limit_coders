@@ -5,8 +5,6 @@ import { Reply, X, RefreshCw, Paperclip } from "lucide-react";
 import CustomerReplyDialog from "./CustomerReplyDialog";
 import AttachmentsModal from "../../../tasks/_components/(table)/(attachment)/AttachmentModal";
 import CustomerMessageThreadView from "./CustomerMessageThreadView";
-import { getMessageThread } from "./getMessageThread";
-import { MessageCategory } from "@prisma/client";
 
 interface Attachment {
   id: string;
@@ -101,8 +99,8 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   }
 
   return (
-    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col">
-      <div className="p-4 border-b bg-muted/30 flex justify-between items-center">
+    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col max-h-[500px]">
+      <div className="p-4 border-b bg-muted/30 flex justify-between items-center shrink-0">
         <div className="flex-1">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-lg">{message.subject}</h3>
@@ -153,7 +151,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
         </div>
       </div>
 
-      <div className="p-4 flex-1 overflow-y-auto">
+      <div className="p-4 flex-1 overflow-y-auto min-h-0">
         <div className="prose prose-sm max-w-none">
           <p>{message.message}</p>
         </div>
@@ -167,11 +165,10 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
           </div>
         )}
 
-        {/* Message thread/history section - Now using the new component */}
+        {/* Message thread/history section */}
         <CustomerMessageThreadView
           key={`thread-${message.id}-${refreshKey}`}
           messageId={message.id}
-          // Removed initialMessage to prevent admin messages from showing
           onRefresh={handleThreadRefresh}
         />
       </div>

@@ -96,21 +96,6 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // For debugging: log thread responses when they change
-  useEffect(() => {
-    if (responses && responses.length > 0) {
-      console.log("Thread responses:", responses);
-      console.log(
-        "Customer messages:",
-        responses.filter((r) => r.isCustomerMessage),
-      );
-      console.log(
-        "Admin messages:",
-        responses.filter((r) => !r.isCustomerMessage),
-      );
-    }
-  }, [responses]);
-
   // Function to fetch message thread data - wrapped in useCallback to prevent infinite renders
   const fetchMessageThread = useCallback(async () => {
     if (!messageId) return;
@@ -188,8 +173,8 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
 
   if (responses.length === 0) {
     return (
-      <div className="mt-6 border-t pt-4">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mt-6 border-t pt-4 max-h-[300px] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4 sticky top-0 bg-background z-10">
           <h3 className="text-md font-medium">Message History</h3>
           <Button
             variant="ghost"
@@ -215,8 +200,8 @@ const CustomerMessageThreadView: React.FC<CustomerMessageThreadViewProps> = ({
   }
 
   return (
-    <div className="mt-6 border-t pt-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="mt-6 border-t pt-4 max-h-[300px] overflow-y-auto">
+      <div className="flex items-center justify-between mb-4 sticky top-0 bg-background z-10 py-2">
         <h3 className="text-md font-medium">
           Message History ({responses.length})
         </h3>
