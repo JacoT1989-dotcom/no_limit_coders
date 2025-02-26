@@ -118,12 +118,13 @@ const WelcomePage = () => {
                   <div className="rounded-lg bg-accent/10 p-2">
                     <Layout className="h-6 w-6 text-accent" />
                   </div>
-                  <span>Message Tech Team</span>
+                  <span>Create Subject Message</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Instant Message allows you to have response in a flash
+                  Create a chat topic. Each subject you create allows for a
+                  dialog with admin.
                 </p>
               </CardContent>
             </Card>
