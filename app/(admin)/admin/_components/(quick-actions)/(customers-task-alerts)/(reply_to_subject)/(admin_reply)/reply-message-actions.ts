@@ -106,12 +106,13 @@ export async function respondToMessage(formData: FormData) {
 
     // Create a transaction to ensure all operations succeed or fail together
     const result = await prisma.$transaction(async (tx) => {
-      // Create the user message
+      // Create the user message with the required message field
       const userMessage = await tx.userMessage.create({
         data: {
           sender: user.displayName,
           subject: subject || `Re: ${techTeamMessage.subject}`,
-          preview: preview,
+          preview: preview || message.substring(0, 150), // Use first 150 chars as preview if not provided
+          message: message, // Required field now
           category: category,
           isUnread: true,
           hasAttachment: attachments.length > 0,

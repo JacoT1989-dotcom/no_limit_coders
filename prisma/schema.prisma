@@ -242,6 +242,7 @@ model UserMessage {
   sender        String
   subject       String
   preview       String
+  message       String // Add this new field
   category      MessageCategory
   isUnread      Boolean         @default(true)
   hasAttachment Boolean         @default(false)

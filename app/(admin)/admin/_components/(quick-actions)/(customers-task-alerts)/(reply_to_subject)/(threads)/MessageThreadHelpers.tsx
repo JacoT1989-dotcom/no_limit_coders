@@ -14,6 +14,7 @@ export interface ThreadResponse {
   sender: string;
   subject: string;
   preview: string;
+  message?: string; // Added message field as optional
   category: string;
   createdAt: Date;
   attachments: ThreadResponseAttachment[];

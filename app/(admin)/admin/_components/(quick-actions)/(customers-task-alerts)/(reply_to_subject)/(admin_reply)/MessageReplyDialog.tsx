@@ -78,13 +78,29 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
     setIsSubmitting(true);
 
     try {
+      // Debug: Log form data before submission
+      console.log("Submitting form with data:", {
+        techTeamMessageId: message.id,
+        subject,
+        preview,
+        messageText,
+        category,
+        filesCount: files.length,
+      });
+
       // Create FormData to handle file uploads
       const formData = new FormData();
       formData.append("techTeamMessageId", message.id);
       formData.append("subject", subject);
-      formData.append("preview", preview);
-      formData.append("message", messageText);
+      formData.append("preview", preview || messageText.substring(0, 150));
+      formData.append("message", messageText); // Make sure message is being sent
       formData.append("category", category);
+
+      // Debug: Log the form data
+      console.log("FormData keys:");
+      for (const key of formData.keys()) {
+        console.log(` - ${key}: ${formData.get(key)}`);
+      }
 
       // Append files
       files.forEach((file) => {
@@ -97,6 +113,9 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
       if ("error" in result && result.error) {
         throw new Error(result.error);
       }
+
+      // Debug: Log the result
+      console.log("Response from server:", result);
 
       // Success!
       toast("Success", {

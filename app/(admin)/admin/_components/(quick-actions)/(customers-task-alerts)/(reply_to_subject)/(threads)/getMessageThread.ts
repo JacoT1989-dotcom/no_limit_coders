@@ -93,16 +93,7 @@ export async function getMessageThread(techTeamMessageId: string) {
           // Exclude the original message
           id: { not: techTeamMessage.userMessageId },
         },
-        select: {
-          id: true,
-          sender: true,
-          subject: true,
-          preview: true,
-          category: true,
-          isUnread: true,
-          hasAttachment: true,
-          createdAt: true,
-          userId: true,
+        include: {
           attachments: true,
         },
         orderBy: {
@@ -112,22 +103,69 @@ export async function getMessageThread(techTeamMessageId: string) {
 
       console.log(`Found ${responseMessages.length} related responses`);
 
+      // Debug: Log all response messages with their complete fields
+      console.log("=== RAW DATABASE RESPONSES ===");
+      responseMessages.forEach((respMsg, idx) => {
+        console.log(`Raw Response ${idx} (${respMsg.id}):`);
+        // Log all properties to see what's available
+        console.log(
+          JSON.stringify(
+            {
+              id: respMsg.id,
+              sender: respMsg.sender,
+              subject: respMsg.subject,
+              preview: respMsg.preview?.substring(0, 30) + "...",
+              message: respMsg.message
+                ? respMsg.message.substring(0, 30) + "..."
+                : undefined,
+              category: respMsg.category,
+              isUnread: respMsg.isUnread,
+              hasAttachment: respMsg.hasAttachment,
+              createdAt: respMsg.createdAt,
+              userId: respMsg.userId,
+              attachmentsCount: respMsg.attachments?.length || 0,
+            },
+            null,
+            2,
+          ),
+        );
+      });
+      console.log("=== END RAW RESPONSES ===");
+
       // Process each response message
       for (const respMsg of responseMessages) {
+        // Debug: Log what we're adding to the responses array
+        console.log(`Building response object for ${respMsg.id}`);
+        console.log(
+          `Message field exists: ${respMsg.hasOwnProperty("message")}`,
+        );
+        console.log(
+          `Message content length: ${respMsg.message ? respMsg.message.length : 0}`,
+        );
+
         // Add the message with its attachments to the responses array
-        responses.push({
+        const responseObject = {
           id: respMsg.id,
           sender: respMsg.sender,
           subject: respMsg.subject,
-          // Just use preview as is since we don't have access to the full message content
           preview: respMsg.preview || "",
+          message: respMsg.message || "", // This should include the message field if it exists
           category: respMsg.category,
           createdAt: respMsg.createdAt,
           attachments: respMsg.attachments.map((att) => ({
             ...att,
             messageId: respMsg.id, // Explicitly set the messageId to ensure association
           })),
+        };
+
+        console.log(`Built response object:`, {
+          id: responseObject.id,
+          hasMessage: !!responseObject.message,
+          messageLength: responseObject.message?.length || 0,
+          previewLength: responseObject.preview?.length || 0,
         });
+
+        responses.push(responseObject);
 
         console.log(
           `Response ${respMsg.id}: ${respMsg.subject} has ${respMsg.attachments.length} attachments`,
@@ -135,11 +173,16 @@ export async function getMessageThread(techTeamMessageId: string) {
       }
 
       // Log response details
+      console.log("=== FINAL PROCESSED RESPONSES ===");
       responses.forEach((resp, index) => {
         console.log(`Response ${index} details:`, {
           id: resp.id,
           subject: resp.subject,
-          preview: resp.preview,
+          preview: resp.preview?.substring(0, 30) + "...",
+          message: resp.message
+            ? resp.message.substring(0, 30) + "..."
+            : "undefined",
+          messageLength: resp.message ? resp.message.length : 0,
           attachmentsCount: resp.attachments.length,
         });
 
@@ -153,6 +196,7 @@ export async function getMessageThread(techTeamMessageId: string) {
           });
         }
       });
+      console.log("=== END PROCESSED RESPONSES ===");
     }
 
     return {
