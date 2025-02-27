@@ -1,6 +1,7 @@
-import React from "react";
-import { Filter, Paperclip } from "lucide-react";
+import React, { useMemo } from "react";
+import { Filter, Paperclip, MessageSquare, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 import { MessageWithUser } from "./(reply_to_subject)/(message_card)/CustomerMessageCard";
@@ -35,6 +36,15 @@ const formatSubject = (
     main: mainSubject,
     reference: null,
   };
+};
+
+// Helper function to normalize subjects for grouping
+const normalizeSubject = (subject: string): string => {
+  // Remove Re: prefixes
+  const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
+  // Remove reference numbers
+  const withoutRef = withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
+  return withoutRef;
 };
 
 interface MessageListProps {
@@ -101,6 +111,34 @@ const formatDate = (date: Date) => {
   }
 };
 
+// Function to format date in a more readable format
+const formatDateFull = (date: Date) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+interface SubjectGroup {
+  subject: string;
+  normalizedSubject: string;
+  reference: string | null;
+  messages: MessageWithUser[];
+  latestDate: Date;
+  oldestDate: Date;
+  highestPriority: Priority;
+  totalAttachments: number;
+  categories: Set<TechTeamMessageCategory>;
+  originalSender: {
+    id: string;
+    displayName: string;
+    email: string;
+  };
+  totalMessages: number;
+  uniqueUsers: Set<string>;
+}
+
 const MessageList: React.FC<MessageListProps> = ({
   messages,
   selectedMessageId,
@@ -111,6 +149,84 @@ const MessageList: React.FC<MessageListProps> = ({
   // Add a reference to the messages container
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
+  // Group messages by subject
+  const subjectGroups = useMemo(() => {
+    const groups: Record<string, SubjectGroup> = {};
+
+    messages.forEach((msg) => {
+      const { main, reference } = formatSubject(msg.subject);
+      const normalizedSubject = normalizeSubject(msg.subject);
+
+      if (!groups[normalizedSubject]) {
+        groups[normalizedSubject] = {
+          subject: main,
+          normalizedSubject,
+          reference,
+          messages: [],
+          latestDate: msg.createdAt,
+          oldestDate: msg.createdAt,
+          highestPriority: msg.priority,
+          totalAttachments: 0,
+          categories: new Set<TechTeamMessageCategory>(),
+          originalSender: {
+            id: msg.user.id,
+            displayName: msg.user.displayName,
+            email: msg.user.email,
+          },
+          totalMessages: 0,
+          uniqueUsers: new Set<string>(),
+        };
+      }
+
+      // Add message to group
+      groups[normalizedSubject].messages.push(msg);
+      groups[normalizedSubject].totalMessages++;
+      groups[normalizedSubject].uniqueUsers.add(msg.user.id);
+
+      // Update group metadata
+      const group = groups[normalizedSubject];
+
+      // Update latest date
+      if (new Date(msg.createdAt) > new Date(group.latestDate)) {
+        group.latestDate = msg.createdAt;
+      }
+
+      // Update oldest date (to find the original message)
+      if (new Date(msg.createdAt) < new Date(group.oldestDate)) {
+        group.oldestDate = msg.createdAt;
+        // Update original sender to the earliest message sender
+        group.originalSender = {
+          id: msg.user.id,
+          displayName: msg.user.displayName,
+          email: msg.user.email,
+        };
+      }
+
+      // Update highest priority (URGENT > HIGH > MEDIUM > LOW)
+      const priorityRank = {
+        URGENT: 4,
+        HIGH: 3,
+        MEDIUM: 2,
+        LOW: 1,
+      };
+      if (priorityRank[msg.priority] > priorityRank[group.highestPriority]) {
+        group.highestPriority = msg.priority;
+      }
+
+      // Update total attachments
+      group.totalAttachments += msg.attachments.length;
+
+      // Add category
+      group.categories.add(msg.category as TechTeamMessageCategory);
+    });
+
+    // Convert to array and sort by latest date
+    return Object.values(groups).sort(
+      (a, b) =>
+        new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime(),
+    );
+  }, [messages]);
+
   // Function to scroll to bottom when needed
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -118,10 +234,16 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  // Find which group contains the selected message
+  const isGroupSelected = (group: SubjectGroup) => {
+    if (!selectedMessageId) return false;
+    return group.messages.some((msg) => msg.id === selectedMessageId);
+  };
+
   return (
     <div className="w-2/5 border rounded-lg overflow-hidden flex flex-col min-h-0">
       <div className="p-3 border-b bg-muted/30 flex justify-between items-center shrink-0">
-        <h3 className="font-medium">Recent Messages</h3>
+        <h3 className="font-medium">Conversations</h3>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -135,51 +257,88 @@ const MessageList: React.FC<MessageListProps> = ({
         </div>
       </div>
       <div className="overflow-y-auto flex-1">
-        {messages.length === 0 ? (
+        {subjectGroups.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             No messages found
           </div>
         ) : (
           <div className="divide-y">
-            {messages.map((msg) => (
+            {subjectGroups.map((group) => (
               <div
-                key={msg.id}
+                key={group.normalizedSubject}
                 className={`p-3 cursor-pointer hover:bg-accent/5 transition-colors ${
-                  selectedMessageId === msg.id ? "bg-accent/10" : ""
+                  isGroupSelected(group) ? "bg-accent/10" : ""
                 }`}
-                onClick={() => onSelectMessage(msg.id)}
+                onClick={() => onSelectMessage(group.messages[0].id)}
               >
                 <div className="flex justify-between items-start">
                   <div className="max-w-[80%]">
-                    <h4 className="font-medium">
-                      {formatSubject(msg.subject).main}
+                    <h4 className="font-medium flex items-center">
+                      <span>{group.subject}</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {group.messages.length}
+                      </Badge>
                     </h4>
-                    {formatSubject(msg.subject).reference && (
+                    {group.reference && (
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {formatSubject(msg.subject).reference}
+                        {group.reference}
                       </div>
                     )}
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <span className="font-medium">Started by:</span>{" "}
+                      {group.originalSender.displayName}
+                    </div>
                   </div>
-                  <PriorityBadge priority={msg.priority} />
+                  <PriorityBadge priority={group.highestPriority} />
                 </div>
+
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                  {msg.message}
+                  {group.messages[0].message}
                 </p>
-                <div className="flex justify-between items-center mt-2">
-                  <div className="flex gap-2">
-                    <CategoryBadge
-                      category={msg.category as TechTeamMessageCategory}
-                    />
-                    {msg.attachments.length > 0 && (
-                      <span className="flex items-center text-xs text-muted-foreground">
-                        <Paperclip className="h-3 w-3 mr-1" />
-                        {msg.attachments.length}
+
+                <div className="flex flex-col gap-1 mt-2">
+                  {/* Messages count and date range */}
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MessageSquare className="h-3 w-3" />
+                      <span>
+                        {group.totalMessages} messages •{" "}
+                        {group.uniqueUsers.size} participants
                       </span>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        {formatDateFull(group.oldestDate)} -{" "}
+                        {formatDateFull(group.latestDate)}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs text-accent">
-                    {formatDate(msg.createdAt)}
-                  </span>
+
+                  {/* Categories and attachment count */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-2 flex-wrap">
+                      {Array.from(group.categories)
+                        .slice(0, 2)
+                        .map((category) => (
+                          <CategoryBadge key={category} category={category} />
+                        ))}
+                      {group.categories.size > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{group.categories.size - 2} more
+                        </Badge>
+                      )}
+                      {group.totalAttachments > 0 && (
+                        <span className="flex items-center text-xs text-muted-foreground">
+                          <Paperclip className="h-3 w-3 mr-1" />
+                          {group.totalAttachments}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-accent">
+                      Updated {formatDate(group.latestDate)}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}

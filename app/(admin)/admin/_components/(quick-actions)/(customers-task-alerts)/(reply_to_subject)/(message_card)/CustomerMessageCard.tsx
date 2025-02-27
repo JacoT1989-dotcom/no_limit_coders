@@ -8,15 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  MessageSquare,
-  Filter,
-  ExternalLink,
-  AlertTriangle,
-  Loader2,
-  ChevronDown,
-  X,
-} from "lucide-react";
+import { MessageSquare, Filter, AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -74,7 +66,7 @@ const CustomerMessageCard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  // New state for subject filtering
+  // State for subject filtering
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [uniqueSubjects, setUniqueSubjects] = useState<string[]>([]);
 
@@ -116,7 +108,7 @@ const CustomerMessageCard = () => {
           setSelectedCustomer(uniqueCustomers[0].id);
         }
 
-        // Extract unique subjects for dropdown
+        // Extract unique normalized subjects for dropdown
         const subjects = allMessages.map((msg) => msg.subject);
         // Clean up subjects (remove Re: prefixes and reference numbers for comparison)
         const cleanSubjects = subjects.map((subject) => {
@@ -146,17 +138,19 @@ const CustomerMessageCard = () => {
     }
   }, [dialogOpen, fetchMessages]);
 
+  // Helper function to normalize subjects for grouping
+  const normalizeSubject = (subject: string): string => {
+    // Remove Re: prefixes
+    const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
+    // Remove reference numbers
+    const withoutRef = withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
+    return withoutRef;
+  };
+
   // Helper function to check if a message matches the subject filter
   const matchesSubjectFilter = (messageSubject: string) => {
     if (!subjectFilter) return true;
-
-    // Clean the message subject (remove Re: and reference numbers)
-    const cleanSubject = messageSubject
-      .replace(/^(Re:\s*)+/i, "")
-      .replace(/\[Ref:[^\]]+\]/g, "")
-      .trim();
-
-    return cleanSubject === subjectFilter;
+    return normalizeSubject(messageSubject) === subjectFilter;
   };
 
   // Handler for subject filter change
@@ -182,7 +176,7 @@ const CustomerMessageCard = () => {
 
   const currentMessage = selectedMessage
     ? messages.find((msg) => msg.id === selectedMessage)
-    : null;
+    : undefined;
 
   const clearSelectedMessage = () => {
     setSelectedMessage(null);
@@ -328,10 +322,12 @@ const CustomerMessageCard = () => {
                 onClearFilter={() => setFilter(null)}
               />
 
-              {/* Message Detail Panel */}
+              {/* Message Detail Panel with access to all messages for grouping */}
               <MessageDetail
-                message={currentMessage || undefined}
+                message={currentMessage}
                 onClose={clearSelectedMessage}
+                onMessageResponded={fetchMessages}
+                allMessages={filteredMessages}
               />
             </div>
           </>
