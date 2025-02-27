@@ -1,6 +1,6 @@
-// types.ts
 import { Priority } from "@prisma/client";
 
+// Message categories and types
 export type TechTeamMessageCategory =
   | "bug"
   | "feature"
@@ -18,6 +18,7 @@ export type TechTeamMessageType =
   | "documentation"
   | "question";
 
+// Form values
 export interface TechTeamMessageFormValues {
   subject: string;
   message: string;
@@ -27,11 +28,16 @@ export interface TechTeamMessageFormValues {
   attachments?: File[];
 }
 
+// Message attachment
 export interface TechTeamMessageAttachment {
+  id?: string;
   fileName: string;
   fileUrl: string;
+  createdAt?: Date;
+  messageId?: string;
 }
 
+// API response types
 export interface TechTeamMessageResponse {
   success?: boolean;
   messageId?: string;
@@ -56,6 +62,28 @@ export interface GetTechTeamMessagesResponse {
     attachments: TechTeamMessageAttachment[];
   }[];
   error?: string;
+}
+
+// Thread response types
+export interface ThreadResponseAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: Date;
+  messageId?: string;
+  taskId: string;
+  uploaderId: string;
+}
+
+export interface ThreadResponse {
+  id: string;
+  sender: string;
+  subject: string;
+  preview: string;
+  message?: string; // Add full message content
+  category: string;
+  createdAt: Date;
+  attachments: ThreadResponseAttachment[];
 }
 
 // Constants for form options

@@ -3,7 +3,7 @@ import { Filter, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
-import { MessageWithUser } from "./CustomerMessageCard";
+import { MessageWithUser } from "./(reply_to_subject)/(message_card)/CustomerMessageCard";
 
 // Helper function to format subjects and extract reference numbers
 const formatSubject = (

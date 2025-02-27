@@ -70,15 +70,26 @@ export async function getMessageThread(techTeamMessageId: string) {
       );
       console.log("And subject containing:", techTeamMessage.subject);
 
+      // Extract reference ID if present in the subject
+      const refMatch = techTeamMessage.subject.match(/\[Ref:([^\]]+)\]/);
+      const referenceId = refMatch ? refMatch[0] : null;
+
       // Get all user messages that are responses to the original message
-      // CRITICAL: Use separate queries for each message to ensure attachments are properly grouped
       const responseMessages = await prisma.userMessage.findMany({
         where: {
           userId: techTeamMessage.userId,
-          // Filter for related messages by subject
-          subject: {
-            contains: techTeamMessage.subject,
-          },
+          OR: [
+            // Match exact subject
+            { subject: techTeamMessage.subject },
+            // Match subject with Re: prefix
+            {
+              subject: {
+                startsWith: `Re: ${techTeamMessage.subject.replace(/^(Re:\s*)+/i, "")}`,
+              },
+            },
+            // Match subject with reference ID if present
+            ...(referenceId ? [{ subject: { contains: referenceId } }] : []),
+          ],
           // Exclude the original message
           id: { not: techTeamMessage.userMessageId },
         },
@@ -92,6 +103,7 @@ export async function getMessageThread(techTeamMessageId: string) {
           hasAttachment: true,
           createdAt: true,
           userId: true,
+          attachments: true,
         },
         orderBy: {
           createdAt: "asc",
@@ -100,26 +112,25 @@ export async function getMessageThread(techTeamMessageId: string) {
 
       console.log(`Found ${responseMessages.length} related responses`);
 
-      // For each message, get its attachments separately to ensure proper relationship
+      // Process each response message
       for (const respMsg of responseMessages) {
-        // Get attachments for this specific message
-        const msgAttachments = await prisma.messageAttachment.findMany({
-          where: {
-            messageId: respMsg.id,
-          },
-        });
-
         // Add the message with its attachments to the responses array
         responses.push({
-          ...respMsg,
-          attachments: msgAttachments.map((att) => ({
+          id: respMsg.id,
+          sender: respMsg.sender,
+          subject: respMsg.subject,
+          // Just use preview as is since we don't have access to the full message content
+          preview: respMsg.preview || "",
+          category: respMsg.category,
+          createdAt: respMsg.createdAt,
+          attachments: respMsg.attachments.map((att) => ({
             ...att,
             messageId: respMsg.id, // Explicitly set the messageId to ensure association
           })),
         });
 
         console.log(
-          `Response ${respMsg.id}: ${respMsg.subject} has ${msgAttachments.length} attachments`,
+          `Response ${respMsg.id}: ${respMsg.subject} has ${respMsg.attachments.length} attachments`,
         );
       }
 

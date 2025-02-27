@@ -16,7 +16,7 @@ import { useSession } from "../SessionProvider";
 import CustomerProjectsCard from "./_components/(quick-actions)/(customer-projects)/CustomerProjectsCard";
 import ConsultationsCard from "./_components/(quick-actions)/(public-consultations)/ConsultationsCard";
 import MessagesCard from "./_components/(quick-actions)/(public-messages)/MessagesCard";
-import CustomerMessageCard from "./_components/(quick-actions)/(customers-task-alerts)/CustomerMessageCard";
+import CustomerMessageCard from "./_components/(quick-actions)/(customers-task-alerts)/(reply_to_subject)/(message_card)/CustomerMessageCard";
 
 const WelcomePage = () => {
   const { user } = useSession();

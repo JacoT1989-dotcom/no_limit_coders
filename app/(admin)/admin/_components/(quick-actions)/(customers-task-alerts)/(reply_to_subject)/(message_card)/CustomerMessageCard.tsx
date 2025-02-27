@@ -33,9 +33,9 @@ import {
   PRIORITY_OPTIONS,
 } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
-import { getTechTeamMessages } from "./get-message-actions";
-import MessageList from "./MessageList";
-import MessageDetail from "./(message_details)/MessageDetail";
+import { getTechTeamMessages } from "../../get-message-actions";
+import MessageList from "../../MessageList";
+import MessageDetail from "../../(message_details)/MessageDetail";
 
 // Type for our messages with all required fields
 export interface MessageWithUser {
