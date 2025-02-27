@@ -35,7 +35,7 @@ import {
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 import { getTechTeamMessages } from "./get-message-actions";
 import MessageList from "./MessageList";
-import MessageDetail from "./MessageDetail";
+import MessageDetail from "./(message_details)/MessageDetail";
 
 // Type for our messages with all required fields
 export interface MessageWithUser {

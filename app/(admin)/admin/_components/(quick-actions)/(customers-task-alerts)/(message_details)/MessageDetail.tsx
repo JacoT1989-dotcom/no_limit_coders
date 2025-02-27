@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reply, X, RefreshCw } from "lucide-react";
-import { MessageWithUser } from "./CustomerMessageCard";
+import { MessageWithUser } from "../CustomerMessageCard";
 import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 import AttachmentsModal from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
-import MessageReplyDialog from "./(reply_to_subject)/MessageReplyDialog";
+import MessageReplyDialog from "../(reply_to_subject)/(admin_reply)/MessageReplyDialog";
 import { toast } from "sonner";
-import { getMessageThread } from "./(reply_to_subject)/getMessageThread";
-import MessageThreadView from "./(reply_to_subject)/MessageThreadView";
+import { getMessageThread } from "../(reply_to_subject)/(threads)/getMessageThread";
+import MessageThreadView from "../(reply_to_subject)/(threads)/MessageThreadView";
 
 // Helper function to format subjects and extract reference numbers
 const formatSubject = (

@@ -17,7 +17,7 @@ import {
   getPriorityColor,
   getStatusColor,
 } from "@/app/(customer)/customer/tasks/types";
-import AttachmentsModal from "../../../_components/(quick-actions)/(customers-task-alerts)/(reply_to_subject)/AttacmentModal";
+import AttachmentsModal from "../../../_components/(quick-actions)/(customers-task-alerts)/AttacmentModal";
 import { CommentsBadge } from "../(task-comments)/CommentsModal";
 import { getCustomerProjects } from "../get-actions";
 import AssigneesModal from "./AssigneesModal";

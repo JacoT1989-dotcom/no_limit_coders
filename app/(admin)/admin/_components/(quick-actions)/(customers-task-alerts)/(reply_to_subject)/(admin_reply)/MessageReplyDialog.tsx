@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MessageCategory } from "@prisma/client";
-import { MessageWithUser } from "../CustomerMessageCard";
+import { MessageWithUser } from "../../CustomerMessageCard";
 import { respondToMessage } from "./reply-message-actions";
 
 interface MessageReplyDialogProps {
