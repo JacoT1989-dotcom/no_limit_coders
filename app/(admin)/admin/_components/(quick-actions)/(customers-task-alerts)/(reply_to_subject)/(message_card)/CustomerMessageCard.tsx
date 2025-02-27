@@ -55,6 +55,7 @@ export interface TechTeamMessageWithUser {
     username: string;
     displayName: string;
     email: string;
+    role?: string;
   };
 }
 
@@ -76,6 +77,7 @@ export interface UserMessageWithUser {
     username: string;
     displayName: string;
     email: string;
+    role?: string;
   };
 }
 
@@ -106,6 +108,7 @@ export interface MessageWithUser {
     username: string;
     displayName: string;
     email: string;
+    role?: string;
   };
 }
 
@@ -132,7 +135,7 @@ const CustomerMessageCard = () => {
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [uniqueSubjects, setUniqueSubjects] = useState<string[]>([]);
 
-  // Define fetchConversations with useCallback
+  // Define fetchConversations with useCallback - properly handling selectedCustomer dependency
   const fetchConversations = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -160,6 +163,7 @@ const CustomerMessageCard = () => {
               type: "techTeam",
               subject: conversation.subject, // Add subject from conversation
             });
+            console.log(`Added techTeam message from: ${msg.user.displayName}`);
           });
 
           // Add user messages
@@ -169,22 +173,35 @@ const CustomerMessageCard = () => {
               type: "user",
               subject: conversation.subject, // Add subject from conversation
             });
+            console.log(`Added user message from: ${msg.user.displayName}`);
           });
         });
 
         setMessages(flattenedMessages);
 
-        // Extract unique customers from messages
+        // Extract unique customers - look at user roles and displayNames since message types are inverted
         const uniqueCustomers = new Map<string, Customer>();
 
         flattenedMessages.forEach((msg) => {
-          // Only add if not already in the map
-          if (!uniqueCustomers.has(msg.user.id)) {
+          // Filter by display name to identify real customers (not admins)
+          // Exclude anyone with "Admin" in their name or email
+          const isAdminName = msg.user.displayName.includes("Admin");
+          const isAdminEmail = msg.user.email.toLowerCase().includes("admin");
+
+          // Include users who are real customers (not admins)
+          if (
+            !uniqueCustomers.has(msg.user.id) &&
+            !isAdminName &&
+            !isAdminEmail
+          ) {
             uniqueCustomers.set(msg.user.id, {
               id: msg.user.id,
               displayName: msg.user.displayName,
               email: msg.user.email,
             });
+            console.log(
+              `Added customer: ${msg.user.displayName} (${msg.user.id})`,
+            );
           }
         });
 
@@ -209,7 +226,7 @@ const CustomerMessageCard = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCustomer]);
+  }, [selectedCustomer]); // Include selectedCustomer in dependency array
 
   // Fetch conversations when dialog opens
   useEffect(() => {
@@ -234,10 +251,18 @@ const CustomerMessageCard = () => {
 
   // Filter messages by priority, selected customer, and subject
   const filteredMessages = messages.filter((msg) => {
-    // Filter by customer
-    const customerMatch = selectedCustomer
-      ? msg.user.id === selectedCustomer
-      : true;
+    // When a customer is selected, show messages from that customer AND
+    // any messages in the same conversations (including admin messages)
+    let customerMatch = true;
+    if (selectedCustomer) {
+      // Get all conversation IDs that include the selected customer
+      const customerConversationIds = messages
+        .filter((m) => m.user.id === selectedCustomer)
+        .map((m) => m.conversationId);
+
+      // Match if the message is in any of those conversations
+      customerMatch = customerConversationIds.includes(msg.conversationId);
+    }
 
     // Filter by priority (only applies to tech team messages)
     const priorityMatch = filter
@@ -264,10 +289,13 @@ const CustomerMessageCard = () => {
   };
 
   const handleCustomerChange = (customerId: string) => {
-    setSelectedCustomer(customerId);
-    // Clear selected message when changing customers
-    setSelectedMessage(null);
-    setSelectedConversation(null);
+    // Only update if a valid customer ID is provided
+    if (customerId && customerId.trim() !== "") {
+      setSelectedCustomer(customerId);
+      // Clear selected message when changing customers
+      setSelectedMessage(null);
+      setSelectedConversation(null);
+    }
   };
 
   // Clear all filters
@@ -362,11 +390,17 @@ const CustomerMessageCard = () => {
                     <SelectValue placeholder="Select a customer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id}>
-                        {customer.displayName} ({customer.email})
+                    {customers.length === 0 ? (
+                      <SelectItem value="no-customers">
+                        No customers found
                       </SelectItem>
-                    ))}
+                    ) : (
+                      customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.displayName} ({customer.email})
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

@@ -1,3 +1,4 @@
+import { UserRole } from "@/app/(admin)/SessionProvider";
 import { Priority } from "@prisma/client";
 
 // Message categories and types
@@ -158,6 +159,7 @@ export interface MessageWithUser {
     username: string;
     displayName: string;
     email: string;
+    role?: UserRole; // Add role property
   };
 }
 

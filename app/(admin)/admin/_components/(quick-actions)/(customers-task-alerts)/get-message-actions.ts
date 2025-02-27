@@ -4,6 +4,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 
+// In get-message-actions.ts or similar file
 export async function getConversations() {
   try {
     // Validate user has admin privileges
@@ -74,7 +75,6 @@ export async function getConversations() {
     };
   }
 }
-
 export async function getConversationById(conversationId: string) {
   try {
     // Validate user has admin privileges

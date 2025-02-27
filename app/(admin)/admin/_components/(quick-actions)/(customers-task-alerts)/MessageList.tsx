@@ -142,6 +142,7 @@ const MessageList: React.FC<MessageListProps> = ({
       }
 
       // Add message to group
+      // Update totalMessages and uniqueUsers
       groups[conversationId].messages.push(msg);
       groups[conversationId].totalMessages++;
       groups[conversationId].uniqueUsers.add(msg.user.id);
