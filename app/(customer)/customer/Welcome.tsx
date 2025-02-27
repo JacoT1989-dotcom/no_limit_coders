@@ -16,7 +16,7 @@ import { useSession } from "../SessionProvider";
 import CreateProjectDialog from "./_components/(quick-actions)/(create_project)/CreateProjectDialog";
 import ScheduleMeetingModal from "./_components/(quick-actions)/(schedule_meeting)/ScheduleMeetingModal";
 import MessageTechTeamModal from "./_components/(quick-actions)/(message_tech_team)/MessageTechTeamModal";
-import ViewMessagesModal from "./_components/(quick-actions)/(my_messages)/ViewMessagesModal";
+import CustomerProjectsCard from "./_components/(quick-actions)/(my_messages)/CustomerProjectsCard";
 
 // Define interface for user data structure
 interface User {
@@ -91,24 +91,7 @@ const WelcomePage = () => {
             </Card>
           </ScheduleMeetingModal>
 
-          <ViewMessagesModal>
-            <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300 cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-3">
-                  <div className="rounded-lg bg-accent/10 p-2">
-                    <FileText className="h-6 w-6 text-accent" />
-                  </div>
-                  <span>View My Inbox</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  View your messages by clicking this block
-                </p>
-              </CardContent>
-            </Card>
-          </ViewMessagesModal>
+          <CustomerProjectsCard />
 
           <MessageTechTeamModal>
             <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300 cursor-pointer">

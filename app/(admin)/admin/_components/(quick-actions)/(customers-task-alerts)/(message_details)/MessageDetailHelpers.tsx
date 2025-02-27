@@ -4,11 +4,14 @@ import {
   TechTeamMessageAttachment,
   TechTeamMessageCategory,
 } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
+import { MessageAttachment } from "./../(reply_to_subject)/(message_card)/CustomerMessageCard";
 
 // Helper function to format subjects and extract reference numbers
 export const formatSubject = (
   subject: string,
 ): { main: string; reference: string | null } => {
+  if (!subject) return { main: "No Subject", reference: null };
+
   // Check if the subject starts with multiple "Re:" prefixes
   const rePattern = /^(Re:\s*)+/i;
   let mainSubject = subject;
@@ -56,7 +59,7 @@ export const PriorityBadge = ({ priority }: { priority: Priority }) => {
 export const CategoryBadge = ({
   category,
 }: {
-  category: TechTeamMessageCategory;
+  category: TechTeamMessageCategory | string;
 }) => {
   const categoryMap: Record<string, { label: string; style: string }> = {
     bug: { label: "Bug", style: "bg-red-50 text-red-600" },
@@ -69,9 +72,15 @@ export const CategoryBadge = ({
     },
     security: { label: "Security", style: "bg-green-50 text-green-600" },
     other: { label: "Other", style: "bg-gray-50 text-gray-600" },
+    DESIGN: { label: "Design", style: "bg-purple-50 text-purple-600" },
+    SUPPORT: { label: "Support", style: "bg-blue-50 text-blue-600" },
+    MEETING: { label: "Meeting", style: "bg-green-50 text-green-600" },
   };
 
-  const { label, style } = categoryMap[category];
+  const { label, style } = categoryMap[category] || {
+    label: typeof category === "string" ? category : "Other",
+    style: "bg-gray-50 text-gray-600",
+  };
 
   return (
     <span className={`px-2 py-1 text-xs rounded-full ${style}`}>{label}</span>
@@ -94,9 +103,9 @@ export const formatDate = (date: Date) => {
   }
 };
 
-// Properly typed function to convert TechTeamMessageAttachment to the format expected by AttachmentsModal
+// Generic function to convert any attachment type to the format expected by AttachmentsModal
 export const convertAttachments = (
-  attachments: TechTeamMessageAttachment[],
+  attachments: TechTeamMessageAttachment[] | MessageAttachment[] | any[],
 ): {
   id: string;
   name: string;
@@ -109,7 +118,7 @@ export const convertAttachments = (
     id: att.id || String(Math.random()),
     name: att.fileName,
     url: att.fileUrl,
-    createdAt: new Date(),
+    createdAt: att.createdAt || new Date(),
     taskId: "message",
     uploaderId: "user",
   }));

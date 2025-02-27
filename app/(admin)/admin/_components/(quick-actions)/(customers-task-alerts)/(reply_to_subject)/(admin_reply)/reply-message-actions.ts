@@ -26,7 +26,7 @@ const fileValidationSchema = z
     "Invalid file type. Accepted types: images, PDF, Word documents, and text files",
   );
 
-export async function respondToMessage(formData: FormData) {
+export async function respondToConversation(formData: FormData) {
   try {
     // Validate user has admin privileges
     const { user } = await validateRequest();
@@ -37,25 +37,22 @@ export async function respondToMessage(formData: FormData) {
     }
 
     // Extract form data
-    const techTeamMessageId = formData.get("techTeamMessageId") as string;
-    const subject = formData.get("subject") as string;
-    const preview = formData.get("preview") as string;
+    const conversationId = formData.get("conversationId") as string;
     const message = formData.get("message") as string;
     const category = formData.get("category") as MessageCategory;
 
     // Validate required fields
-    if (!techTeamMessageId || !subject || !message || !category) {
+    if (!conversationId || !message || !category) {
       return { error: "Missing required fields" };
     }
 
-    // Fetch the original tech team message to get user information
-    const techTeamMessage = await prisma.techTeamMessage.findUnique({
-      where: { id: techTeamMessageId },
-      include: { user: true },
+    // Fetch the conversation to ensure it exists
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
     });
 
-    if (!techTeamMessage) {
-      return { error: "Original message not found" };
+    if (!conversation) {
+      return { error: "Conversation not found" };
     }
 
     // Handle file uploads
@@ -106,36 +103,48 @@ export async function respondToMessage(formData: FormData) {
 
     // Create a transaction to ensure all operations succeed or fail together
     const result = await prisma.$transaction(async (tx) => {
-      // Create the user message with the required message field
+      // Create the user message
       const userMessage = await tx.userMessage.create({
         data: {
           sender: user.displayName,
-          subject: subject || `Re: ${techTeamMessage.subject}`,
-          preview: preview || message.substring(0, 150), // Use first 150 chars as preview if not provided
-          message: message, // Required field now
+          preview: message.substring(0, 100), // Use first 100 chars as preview
+          message: message,
           category: category,
           isUnread: true,
           hasAttachment: attachments.length > 0,
-          userId: techTeamMessage.userId,
-          // Link this message to the original tech team message
-          techTeamResponse: {
-            connect: {
-              id: techTeamMessageId,
-            },
-          },
-          // Create the attachments for this message
-          attachments: {
-            create: attachments,
-          },
+          isInitial: false,
+          userId: user.id,
+
+          // Connect to the conversation using conversationId
+          conversationId: conversationId,
+
+          // Create message attachments separately
         },
         include: {
           attachments: true,
         },
       });
 
+      // Create attachments for the message
+      if (attachments.length > 0) {
+        await tx.messageAttachment.createMany({
+          data: attachments.map((attachment) => ({
+            ...attachment,
+            messageId: userMessage.id,
+          })),
+        });
+      }
+
+      // Update the conversation's updatedAt timestamp
+      await tx.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
+
       return {
         success: true,
         messageId: userMessage.id,
+        conversationId,
         attachments: userMessage.attachments,
       };
     });
@@ -145,6 +154,39 @@ export async function respondToMessage(formData: FormData) {
     console.error("Error sending response message:", error);
     return {
       error: "Failed to send response message",
+    };
+  }
+}
+
+export async function markMessagesAsRead(conversationId: string) {
+  try {
+    // Validate user has admin privileges
+    const { user } = await validateRequest();
+    if (!user) throw new Error("Unauthorized access");
+
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.SUPERADMIN) {
+      return { error: "Access denied. Admin privileges required." };
+    }
+
+    // Update all unread messages in the conversation to read
+    const result = await prisma.userMessage.updateMany({
+      where: {
+        conversationId,
+        isUnread: true,
+      },
+      data: {
+        isUnread: false,
+      },
+    });
+
+    return {
+      success: true,
+      updatedCount: result.count,
+    };
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    return {
+      error: "Failed to mark messages as read",
     };
   }
 }

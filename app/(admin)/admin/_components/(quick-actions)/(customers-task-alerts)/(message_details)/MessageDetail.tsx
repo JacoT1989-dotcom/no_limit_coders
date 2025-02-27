@@ -14,15 +14,7 @@ import {
   convertAttachments,
 } from "./MessageDetailHelpers";
 import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
-
-// Helper function to normalize subjects for grouping (same as in MessageList)
-const normalizeSubject = (subject: string): string => {
-  // Remove Re: prefixes
-  const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
-  // Remove reference numbers
-  const withoutRef = withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
-  return withoutRef;
-};
+import { markMessagesAsRead } from "../(reply_to_subject)/(admin_reply)/reply-message-actions";
 
 // Format date for message groups
 const formatDateForGroup = (date: Date): string => {
@@ -79,18 +71,32 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
 }) => {
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
 
-  // Find all related messages with the same normalized subject
+  // Mark messages as read when they're viewed
+  useEffect(() => {
+    if (message && message.conversationId) {
+      // Only mark as read if there are any unread messages
+      const hasUnreadMessages = allMessages.some(
+        (msg) => msg.type === "user" && "isUnread" in msg && msg.isUnread,
+      );
+
+      if (hasUnreadMessages) {
+        markMessagesAsRead(message.conversationId).catch((err) => {
+          console.error("Error marking messages as read:", err);
+        });
+      }
+    }
+  }, [message, allMessages]);
+
+  // Sort messages chronologically
   const relatedMessages = useMemo(() => {
     if (!message || allMessages.length === 0)
       return [message].filter(Boolean) as MessageWithUser[];
 
-    const targetSubject = normalizeSubject(message.subject);
-    return allMessages
-      .filter((msg) => normalizeSubject(msg.subject) === targetSubject)
-      .sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      ); // Sort chronologically
+    // Get all messages from the same conversation
+    return allMessages.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   }, [message, allMessages]);
 
   // Group messages by date
@@ -131,14 +137,18 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
   }
 
   // Get a unique customer ID to use for comparison (the original message sender)
-  // We'll treat the first message sender as the customer
-  const customerId =
-    relatedMessages.length > 0 ? relatedMessages[0].user.id : null;
+  // We'll find the earliest message and use that user as our customer reference
+  const firstMessage = relatedMessages.length > 0 ? relatedMessages[0] : null;
+  const customerId = firstMessage?.user.id || null;
 
   // Helper function to determine if message is from admin or customer
   const isCustomerMessage = (msg: MessageWithUser) => {
-    // If the message's user ID matches the customer ID, it's a customer message
-    return msg.user.id === customerId;
+    // If first message was from a customer and the current message has the same user ID
+    // OR if the message is of type 'user' (indicates a message sent by a customer)
+    return (
+      (firstMessage?.type === "user" && msg.user.id === customerId) ||
+      msg.type === "user"
+    );
   };
 
   return (
@@ -148,17 +158,16 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
           <div className="flex justify-between items-start">
             <div className="max-w-[85%]">
               <h3 className="font-semibold text-lg">
-                {formatSubject(message.subject).main}
+                {message.subject || "No Subject"}
               </h3>
-              {formatSubject(message.subject).reference && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatSubject(message.subject).reference}
-                </p>
-              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline">{message.messageType}</Badge>
-              <PriorityBadge priority={message.priority} />
+              {message.type === "techTeam" && message.messageType && (
+                <Badge variant="outline">{message.messageType}</Badge>
+              )}
+              {message.type === "techTeam" && message.priority && (
+                <PriorityBadge priority={message.priority} />
+              )}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1 mt-1 text-sm text-muted-foreground">
@@ -167,9 +176,14 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
               <span>{relatedMessages.length} messages</span>
             </div>
             <span>•</span>
-            <CategoryBadge
-              category={message.category as TechTeamMessageCategory}
-            />
+            {message.type === "techTeam" && (
+              <CategoryBadge
+                category={message.category as TechTeamMessageCategory}
+              />
+            )}
+            {message.type === "user" && (
+              <Badge variant="outline">{message.category}</Badge>
+            )}
             <span>•</span>
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -213,7 +227,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
 
             {/* Messages for this date */}
             <div className="space-y-4">
-              {group.messages.map((msg, msgIndex) => {
+              {group.messages.map((msg) => {
                 const isCustomer = isCustomerMessage(msg);
 
                 return (
@@ -251,7 +265,7 @@ const MessageDetail: React.FC<MessageDetailProps> = ({
                       </div>
 
                       {/* Attachments if any */}
-                      {msg.attachments.length > 0 && (
+                      {msg.attachments && msg.attachments.length > 0 && (
                         <div
                           className={`mt-2 pt-2 border-t ${isCustomer ? "border-primary-foreground/20" : "border-muted-foreground/20"}`}
                         >

@@ -3,7 +3,6 @@ import { Paperclip, Send, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { MessageCategory } from "@prisma/client";
 import { MessageWithUser } from "../(message_card)/CustomerMessageCard";
-import { respondToMessage } from "./reply-message-actions";
+import { respondToConversation } from "./reply-message-actions";
 
 interface MessageReplyDialogProps {
   open: boolean;
@@ -39,8 +38,6 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [subject, setSubject] = useState("");
-  const [preview, setPreview] = useState("");
   const [messageText, setMessageText] = useState("");
   const [category, setCategory] = useState<MessageCategory>(
     MessageCategory.SUPPORT,
@@ -49,8 +46,6 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
   // Reset form when message changes
   useEffect(() => {
     if (message) {
-      setSubject(`Re: ${message.subject}`);
-      setPreview("");
       setMessageText("");
       setCategory(MessageCategory.SUPPORT);
       setFiles([]);
@@ -70,7 +65,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!subject || !messageText || !category) {
+    if (!messageText || !category) {
       toast("Error", { description: "Please fill all required fields" });
       return;
     }
@@ -80,9 +75,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
     try {
       // Debug: Log form data before submission
       console.log("Submitting form with data:", {
-        techTeamMessageId: message.id,
-        subject,
-        preview,
+        conversationId: message.conversationId,
         messageText,
         category,
         filesCount: files.length,
@@ -90,10 +83,8 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
       // Create FormData to handle file uploads
       const formData = new FormData();
-      formData.append("techTeamMessageId", message.id);
-      formData.append("subject", subject);
-      formData.append("preview", preview || messageText.substring(0, 150));
-      formData.append("message", messageText); // Make sure message is being sent
+      formData.append("conversationId", message.conversationId);
+      formData.append("message", messageText);
       formData.append("category", category);
 
       // Debug: Log the form data
@@ -108,7 +99,7 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
       });
 
       // Call the server action directly with FormData
-      const result = await respondToMessage(formData);
+      const result = await respondToConversation(formData);
 
       if ("error" in result && result.error) {
         throw new Error(result.error);
@@ -124,8 +115,6 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
 
       // Close the dialog and reset the form
       onOpenChange(false);
-      setSubject("");
-      setPreview("");
       setMessageText("");
       setCategory(MessageCategory.SUPPORT);
       setFiles([]);
@@ -153,31 +142,12 @@ const MessageReplyDialog: React.FC<MessageReplyDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-xl">Reply to Customer</DialogTitle>
           <DialogDescription>
-            Send a direct response to {message?.user?.displayName}
+            Send a direct response to {message?.user?.displayName} about &quot;
+            {message?.subject}&quot;
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="preview">Preview (shows in inbox)</Label>
-            <Input
-              id="preview"
-              value={preview}
-              onChange={(e) => setPreview(e.target.value)}
-              placeholder="Brief summary of your message"
-            />
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="message">Message</Label>
             <Textarea

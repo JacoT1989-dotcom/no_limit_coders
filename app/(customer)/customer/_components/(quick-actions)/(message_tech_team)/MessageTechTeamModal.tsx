@@ -39,10 +39,10 @@ import {
   PRIORITY_OPTIONS,
 } from "./types";
 import {
-  techTeamMessageSchema,
-  TechTeamMessageSchemaType,
+  newConversationWithMessageSchema,
+  NewConversationWithMessageSchemaType,
 } from "./validations";
-import { createTechTeamMessage } from "./message-actions";
+import { createConversationWithMessage } from "./message-actions";
 
 interface MessageTechTeamModalProps {
   children: ReactNode;
@@ -63,8 +63,8 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<TechTeamMessageSchemaType>({
-    resolver: zodResolver(techTeamMessageSchema),
+  const form = useForm<NewConversationWithMessageSchemaType>({
+    resolver: zodResolver(newConversationWithMessageSchema),
     defaultValues: {
       subject: "",
       message: "",
@@ -122,7 +122,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
     setOpen(false);
   };
 
-  const onSubmit = async (data: TechTeamMessageSchemaType) => {
+  const onSubmit = async (data: NewConversationWithMessageSchemaType) => {
     setIsSubmitting(true);
 
     try {
@@ -139,7 +139,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
         formData.append("attachments", attachment.file);
       });
 
-      const response = await createTechTeamMessage(formData);
+      const response = await createConversationWithMessage(formData);
 
       if (response.error) {
         throw new Error(response.error);

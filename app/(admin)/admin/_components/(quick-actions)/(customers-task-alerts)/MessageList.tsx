@@ -6,47 +6,6 @@ import { TechTeamMessageCategory } from "@/app/(customer)/customer/_components/(
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 import { MessageWithUser } from "./(reply_to_subject)/(message_card)/CustomerMessageCard";
 
-// Helper function to format subjects and extract reference numbers
-const formatSubject = (
-  subject: string,
-): { main: string; reference: string | null } => {
-  // Check if the subject starts with multiple "Re:" prefixes
-  const rePattern = /^(Re:\s*)+/i;
-  let mainSubject = subject;
-
-  if (rePattern.test(subject)) {
-    // Replace multiple "Re:" with just one "Re:"
-    mainSubject = "Re: " + subject.replace(rePattern, "");
-  }
-
-  // Extract reference number if present
-  const refPattern = /\[Ref:([^\]]+)\]/;
-  const refMatch = subject.match(refPattern);
-
-  if (refMatch) {
-    // Remove reference from main subject
-    mainSubject = mainSubject.replace(refPattern, "").trim();
-    return {
-      main: mainSubject,
-      reference: refMatch[0],
-    };
-  }
-
-  return {
-    main: mainSubject,
-    reference: null,
-  };
-};
-
-// Helper function to normalize subjects for grouping
-const normalizeSubject = (subject: string): string => {
-  // Remove Re: prefixes
-  const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
-  // Remove reference numbers
-  const withoutRef = withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
-  return withoutRef;
-};
-
 interface MessageListProps {
   messages: MessageWithUser[];
   selectedMessageId: string | null;
@@ -88,7 +47,10 @@ const CategoryBadge = ({ category }: { category: TechTeamMessageCategory }) => {
     other: { label: "Other", style: "bg-gray-50 text-gray-600" },
   };
 
-  const { label, style } = categoryMap[category];
+  const { label, style } = categoryMap[category] || {
+    label: category,
+    style: "bg-gray-50 text-gray-600",
+  };
 
   return (
     <span className={`px-2 py-1 text-xs rounded-full ${style}`}>{label}</span>
@@ -120,16 +82,15 @@ const formatDateFull = (date: Date) => {
   });
 };
 
-interface SubjectGroup {
+interface ConversationGroup {
+  conversationId: string;
   subject: string;
-  normalizedSubject: string;
-  reference: string | null;
   messages: MessageWithUser[];
   latestDate: Date;
   oldestDate: Date;
   highestPriority: Priority;
   totalAttachments: number;
-  categories: Set<TechTeamMessageCategory>;
+  categories: Set<string>;
   originalSender: {
     id: string;
     displayName: string;
@@ -137,6 +98,7 @@ interface SubjectGroup {
   };
   totalMessages: number;
   uniqueUsers: Set<string>;
+  hasUnreadMessages: boolean;
 }
 
 const MessageList: React.FC<MessageListProps> = ({
@@ -149,25 +111,25 @@ const MessageList: React.FC<MessageListProps> = ({
   // Add a reference to the messages container
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  // Group messages by subject
-  const subjectGroups = useMemo(() => {
-    const groups: Record<string, SubjectGroup> = {};
+  // Group messages by conversation
+  const conversationGroups = useMemo(() => {
+    const groups: Record<string, ConversationGroup> = {};
 
     messages.forEach((msg) => {
-      const { main, reference } = formatSubject(msg.subject);
-      const normalizedSubject = normalizeSubject(msg.subject);
+      const conversationId = msg.conversationId;
+      const subject = msg.subject || "No Subject";
 
-      if (!groups[normalizedSubject]) {
-        groups[normalizedSubject] = {
-          subject: main,
-          normalizedSubject,
-          reference,
+      if (!groups[conversationId]) {
+        groups[conversationId] = {
+          conversationId,
+          subject,
           messages: [],
           latestDate: msg.createdAt,
           oldestDate: msg.createdAt,
-          highestPriority: msg.priority,
+          highestPriority:
+            msg.type === "techTeam" && msg.priority ? msg.priority : "LOW",
           totalAttachments: 0,
-          categories: new Set<TechTeamMessageCategory>(),
+          categories: new Set<string>(),
           originalSender: {
             id: msg.user.id,
             displayName: msg.user.displayName,
@@ -175,16 +137,22 @@ const MessageList: React.FC<MessageListProps> = ({
           },
           totalMessages: 0,
           uniqueUsers: new Set<string>(),
+          hasUnreadMessages: false,
         };
       }
 
       // Add message to group
-      groups[normalizedSubject].messages.push(msg);
-      groups[normalizedSubject].totalMessages++;
-      groups[normalizedSubject].uniqueUsers.add(msg.user.id);
+      groups[conversationId].messages.push(msg);
+      groups[conversationId].totalMessages++;
+      groups[conversationId].uniqueUsers.add(msg.user.id);
+
+      // Check for unread messages
+      if (msg.type === "user" && "isUnread" in msg && msg.isUnread === true) {
+        groups[conversationId].hasUnreadMessages = true;
+      }
 
       // Update group metadata
-      const group = groups[normalizedSubject];
+      const group = groups[conversationId];
 
       // Update latest date
       if (new Date(msg.createdAt) > new Date(group.latestDate)) {
@@ -209,15 +177,24 @@ const MessageList: React.FC<MessageListProps> = ({
         MEDIUM: 2,
         LOW: 1,
       };
-      if (priorityRank[msg.priority] > priorityRank[group.highestPriority]) {
+
+      if (
+        msg.type === "techTeam" &&
+        msg.priority &&
+        priorityRank[msg.priority] > priorityRank[group.highestPriority]
+      ) {
         group.highestPriority = msg.priority;
       }
 
       // Update total attachments
-      group.totalAttachments += msg.attachments.length;
+      group.totalAttachments += msg.attachments?.length || 0;
 
       // Add category
-      group.categories.add(msg.category as TechTeamMessageCategory);
+      group.categories.add(
+        msg.type === "techTeam"
+          ? (msg.category as string)
+          : msg.category || "other",
+      );
     });
 
     // Convert to array and sort by latest date
@@ -235,7 +212,7 @@ const MessageList: React.FC<MessageListProps> = ({
   };
 
   // Find which group contains the selected message
-  const isGroupSelected = (group: SubjectGroup) => {
+  const isGroupSelected = (group: ConversationGroup) => {
     if (!selectedMessageId) return false;
     return group.messages.some((msg) => msg.id === selectedMessageId);
   };
@@ -257,18 +234,18 @@ const MessageList: React.FC<MessageListProps> = ({
         </div>
       </div>
       <div className="overflow-y-auto flex-1">
-        {subjectGroups.length === 0 ? (
+        {conversationGroups.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             No messages found
           </div>
         ) : (
           <div className="divide-y">
-            {subjectGroups.map((group) => (
+            {conversationGroups.map((group) => (
               <div
-                key={group.normalizedSubject}
+                key={group.conversationId}
                 className={`p-3 cursor-pointer hover:bg-accent/5 transition-colors ${
                   isGroupSelected(group) ? "bg-accent/10" : ""
-                }`}
+                } ${group.hasUnreadMessages ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                 onClick={() => onSelectMessage(group.messages[0].id)}
               >
                 <div className="flex justify-between items-start">
@@ -278,12 +255,15 @@ const MessageList: React.FC<MessageListProps> = ({
                       <Badge variant="outline" className="ml-2 text-xs">
                         {group.messages.length}
                       </Badge>
+                      {group.hasUnreadMessages && (
+                        <Badge
+                          variant="default"
+                          className="ml-2 text-xs bg-blue-500"
+                        >
+                          New
+                        </Badge>
+                      )}
                     </h4>
-                    {group.reference && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        {group.reference}
-                      </div>
-                    )}
                     <div className="text-xs text-muted-foreground mt-1">
                       <span className="font-medium">Started by:</span>{" "}
                       {group.originalSender.displayName}
@@ -293,7 +273,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 </div>
 
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                  {group.messages[0].message}
+                  {group.messages[group.messages.length - 1].message}
                 </p>
 
                 <div className="flex flex-col gap-1 mt-2">
@@ -321,7 +301,10 @@ const MessageList: React.FC<MessageListProps> = ({
                       {Array.from(group.categories)
                         .slice(0, 2)
                         .map((category) => (
-                          <CategoryBadge key={category} category={category} />
+                          <CategoryBadge
+                            key={category}
+                            category={category as TechTeamMessageCategory}
+                          />
                         ))}
                       {group.categories.size > 2 && (
                         <Badge variant="outline" className="text-xs">

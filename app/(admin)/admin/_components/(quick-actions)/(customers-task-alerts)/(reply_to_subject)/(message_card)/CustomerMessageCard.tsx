@@ -25,14 +25,22 @@ import {
   PRIORITY_OPTIONS,
 } from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/types";
 import { Priority } from "@/app/(customer)/customer/tasks/types";
-import { getTechTeamMessages } from "../../get-message-actions";
+import { getConversations } from "../../get-message-actions";
 import MessageList from "../../MessageList";
 import MessageDetail from "../../(message_details)/MessageDetail";
 
-// Type for our messages with all required fields
-export interface MessageWithUser {
+// Types for our conversation and message structure
+export interface Conversation {
   id: string;
   subject: string;
+  createdAt: Date;
+  updatedAt: Date;
+  techTeamMessages: TechTeamMessageWithUser[];
+  userMessages: UserMessageWithUser[];
+}
+
+export interface TechTeamMessageWithUser {
+  id: string;
   message: string;
   category: TechTeamMessageCategory;
   messageType: TechTeamMessageType;
@@ -40,13 +48,64 @@ export interface MessageWithUser {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+  conversationId: string;
   attachments: TechTeamMessageAttachment[];
   user: {
     id: string;
     username: string;
     displayName: string;
     email: string;
-    // Other user fields as needed
+  };
+}
+
+export interface UserMessageWithUser {
+  id: string;
+  sender: string;
+  preview: string;
+  message: string;
+  category: string;
+  isUnread: boolean;
+  hasAttachment: boolean;
+  createdAt: Date;
+  isInitial: boolean;
+  userId: string;
+  conversationId: string;
+  attachments: MessageAttachment[];
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    email: string;
+  };
+}
+
+export interface MessageAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt: Date;
+  messageId: string;
+}
+
+// Combined message type for displaying in the UI
+export interface MessageWithUser {
+  id: string;
+  type: "techTeam" | "user";
+  message: string;
+  subject?: string; // For compatibility with existing components
+  category: TechTeamMessageCategory | string;
+  messageType?: TechTeamMessageType;
+  priority?: Priority;
+  createdAt: Date;
+  updatedAt?: Date;
+  userId: string;
+  conversationId: string;
+  attachments: TechTeamMessageAttachment[] | MessageAttachment[];
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    email: string;
   };
 }
 
@@ -59,98 +118,110 @@ interface Customer {
 
 const CustomerMessageCard = () => {
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<
+    string | null
+  >(null);
   const [filter, setFilter] = useState<Priority | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<MessageWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  // State for subject filtering
   const [subjectFilter, setSubjectFilter] = useState<string | null>(null);
   const [uniqueSubjects, setUniqueSubjects] = useState<string[]>([]);
 
-  // Define fetchMessages with useCallback
-  const fetchMessages = useCallback(async () => {
+  // Define fetchConversations with useCallback
+  const fetchConversations = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await getTechTeamMessages();
+      const response = await getConversations();
 
       if (response.error) {
         setError(response.error);
         return;
       }
 
-      if (response.messages) {
-        const allMessages = response.messages as MessageWithUser[];
-        setMessages(allMessages);
+      if (response.conversations) {
+        const allConversations = response.conversations as Conversation[];
+        setConversations(allConversations);
+
+        // Convert conversations to a flattened array of messages for compatibility with existing UI
+        const flattenedMessages: MessageWithUser[] = [];
+
+        allConversations.forEach((conversation) => {
+          // Add tech team messages
+          conversation.techTeamMessages.forEach((msg) => {
+            flattenedMessages.push({
+              ...msg,
+              type: "techTeam",
+              subject: conversation.subject, // Add subject from conversation
+            });
+          });
+
+          // Add user messages
+          conversation.userMessages.forEach((msg) => {
+            flattenedMessages.push({
+              ...msg,
+              type: "user",
+              subject: conversation.subject, // Add subject from conversation
+            });
+          });
+        });
+
+        setMessages(flattenedMessages);
 
         // Extract unique customers from messages
-        const uniqueCustomers = Array.from(
-          new Map(
-            allMessages.map((msg) => [
-              msg.user.id,
-              {
-                id: msg.user.id,
-                displayName: msg.user.displayName,
-                email: msg.user.email,
-              },
-            ]),
-          ).values(),
-        );
+        const uniqueCustomers = new Map<string, Customer>();
 
-        setCustomers(uniqueCustomers);
+        flattenedMessages.forEach((msg) => {
+          // Only add if not already in the map
+          if (!uniqueCustomers.has(msg.user.id)) {
+            uniqueCustomers.set(msg.user.id, {
+              id: msg.user.id,
+              displayName: msg.user.displayName,
+              email: msg.user.email,
+            });
+          }
+        });
+
+        setCustomers(Array.from(uniqueCustomers.values()));
 
         // Set first customer as default if none selected
-        if (uniqueCustomers.length > 0 && !selectedCustomer) {
-          setSelectedCustomer(uniqueCustomers[0].id);
+        if (uniqueCustomers.size > 0 && !selectedCustomer) {
+          setSelectedCustomer(Array.from(uniqueCustomers.values())[0].id);
         }
 
-        // Extract unique normalized subjects for dropdown
-        const subjects = allMessages.map((msg) => msg.subject);
-        // Clean up subjects (remove Re: prefixes and reference numbers for comparison)
-        const cleanSubjects = subjects.map((subject) => {
-          // Remove Re: prefixes
-          const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
-          // Remove reference numbers
-          return withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
-        });
-        // Get unique cleaned subjects
-        const uniqueCleanSubjects = Array.from(new Set(cleanSubjects));
-        setUniqueSubjects(uniqueCleanSubjects);
+        // Extract unique subjects for dropdown (from conversations)
+        const subjects = allConversations.map((conv) => conv.subject);
+        const uniqueSubjectList = Array.from(new Set(subjects));
+        setUniqueSubjects(uniqueSubjectList);
       } else {
+        setConversations([]);
         setMessages([]);
       }
     } catch (err) {
       setError("Failed to load messages. Please try again.");
-      console.error("Error fetching messages:", err);
+      console.error("Error fetching conversations:", err);
     } finally {
       setLoading(false);
     }
   }, [selectedCustomer]);
 
-  // Fetch messages when dialog opens
+  // Fetch conversations when dialog opens
   useEffect(() => {
     if (dialogOpen) {
-      fetchMessages();
+      fetchConversations();
     }
-  }, [dialogOpen, fetchMessages]);
-
-  // Helper function to normalize subjects for grouping
-  const normalizeSubject = (subject: string): string => {
-    // Remove Re: prefixes
-    const withoutRe = subject.replace(/^(Re:\s*)+/i, "");
-    // Remove reference numbers
-    const withoutRef = withoutRe.replace(/\[Ref:[^\]]+\]/g, "").trim();
-    return withoutRef;
-  };
+  }, [dialogOpen, fetchConversations]);
 
   // Helper function to check if a message matches the subject filter
-  const matchesSubjectFilter = (messageSubject: string) => {
+  const matchesSubjectFilter = (conversationSubject: string) => {
     if (!subjectFilter) return true;
-    return normalizeSubject(messageSubject) === subjectFilter;
+    return conversationSubject === subjectFilter;
   };
 
   // Handler for subject filter change
@@ -158,6 +229,7 @@ const CustomerMessageCard = () => {
     setSubjectFilter(value === "all" ? null : value);
     // Clear selected message when changing subjects
     setSelectedMessage(null);
+    setSelectedConversation(null);
   };
 
   // Filter messages by priority, selected customer, and subject
@@ -166,10 +238,15 @@ const CustomerMessageCard = () => {
     const customerMatch = selectedCustomer
       ? msg.user.id === selectedCustomer
       : true;
-    // Filter by priority
-    const priorityMatch = filter ? msg.priority === filter : true;
+
+    // Filter by priority (only applies to tech team messages)
+    const priorityMatch = filter
+      ? msg.type === "techTeam" &&
+        (msg as TechTeamMessageWithUser).priority === filter
+      : true;
+
     // Filter by subject
-    const subjectMatch = matchesSubjectFilter(msg.subject);
+    const subjectMatch = matchesSubjectFilter(msg.subject || "");
 
     return customerMatch && priorityMatch && subjectMatch;
   });
@@ -190,12 +267,24 @@ const CustomerMessageCard = () => {
     setSelectedCustomer(customerId);
     // Clear selected message when changing customers
     setSelectedMessage(null);
+    setSelectedConversation(null);
   };
 
   // Clear all filters
   const clearAllFilters = () => {
     setFilter(null);
     setSubjectFilter(null);
+  };
+
+  // Handle message selection
+  const handleSelectMessage = (messageId: string) => {
+    setSelectedMessage(messageId);
+
+    // Also set the selected conversation
+    const message = messages.find((msg) => msg.id === messageId);
+    if (message) {
+      setSelectedConversation(message.conversationId);
+    }
   };
 
   return (
@@ -258,7 +347,7 @@ const CustomerMessageCard = () => {
             <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
             <h3 className="text-lg font-medium mb-2">Error Loading Messages</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={fetchMessages}>Try Again</Button>
+            <Button onClick={fetchConversations}>Try Again</Button>
           </div>
         ) : (
           <>
@@ -317,17 +406,19 @@ const CustomerMessageCard = () => {
               <MessageList
                 messages={filteredMessages}
                 selectedMessageId={selectedMessage}
-                onSelectMessage={setSelectedMessage}
+                onSelectMessage={handleSelectMessage}
                 currentFilter={filter}
                 onClearFilter={() => setFilter(null)}
               />
 
-              {/* Message Detail Panel with access to all messages for grouping */}
+              {/* Message Detail Panel with access to all messages for conversation */}
               <MessageDetail
                 message={currentMessage}
                 onClose={clearSelectedMessage}
-                onMessageResponded={fetchMessages}
-                allMessages={filteredMessages}
+                onMessageResponded={fetchConversations}
+                allMessages={filteredMessages.filter(
+                  (msg) => msg.conversationId === selectedConversation,
+                )}
               />
             </div>
           </>
@@ -353,7 +444,10 @@ const CustomerMessageCard = () => {
             <span>
               {
                 filteredMessages.filter(
-                  (m) => m.priority === "URGENT" || m.priority === "HIGH",
+                  (m) =>
+                    m.type === "techTeam" &&
+                    ((m as TechTeamMessageWithUser).priority === "URGENT" ||
+                      (m as TechTeamMessageWithUser).priority === "HIGH"),
                 ).length
               }{" "}
               high priority
@@ -376,7 +470,11 @@ const CustomerMessageCard = () => {
               </div>
             </div>
 
-            <Button onClick={fetchMessages} variant="outline" className="gap-2">
+            <Button
+              onClick={fetchConversations}
+              variant="outline"
+              className="gap-2"
+            >
               <Loader2 className="h-4 w-4" />
               <span>Refresh</span>
             </Button>

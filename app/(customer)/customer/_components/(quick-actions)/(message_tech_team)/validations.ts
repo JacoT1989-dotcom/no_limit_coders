@@ -19,13 +19,18 @@ const ACCEPTED_FILE_TYPES = [
 const validCategories = CATEGORY_OPTIONS.map((opt) => opt.value);
 const validMessageTypes = MESSAGE_TYPE_OPTIONS.map((opt) => opt.value);
 
-export const techTeamMessageSchema = z.object({
+// Schema for conversation
+export const conversationSchema = z.object({
   subject: z
     .string()
     .min(5, "Subject must be at least 5 characters")
     .max(100, "Subject cannot exceed 100 characters")
     .trim(),
+});
 
+// Schema for tech team message
+export const techTeamMessageSchema = z.object({
+  // No subject field as it's now in the conversation
   message: z
     .string()
     .min(20, "Message must be at least 20 characters")
@@ -61,5 +66,18 @@ export const techTeamMessageSchema = z.object({
     .default([]),
 });
 
+// Combined schema for creating a new conversation with a tech team message
+export const newConversationWithMessageSchema = techTeamMessageSchema.extend({
+  subject: z
+    .string()
+    .min(5, "Subject must be at least 5 characters")
+    .max(100, "Subject cannot exceed 100 characters")
+    .trim(),
+});
+
 // Type inference
 export type TechTeamMessageSchemaType = z.infer<typeof techTeamMessageSchema>;
+export type NewConversationWithMessageSchemaType = z.infer<
+  typeof newConversationWithMessageSchema
+>;
+export type ConversationSchemaType = z.infer<typeof conversationSchema>;

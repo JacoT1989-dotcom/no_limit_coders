@@ -1,233 +1,122 @@
-import React, { useState, useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import React, { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Reply, X, RefreshCw, Paperclip } from "lucide-react";
-import CustomerReplyDialog from "./CustomerReplyDialog";
-import AttachmentsModal from "../../../tasks/_components/(table)/(attachment)/AttachmentModal";
-import CustomerMessageThreadView from "./CustomerMessageThreadView";
+import { Send, User, Clock } from "lucide-react";
 
-interface Attachment {
-  id: string;
-  fileName: string;
-  fileUrl: string;
-}
-
-interface User {
-  id: string;
-  displayName: string;
-  email: string;
-}
-
-interface Message {
-  id: string;
+// Define types for our message structures
+type CustomerMessage = {
+  id: number;
+  customer: string;
   subject: string;
-  message: string;
-  category: string;
-  messageType: string;
-  priority: string;
-  createdAt: Date;
-  attachments: Attachment[];
-  user: User;
-}
+  content: string;
+  date: string;
+  unread: boolean;
+};
+
+type MessageReply = {
+  messageId: number;
+  content: string;
+  date: string;
+  from: string;
+};
 
 interface MessageDetailProps {
-  message: Message | null | undefined;
-  onClose: () => void;
-  onMessageReplied?: () => void;
+  selectedMessage: CustomerMessage | null;
+  replies: MessageReply[];
+  onSubmitReply: (content: string) => void;
 }
 
 const MessageDetail: React.FC<MessageDetailProps> = ({
-  message,
-  onClose,
-  onMessageReplied,
+  selectedMessage,
+  replies,
+  onSubmitReply,
 }) => {
-  const [replyDialogOpen, setReplyDialogOpen] = useState<boolean>(false);
-  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [replyText, setReplyText] = useState<string>("");
 
-  // Helper function to simplify multiple "Re:" prefixes and format reference numbers
-  const formatSubject = (
-    subject: string,
-  ): { main: string; reference: string | null } => {
-    // Check if the subject starts with multiple "Re:" prefixes
-    const rePattern = /^(Re:\s*)+/i;
-    let mainSubject = subject;
-
-    if (rePattern.test(subject)) {
-      // Replace multiple "Re:" with just one "Re:"
-      mainSubject = "Re: " + subject.replace(rePattern, "");
-    }
-
-    // Extract reference number if present
-    const refPattern = /\[Ref:([^\]]+)\]/;
-    const refMatch = subject.match(refPattern);
-
-    if (refMatch) {
-      // Remove reference from main subject
-      mainSubject = mainSubject.replace(refPattern, "").trim();
-      return {
-        main: mainSubject,
-        reference: refMatch[0],
-      };
-    }
-
-    return {
-      main: mainSubject,
-      reference: null,
-    };
+  const handleSubmit = () => {
+    if (!replyText.trim()) return;
+    onSubmitReply(replyText);
+    setReplyText("");
   };
 
-  const formatDate = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - new Date(date).getTime();
-    const diffMins = Math.round(diffMs / 60000);
+  const messageReplies = selectedMessage
+    ? replies.filter((reply) => reply.messageId === selectedMessage.id)
+    : [];
 
-    if (diffMins < 60) {
-      return `${diffMins} minutes ago`;
-    } else if (diffMins < 24 * 60) {
-      const hours = Math.floor(diffMins / 60);
-      return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
-    } else {
-      const days = Math.floor(diffMins / (60 * 24));
-      return `${days} ${days === 1 ? "day" : "days"} ago`;
-    }
-  };
-
-  // Convert attachments to the format expected by AttachmentsModal
-  const convertAttachments = (attachments: Attachment[]) => {
-    if (!attachments || !Array.isArray(attachments)) return [];
-
-    // Ensure each attachment has a unique ID and is correctly mapped
-    return attachments.map((att) => ({
-      id: att.id || String(Math.random()), // Fallback for missing IDs
-      name: att.fileName,
-      url: att.fileUrl,
-      createdAt: new Date(), // Use current date as fallback if not available
-      taskId: "message", // Use placeholder since this isn't a task
-      uploaderId: "admin", // Use placeholder for uploader
-    }));
-  };
-
-  const handleMessageSent = () => {
-    if (onMessageReplied) {
-      onMessageReplied();
-    }
-    // Refresh the thread view when a new message is sent
-    setRefreshKey((prev) => prev + 1);
-  };
-
-  // Handle thread refresh
-  const handleThreadRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
-
-  if (!message) {
+  if (!selectedMessage) {
     return (
-      <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col">
+      <div className="flex-1 pl-3 flex flex-col">
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          Select a message to view details
+          Select a message to view and reply
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-3/5 border rounded-lg overflow-hidden flex flex-col min-h-0">
-      <div className="p-4 border-b bg-muted/30 flex justify-between items-center shrink-0">
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div className="max-w-[85%]">
-              <h3 className="font-semibold text-lg">
-                {formatSubject(message.subject).main}
-              </h3>
-              {formatSubject(message.subject).reference && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatSubject(message.subject).reference}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline">{message.messageType}</Badge>
-              <span
-                className={`px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700`}
-              >
-                {message.priority}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-1 mt-1 text-sm text-muted-foreground">
-            <span>
-              From:{" "}
-              <span className="font-medium">{message.user.displayName}</span>
-            </span>
-            <span>•</span>
-            <span>{message.user.email}</span>
-            <span>•</span>
-            <span>Received {formatDate(message.createdAt)}</span>
-            <span>•</span>
-            <span className="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-600">
-              {message.category}
-            </span>
-          </div>
+    <div className="flex-1 pl-3 flex flex-col">
+      <div className="mb-4 pb-3 border-b">
+        <div className="flex justify-between mb-1">
+          <h3 className="font-semibold">{selectedMessage.subject}</h3>
+          <span className="text-xs text-muted-foreground">
+            {selectedMessage.date}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
+          <User className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">{selectedMessage.customer}</span>
+        </div>
+        <p className="text-sm mt-2">{selectedMessage.content}</p>
+      </div>
+
+      {/* Message history */}
+      <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+        {messageReplies.map((reply, index) => (
+          <div key={index} className="flex gap-3">
+            <div className="rounded-full h-8 w-8 bg-accent/20 flex items-center justify-center text-accent font-semibold">
+              {reply.from === "Admin" ? "A" : "C"}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium">{reply.from}</span>
+                <span className="text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 inline mr-1" />
+                  {reply.date}
+                </span>
+              </div>
+              <p className="text-sm p-3 bg-accent/5 rounded-lg">
+                {reply.content}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Reply form */}
+      <div className="mt-auto">
+        <Textarea
+          placeholder="Type your reply here..."
+          className="min-h-[100px] mb-2"
+          value={replyText}
+          onChange={(e) => setReplyText(e.target.value)}
+        />
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-muted-foreground">
+            Replying to{" "}
+            <span className="font-medium">{selectedMessage.customer}</span>
+          </div>
           <Button
-            onClick={() => setReplyDialogOpen(true)}
-            variant="outline"
-            size="sm"
-            className="h-8"
-            title="Reply to message"
+            onClick={handleSubmit}
+            disabled={!replyText.trim()}
+            className="flex items-center gap-2"
           >
-            <Reply className="h-4 w-4 mr-1" />
-            Reply
-          </Button>
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            title="Clear message view"
-          >
-            <X className="h-4 w-4" />
+            <Send className="h-4 w-4" />
+            Send Reply
           </Button>
         </div>
       </div>
-
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="p-4">
-          <div className="prose prose-sm max-w-none">
-            <p>{message.message}</p>
-          </div>
-
-          {message.attachments.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-sm font-medium mb-2">Attachments</h4>
-              <AttachmentsModal
-                attachments={convertAttachments(message.attachments)}
-              />
-            </div>
-          )}
-
-          {/* Message thread/history section */}
-          <CustomerMessageThreadView
-            key={`thread-${message.id}-${refreshKey}`}
-            messageId={message.id}
-            onRefresh={handleThreadRefresh}
-          />
-        </div>
-      </div>
-
-      {/* Reply Dialog */}
-      <CustomerReplyDialog
-        open={replyDialogOpen}
-        onOpenChange={setReplyDialogOpen}
-        message={{
-          id: message.id,
-          subject: message.subject,
-          sender: message.user.displayName,
-          message: message.message,
-        }}
-        onMessageSent={handleMessageSent}
-      />
     </div>
   );
 };
