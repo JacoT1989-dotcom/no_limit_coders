@@ -16,7 +16,7 @@ import { useSession } from "../SessionProvider";
 import CreateProjectDialog from "./_components/(quick-actions)/(create_project)/CreateProjectDialog";
 import ScheduleMeetingModal from "./_components/(quick-actions)/(schedule_meeting)/ScheduleMeetingModal";
 import MessageTechTeamModal from "./_components/(quick-actions)/(message_tech_team)/MessageTechTeamModal";
-import CustomerProjectsCard from "./_components/(quick-actions)/(my_messages)/CustomerProjectsCard";
+import CustomerMessageCard from "./_components/(quick-actions)/(my_messages)/CustomerMessageCard";
 
 // Define interface for user data structure
 interface User {
@@ -91,7 +91,7 @@ const WelcomePage = () => {
             </Card>
           </ScheduleMeetingModal>
 
-          <CustomerProjectsCard />
+          <CustomerMessageCard />
 
           <MessageTechTeamModal>
             <Card className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300 cursor-pointer">
