@@ -25,12 +25,11 @@ export const navigation: NavItem[] = [
     href: "/customer/tasks",
   },
   {
-    label: "Chat & Feeds",
+    label: "Social Feeds",
     icon: FileText,
     links: [
-      { name: "Notify tech Team", href: "/customer/notify-tech-team" },
+      { name: "Latest News", href: "/customer/notify-tech-team" },
       { name: "Tech Team Feed", href: "/customer/tech-team-feed" },
-      { name: "Upcoming Meetings", href: "/customer/schedule-meeting" },
     ],
   },
   {
@@ -39,7 +38,6 @@ export const navigation: NavItem[] = [
     links: [
       { name: "General", href: "/customer/settings/general" },
       { name: "Security", href: "/customer/settings/security" },
-      { name: "Preferences", href: "/customer/settings/preferences" },
     ],
   },
 ];
