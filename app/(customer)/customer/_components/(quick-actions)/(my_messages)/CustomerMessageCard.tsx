@@ -197,8 +197,8 @@ const CustomerMessageCard = () => {
   useEffect(() => {
     fetchUnreadCount();
 
-    // Set up periodic checking for new messages (every 30 seconds)
-    const intervalId = setInterval(fetchUnreadCount, 30000);
+    // Set up periodic checking for new messages (every hour)
+    const intervalId = setInterval(fetchUnreadCount, 60 * 60 * 1000);
 
     return () => clearInterval(intervalId);
   }, [fetchUnreadCount]);
