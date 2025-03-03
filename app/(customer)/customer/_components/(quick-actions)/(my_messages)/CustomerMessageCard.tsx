@@ -20,7 +20,6 @@ import {
 import { Priority } from "@/app/(customer)/customer/tasks/types";
 
 import CustomerMessageList from "./CustomerMessageList";
-import MessageTechTeamModal from "@/app/(customer)/customer/_components/(quick-actions)/(message_tech_team)/MessageTechTeamModal";
 import {
   getCustomerConversations,
   getCustomerUnreadCount,

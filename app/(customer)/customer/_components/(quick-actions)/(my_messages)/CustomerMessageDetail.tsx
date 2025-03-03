@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Reply, MessageSquare, Calendar, Paperclip } from "lucide-react";
 import { MessageWithUser } from "./CustomerMessageCard";
 import AttachmentsModal from "@/app/(customer)/customer/tasks/_components/(table)/(attachment)/AttachmentModal";
-import CustomerMessageReplyDialog from "./CustomerMessageReplyDialog";
 import {
   CategoryBadge,
   convertAttachments,
@@ -14,6 +13,7 @@ import {
   formatDateForGroup,
   formatMessageTime,
 } from "./CustomerMessageDetailHelpers";
+import CustomerMessageReplyDialog from "./(reply_to_admin)/CustomerMessageReplyDialog";
 
 interface MessageDetailProps {
   message: MessageWithUser | undefined;

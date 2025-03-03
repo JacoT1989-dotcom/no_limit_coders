@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MessageCategory } from "@prisma/client";
-import { replyToConversation } from "./customer-message-actions";
+import { addUserMessageToConversation } from "../../(message_tech_team)/message-actions";
 import { MessageWithUser } from "../CustomerMessageCard";
 
 interface CustomerMessageReplyDialogProps {
@@ -45,28 +45,18 @@ const CustomerMessageReplyDialog: React.FC<CustomerMessageReplyDialogProps> = ({
     MessageCategory.SUPPORT,
   );
 
-  // Reset form when message changes or dialog opens/closes
+  // Reset form when message changes
   useEffect(() => {
     if (message) {
       setMessageText("");
       setCategory(MessageCategory.SUPPORT);
       setFiles([]);
     }
-  }, [message, open]);
+  }, [message]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // Check file size limits before adding
-      const newFiles = Array.from(e.target.files).filter((file) => {
-        if (file.size > 5 * 1024 * 1024) {
-          // 5MB limit
-          toast.error(`File ${file.name} exceeds 5MB limit`);
-          return false;
-        }
-        return true;
-      });
-
-      setFiles((prev) => [...prev, ...newFiles]);
+      setFiles(Array.from(e.target.files));
     }
   };
 
@@ -96,7 +86,7 @@ const CustomerMessageReplyDialog: React.FC<CustomerMessageReplyDialogProps> = ({
       });
 
       // Call the server action to add message to conversation
-      const result = await replyToConversation(
+      const result = await addUserMessageToConversation(
         message.conversationId,
         formData,
       );
@@ -146,7 +136,6 @@ const CustomerMessageReplyDialog: React.FC<CustomerMessageReplyDialogProps> = ({
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               rows={6}
-              placeholder="Provide any additional details or questions..."
               required
             />
           </div>
@@ -177,18 +166,14 @@ const CustomerMessageReplyDialog: React.FC<CustomerMessageReplyDialogProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
-                accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt"
               />
               <label
                 htmlFor="file-upload"
                 className="cursor-pointer text-accent"
               >
                 <Paperclip className="h-4 w-4 inline mr-2" />
-                Attach files (images, PDFs, documents)
+                Attach files
               </label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Maximum 5MB per file
-              </p>
             </div>
 
             {files.length > 0 && (
@@ -200,12 +185,7 @@ const CustomerMessageReplyDialog: React.FC<CustomerMessageReplyDialogProps> = ({
                   >
                     <div className="flex items-center">
                       <Paperclip className="h-4 w-4 mr-2 text-accent" />
-                      <span className="text-sm truncate max-w-[300px]">
-                        {file.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </span>
+                      <span className="text-sm truncate">{file.name}</span>
                     </div>
                     <Button
                       type="button"
