@@ -383,7 +383,7 @@ export const CommentsModal = ({
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="min-h-[80px] resize-none bg-white border-gray-300 text-gray-800 rounded-l-lg rounded-r-none placeholder:text-gray-400 focus-visible:ring-blue-500"
+              className="min-h-[80px] resize-none bg-white border-gray-300 text-gray-800 rounded-l-lg rounded-r-none placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-gray-300"
             />
             <Button
               type="submit"
