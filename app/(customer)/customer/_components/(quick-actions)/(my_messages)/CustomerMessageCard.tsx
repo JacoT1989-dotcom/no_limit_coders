@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MessageSquare, Mail, Loader2, AlertTriangle } from "lucide-react";
+import { MessageSquare, Mail, Loader2, AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -233,30 +233,35 @@ const CustomerMessageCard = () => {
 
   return (
     <>
-      <Card
-        className="group relative overflow-hidden border-2 border-transparent hover:border-accent/20 transition-all duration-300"
+      <Card 
+        className="group relative overflow-hidden border-0 bg-white dark:bg-gray-900 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer hover-lift"
         onClick={() => setDialogOpen(true)}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-3">
-            <div className="rounded-lg bg-accent/10 p-2 relative">
-              <MessageSquare className="h-6 w-6 text-accent" />
+        <div className="absolute top-0 left-0 h-1 w-0 bg-red-500 group-hover:w-full transition-all duration-300" />
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center text-lg font-medium text-gray-800 dark:text-gray-200">
+            <div className="rounded-full bg-gray-100 dark:bg-gray-800 p-2 mr-3 relative">
+              <MessageSquare className="h-5 w-5 text-red-500 dark:text-red-400" />
               {unreadCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-accent">
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 bg-red-500 text-[10px]">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </Badge>
               )}
             </div>
-            <span>Support Messages</span>
+            Conversation Topics
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread message${unreadCount > 1 ? "s" : ""} from our team`
-              : "View and respond to support conversations"}
+              ? `You have ${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
+              : "Review your recent message threads"}
           </p>
+          <div className="mt-4 flex justify-end">
+            <div className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-red-500 transition-colors">
+              <ArrowRight className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover:text-white transition-colors" />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -264,16 +269,19 @@ const CustomerMessageCard = () => {
         <DialogContent className="sm:max-w-6xl w-[95vw] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 shrink-0">
             <div>
-              <DialogTitle className="text-2xl">Support Messages</DialogTitle>
+              <DialogTitle className="text-2xl">
+                My Conversation Topics
+              </DialogTitle>
               <DialogDescription>
-                View and respond to messages from our support team
+                View and respond to messages from admin. This will be you
+                private chat room with admin.
               </DialogDescription>
             </div>
           </DialogHeader>
 
           {loading ? (
             <div className="flex items-center justify-center h-[500px]">
-              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
               <span className="ml-2">Loading messages...</span>
             </div>
           ) : error ? (

@@ -169,7 +169,9 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
         <div className="text-left space-y-2 pb-4">
           <h2 className="text-xl font-semibold">Message Tech Team</h2>
           <p className="text-sm text-muted-foreground">
-            Send a message to our technical team for support or assistance.
+            Send a message to our technical team for support or assistance. Your
+            conversation will become active on the Conversation Topics as soon
+            as an Admin responded to your conversation-topic invite.
           </p>
         </div>
         <Form {...form}>

@@ -89,7 +89,8 @@ const CustomerMessageDetail: React.FC<MessageDetailProps> = ({
           <h3 className="text-lg font-medium mb-2">No Message Selected</h3>
           <p className="text-muted-foreground max-w-md">
             Select a conversation from the left to view your messages or start a
-            new conversation with our support team.
+            new conversation. To Start a new conversation-topic to talk about,
+            exit this modal and click on Create Subject Message.
           </p>
         </div>
       </div>

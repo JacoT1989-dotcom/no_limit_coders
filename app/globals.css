@@ -264,4 +264,120 @@
   }
 }
 
+/* Cloud Animation Styles */
+@keyframes floatCloudLeftToRight {
+  0% {
+    transform: translateX(-120%) translateY(0);
+  }
+  100% {
+    transform: translateX(120%) translateY(0);
+  }
+}
 
+@keyframes floatCloudRightToLeft {
+  0% {
+    transform: translateX(120%) translateY(0);
+  }
+  100% {
+    transform: translateX(-120%) translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.hero-animation {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Individual cloud styles */
+.cloud {
+  position: absolute;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  background-size: contain;
+}
+
+/* Cloud 1 - Large floating left to right */
+.cloud1 {
+  width: 250px;
+  height: 80px;
+  top: 15%;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.7'%3E%3Cpath d='M47.2,56.9c0-5.6-4.5-10.1-10.1-10.1c-1.4,0-2.7,0.3-3.9,0.8c-1.6-6.6-7.5-11.5-14.5-11.5c-8.3,0-15,6.7-15,15c0,0.3,0,0.5,0,0.8C1.4,53.9,0,57.1,0,60.7h47.7C47.4,59.5,47.2,58.3,47.2,56.9z'/%3E%3C/svg%3E");
+  animation: floatCloudLeftToRight 45s linear infinite;
+  opacity: 0.7;
+}
+
+/* Cloud 2 - Medium floating right to left */
+.cloud2 {
+  width: 180px;
+  height: 60px;
+  top: 40%;
+  right: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.6'%3E%3Cpath d='M31.5,37.9c0-3.7-3-6.8-6.8-6.8c-0.9,0-1.8,0.2-2.6,0.5c-1.1-4.4-5-7.7-9.7-7.7c-5.5,0-10,4.5-10,10c0,0.2,0,0.3,0,0.5C0.9,35.9,0,38.1,0,40.4h31.8C31.6,39.6,31.5,38.8,31.5,37.9z'/%3E%3C/svg%3E");
+  animation: floatCloudRightToLeft 35s linear infinite;
+  opacity: 0.6;
+}
+
+/* Cloud 3 - Small floating left to right */
+.cloud3 {
+  width: 120px;
+  height: 40px;
+  top: 25%;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.5'%3E%3Cpath d='M63,75.8c0-7.5-6.1-13.5-13.5-13.5c-1.9,0-3.6,0.4-5.2,1c-2.1-8.8-10-15.3-19.3-15.3c-11,0-20,9-20,20c0,0.4,0,0.7,0,1.1C2,71.9,0,76.2,0,81h63.6C63.2,79.3,63,77.6,63,75.8z'/%3E%3C/svg%3E");
+  animation: floatCloudLeftToRight 28s linear infinite;
+  animation-delay: -10s;
+  opacity: 0.5;
+}
+
+/* Cloud 4 - Extra small floating right to left */
+.cloud4 {
+  width: 100px;
+  height: 30px;
+  top: 60%;
+  right: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.4'%3E%3Cpath d='M31.5,37.9c0-3.7-3-6.8-6.8-6.8c-0.9,0-1.8,0.2-2.6,0.5c-1.1-4.4-5-7.7-9.7-7.7c-5.5,0-10,4.5-10,10c0,0.2,0,0.3,0,0.5C0.9,35.9,0,38.1,0,40.4h31.8C31.6,39.6,31.5,38.8,31.5,37.9z'/%3E%3C/svg%3E");
+  animation: floatCloudRightToLeft 25s linear infinite;
+  animation-delay: -5s;
+  opacity: 0.4;
+}
+
+/* Cloud 5 - Medium floating left to right slower */
+.cloud5 {
+  width: 200px;
+  height: 70px;
+  top: 5%;
+  left: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.35'%3E%3Cpath d='M47.2,56.9c0-5.6-4.5-10.1-10.1-10.1c-1.4,0-2.7,0.3-3.9,0.8c-1.6-6.6-7.5-11.5-14.5-11.5c-8.3,0-15,6.7-15,15c0,0.3,0,0.5,0,0.8C1.4,53.9,0,57.1,0,60.7h47.7C47.4,59.5,47.2,58.3,47.2,56.9z'/%3E%3C/svg%3E");
+  animation: floatCloudLeftToRight 55s linear infinite;
+  animation-delay: -20s;
+  opacity: 0.35;
+}
+
+/* Cloud 6 - Large floating right to left slower */
+.cloud6 {
+  width: 230px;
+  height: 75px;
+  top: 70%;
+  right: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60' fill='white' opacity='0.45'%3E%3Cpath d='M63,75.8c0-7.5-6.1-13.5-13.5-13.5c-1.9,0-3.6,0.4-5.2,1c-2.1-8.8-10-15.3-19.3-15.3c-11,0-20,9-20,20c0,0.4,0,0.7,0,1.1C2,71.9,0,76.2,0,81h63.6C63.2,79.3,63,77.6,63,75.8z'/%3E%3C/svg%3E");
+  animation: floatCloudRightToLeft 60s linear infinite;
+  animation-delay: -15s;
+  opacity: 0.45;
+}
+
+.shimmer {
+  animation: shimmer 4s ease-in-out infinite;
+}
