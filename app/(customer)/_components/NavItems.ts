@@ -20,7 +20,7 @@ import {
 
 export const navigation: NavItem[] = [
   {
-    label: "Tasks",
+    label: "Projects",
     icon: Users,
     href: "/customer/tasks",
   },
@@ -35,9 +35,6 @@ export const navigation: NavItem[] = [
   {
     label: "Settings",
     icon: Settings,
-    links: [
-      { name: "General", href: "/customer/settings/general" },
-      { name: "Security", href: "/customer/settings/security" },
-    ],
+    links: [{ name: "General", href: "/customer/settings/general" }],
   },
 ];

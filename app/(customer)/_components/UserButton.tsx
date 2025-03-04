@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Check, LogOutIcon, Monitor, Moon, Sun, UserIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import UserAvatar from "./UserAvatar";
 import { useSession } from "../SessionProvider";
@@ -32,6 +32,12 @@ export default function UserButton({ className }: UserButtonProps) {
   const { theme, setTheme } = useTheme();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(Date.now());
+
+  // Force re-render of avatar when URL changes
+  useEffect(() => {
+    setAvatarKey(Date.now());
+  }, [user?.avatarUrl]);
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -52,8 +58,11 @@ export default function UserButton({ className }: UserButtonProps) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <button className={cn("flex-none rounded-full", className)}>
-          <UserAvatar avatarUrl={user.avatarUrl} size={40} />
+        <button
+          className={cn("flex-none rounded-full", className)}
+          aria-label="User menu"
+        >
+          <UserAvatar key={avatarKey} avatarUrl={user?.avatarUrl} size={40} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
