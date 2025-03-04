@@ -21,6 +21,12 @@ import AttachmentsModal from "../../../_components/(quick-actions)/(customers-ta
 import { CommentsBadge } from "../(task-comments)/CommentsModal";
 import { getCustomerProjects } from "../get-actions";
 import AssigneesModal from "./AssigneesModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TaskListProps {
   filteredTasks: Task[];
@@ -29,6 +35,12 @@ interface TaskListProps {
   toggleSelectAll: () => void;
   onTasksRefreshed?: (tasks: Task[]) => void;
 }
+
+// Function to truncate text to first 3 letters followed by ellipsis
+const truncateText = (text: string | null | undefined): string => {
+  if (!text) return "";
+  return `${text.substring(0, 3)}...`;
+};
 
 const TaskList: React.FC<TaskListProps> = ({
   filteredTasks,
@@ -140,12 +152,33 @@ const TaskList: React.FC<TaskListProps> = ({
                   onCheckedChange={() => toggleTaskSelection(task.id)}
                 />
               </TableCell>
-              <TableCell className="font-medium">{task.title}</TableCell>
+              <TableCell className="font-medium">
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help">
+                        {truncateText(task.title)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="start">
+                      <p>{task.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </TableCell>
               <TableCell>
-                {task.description
-                  ? task.description.substring(0, 30) +
-                    (task.description.length > 30 ? "..." : "")
-                  : "-"}
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help">
+                        {truncateText(task.description)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="start">
+                      <p>{task.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </TableCell>
               <TableCell>
                 <span

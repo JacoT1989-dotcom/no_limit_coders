@@ -70,11 +70,8 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
         });
         setIsOpen(false);
 
-        // Handle success callback - using optional chaining to avoid the TypeScript error
-        // Since meetingId is not guaranteed in the return type
+        // Handle success callback
         if (onSuccess) {
-          // We're using type assertion here since we know this is a valid pattern in our app
-          // even though TypeScript doesn't know about the meetingId property
           const meetingId = (result as any).meetingId || "";
           onSuccess(meetingId);
         }
@@ -108,17 +105,25 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
       <DialogTrigger asChild onClick={() => setIsOpen(true)}>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
+      {/* Fixed background class to ensure proper contrast in dark mode */}
+      <DialogContent className="sm:max-w-[600px] bg-background dark:bg-slate-800 border border-border shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Schedule a Meeting</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-foreground dark:text-white">
+            Schedule a Meeting
+          </DialogTitle>
+          <DialogDescription className="text-muted-foreground dark:text-slate-300">
             Choose a date, time, and add participants for your meeting.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="subject">Meeting Subject</Label>
+              <Label
+                htmlFor="subject"
+                className="text-foreground dark:text-white"
+              >
+                Meeting Subject
+              </Label>
               <div className="relative">
                 <Input
                   id="subject"
@@ -126,14 +131,16 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                   placeholder="Enter meeting subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className="w-full pl-10"
+                  className="w-full pl-10 dark:bg-slate-700 dark:text-white dark:border-slate-600 dark:placeholder:text-slate-400"
                 />
-                <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground dark:text-slate-400" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Select Date</Label>
+              <Label className="text-foreground dark:text-white">
+                Select Date
+              </Label>
               <div className="relative">
                 <Input
                   type="date"
@@ -141,21 +148,23 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                   value={formData.date}
                   onChange={handleChange}
                   min={new Date().toISOString().split("T")[0]}
-                  className="w-full pl-10"
+                  className="w-full pl-10 dark:bg-slate-700 dark:text-white dark:border-slate-600"
                 />
-                <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground dark:text-slate-400" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="time">Select Time</Label>
+              <Label htmlFor="time" className="text-foreground dark:text-white">
+                Select Time
+              </Label>
               <div className="relative">
                 <select
                   id="time"
                   name="time"
                   value={formData.time}
                   onChange={handleChange}
-                  className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full h-10 pl-10 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-700 dark:text-white dark:border-slate-600"
                   aria-label="Select meeting time"
                 >
                   <option value="">Select time</option>
@@ -165,12 +174,17 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                     </option>
                   ))}
                 </select>
-                <Clock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <Clock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground dark:text-slate-400 pointer-events-none" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="participants">Participants</Label>
+              <Label
+                htmlFor="participants"
+                className="text-foreground dark:text-white"
+              >
+                Participants
+              </Label>
               <div className="relative">
                 <Input
                   id="participants"
@@ -178,9 +192,9 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
                   placeholder="Enter email addresses (comma-separated)"
                   value={formData.participants}
                   onChange={handleChange}
-                  className="w-full pl-10"
+                  className="w-full pl-10 dark:bg-slate-700 dark:text-white dark:border-slate-600 dark:placeholder:text-slate-400"
                 />
-                <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground dark:text-slate-400" />
               </div>
             </div>
           </div>
@@ -190,13 +204,14 @@ const ScheduleMeetingModal: React.FC<ScheduleMeetingModalProps> = ({
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
+              className="dark:bg-slate-700 dark:text-white dark:border-slate-600 dark:hover:bg-slate-600"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="bg-accent text-accent-foreground hover:bg-accent/90"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isFormValid}
             >
               {isSubmitting ? "Scheduling..." : "Schedule Meeting"}
             </Button>

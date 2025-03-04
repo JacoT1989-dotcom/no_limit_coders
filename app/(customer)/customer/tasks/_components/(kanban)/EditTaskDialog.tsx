@@ -140,9 +140,11 @@ export function EditTaskDialog({
           <span className="sr-only">Edit task</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
         <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
+          <DialogTitle className="text-slate-900 dark:text-white">
+            Edit Task
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -155,11 +157,17 @@ export function EditTaskDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel className="text-slate-900 dark:text-slate-100">
+                    Title
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Task title" {...field} />
+                    <Input
+                      placeholder="Task title"
+                      {...field}
+                      className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700"
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -169,16 +177,19 @@ export function EditTaskDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel className="text-slate-900 dark:text-slate-100">
+                    Description
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Describe the task..."
                       {...field}
                       value={field.value || ""}
                       rows={4}
+                      className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -189,17 +200,19 @@ export function EditTaskDialog({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Status
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                         {statusOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -207,7 +220,7 @@ export function EditTaskDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -217,17 +230,19 @@ export function EditTaskDialog({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Priority
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                         {priorityOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -235,7 +250,7 @@ export function EditTaskDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -246,14 +261,16 @@ export function EditTaskDialog({
               name="dueDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Due Date</FormLabel>
+                  <FormLabel className="text-slate-900 dark:text-slate-100">
+                    Due Date
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
+                            "w-full pl-3 text-left font-normal bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700",
                             !field.value && "text-muted-foreground",
                           )}
                         >
@@ -266,16 +283,20 @@ export function EditTaskDialog({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={field.value || undefined}
                         onSelect={field.onChange}
                         initialFocus
+                        className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormMessage />
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
@@ -287,7 +308,9 @@ export function EditTaskDialog({
                 render={() => (
                   <FormItem>
                     <div className="mb-4">
-                      <FormLabel className="text-base">Assignees</FormLabel>
+                      <FormLabel className="text-base text-slate-900 dark:text-slate-100">
+                        Assignees
+                      </FormLabel>
                     </div>
                     <div className="space-y-2">
                       {teamMembers.map((member) => (
@@ -321,9 +344,10 @@ export function EditTaskDialog({
                                         );
                                       }
                                     }}
+                                    className="border-slate-300 dark:border-slate-600"
                                   />
                                 </FormControl>
-                                <FormLabel className="font-normal">
+                                <FormLabel className="font-normal text-slate-900 dark:text-slate-100">
                                   {member.user.displayName}
                                 </FormLabel>
                               </FormItem>
@@ -332,12 +356,12 @@ export function EditTaskDialog({
                         />
                       ))}
                     </div>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
             ) : (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground dark:text-slate-400">
                 No team members available to assign to this task.
               </div>
             )}
@@ -347,10 +371,15 @@ export function EditTaskDialog({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              >
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
