@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MessageSquare, Send, Clock, Users, Info } from "lucide-react";
 import {
   Dialog,
@@ -11,11 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { createTaskComment } from "./comment-actions";
 import { useSession } from "@/app/(customer)/SessionProvider";
+import UserAvatar from "./UserAvatar";
 
+// Improved type definition with strict typing for avatar URL
 type Comment = {
   id: string;
   content: string;
@@ -26,6 +27,7 @@ type Comment = {
   author: {
     id: string;
     displayName: string;
+    avatarUrl?: string | null;
   };
 };
 
@@ -53,8 +55,33 @@ export const CommentsModal = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // When modal opens, log the comment data structure
+  useEffect(() => {
+    if (isOpen && comments.length > 0) {
+      console.log("[Debug] Comments structure sample:", {
+        firstComment: comments[0],
+        lastComment: comments[comments.length - 1],
+        commentsCount: comments.length,
+      });
+
+      // Deep log each comment's author avatarUrl field to troubleshoot
+      comments.forEach((comment, idx) => {
+        console.log(`[Debug] Comment #${idx} author data:`, {
+          commentId: comment.id,
+          authorId: comment.authorId,
+          hasAuthor: !!comment.author,
+          authorObj: comment.author,
+          avatarUrlType: comment.author
+            ? typeof comment.author.avatarUrl
+            : "N/A",
+          avatarUrl: comment.author?.avatarUrl,
+        });
+      });
+    }
+  }, [isOpen, comments]);
+
   // Improved auto-scroll to bottom
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (!scrollAreaRef.current) return;
 
     // Try to find the scroll viewport from Radix UI's ScrollArea
@@ -68,11 +95,17 @@ export const CommentsModal = ({
         scrollViewport.scrollTop = scrollViewport.scrollHeight;
       }, 300);
     }
-  };
+  }, []);
 
   // Scroll when modal opens or comments change
   useEffect(() => {
     if (isOpen) {
+      // Debug comment data structure when modal opens
+      console.log(
+        `[Debug] Modal opened with ${comments.length} comments:`,
+        comments,
+      );
+
       // Multiple attempts to scroll, as content might take time to render
       scrollToBottom();
 
@@ -85,7 +118,7 @@ export const CommentsModal = ({
         timeouts.forEach(clearTimeout);
       };
     }
-  }, [isOpen, comments]);
+  }, [isOpen, comments, scrollToBottom]);
 
   // Animation effect
   useEffect(() => {
@@ -97,7 +130,7 @@ export const CommentsModal = ({
   }, [isOpen]);
 
   // Generate a gradient background based on user ID
-  const generateUserGradient = (authorId: string = "") => {
+  const generateUserGradient = useCallback((authorId: string = "") => {
     if (!authorId) return "bg-gradient-to-r from-gray-400 to-gray-500";
 
     const gradients = [
@@ -114,25 +147,25 @@ export const CommentsModal = ({
     const charCodes = authorId.split("").map((char) => char.charCodeAt(0));
     const sum = charCodes.reduce((acc, code) => acc + code, 0);
     return gradients[sum % gradients.length];
-  };
+  }, []);
 
-  const formatDate = (date: Date): string => {
+  const formatDate = useCallback((date: Date): string => {
     return new Date(date).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
-  };
+  }, []);
 
-  const formatTime = (date: Date): string => {
+  const formatTime = useCallback((date: Date): string => {
     return new Date(date).toLocaleString("en-US", {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
     });
-  };
+  }, []);
 
-  const getInitials = (displayName: string = "") => {
+  const getInitials = useCallback((displayName: string = "") => {
     if (!displayName) return "AU";
     return displayName
       .split(" ")
@@ -140,26 +173,42 @@ export const CommentsModal = ({
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
+  }, []);
 
   // Determine if the user is a customer
-  const isCustomer = (authorId: string) => {
-    // This is a placeholder function. In a real app, you might determine
-    // if a user is a customer based on their role, ID pattern, or other data
-    // For now, we'll assume the current logged-in user is the customer
-    return authorId === user.id;
-  };
+  const isCustomer = useCallback(
+    (authorId: string) => {
+      // This is a placeholder function. In a real app, you might determine
+      // if a user is a customer based on their role, ID pattern, or other data
+      // For now, we'll assume the current logged-in user is the customer
+      return authorId === user?.id;
+    },
+    [user?.id],
+  );
 
   // Get unique participants in the conversation
-  const getUniqueParticipants = (): string[] => {
-    const uniqueAuthors = new Set<string>(); // Explicitly type the Set as containing strings
+  const getUniqueParticipants = useCallback((): {
+    id: string;
+    displayName: string;
+    avatarUrl?: string | null;
+  }[] => {
+    const uniqueAuthors = new Map<
+      string,
+      { id: string; displayName: string; avatarUrl?: string | null }
+    >();
+
     comments.forEach((comment) => {
-      if (comment.author?.displayName) {
-        uniqueAuthors.add(comment.author.displayName);
+      if (comment.author?.id && !uniqueAuthors.has(comment.author.id)) {
+        uniqueAuthors.set(comment.author.id, {
+          id: comment.author.id,
+          displayName: comment.author.displayName || "Unknown",
+          avatarUrl: comment.author.avatarUrl,
+        });
       }
     });
-    return Array.from(uniqueAuthors);
-  };
+
+    return Array.from(uniqueAuthors.values());
+  }, [comments]);
 
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
@@ -172,6 +221,14 @@ export const CommentsModal = ({
         toast.error(response.error || "Failed to add comment");
         return;
       }
+
+      // Log the response data to help with debugging
+      console.log("[Debug] New comment created:", {
+        success: response.success,
+        commentData: response.data,
+        hasAvatar: response.data?.author?.avatarUrl !== undefined,
+        avatarUrl: response.data?.author?.avatarUrl,
+      });
 
       setNewComment("");
       onCommentAdded(); // This will refresh the comments
@@ -195,17 +252,16 @@ export const CommentsModal = ({
   };
 
   // Group comments by date
-  const groupedComments = comments.reduce(
-    (groups: Record<string, Comment[]>, comment) => {
+  const groupedComments = React.useMemo(() => {
+    return comments.reduce((groups: Record<string, Comment[]>, comment) => {
       const date = formatDate(new Date(comment.createdAt));
       if (!groups[date]) {
         groups[date] = [];
       }
       groups[date].push(comment);
       return groups;
-    },
-    {},
-  );
+    }, {});
+  }, [comments, formatDate]);
 
   // Calculate conversation insights
   const participants = getUniqueParticipants();
@@ -270,21 +326,20 @@ export const CommentsModal = ({
                 Active participants:
               </span>
               <div className="flex -space-x-2">
-                {participants.slice(0, 5).map((name, index) => (
-                  <Avatar key={index} className="h-6 w-6 border-2 border-white">
-                    <AvatarFallback
-                      className={`text-white text-xs ${generateUserGradient(name)}`}
-                    >
-                      {getInitials(name)}
-                    </AvatarFallback>
-                  </Avatar>
+                {participants.slice(0, 5).map((participant, index) => (
+                  <UserAvatar
+                    key={index}
+                    avatarUrl={participant.avatarUrl}
+                    size={24}
+                    className="border-2 border-white"
+                    fallbackClassName={generateUserGradient(participant.id)}
+                    initials={getInitials(participant.displayName)}
+                  />
                 ))}
                 {participants.length > 5 && (
-                  <Avatar className="h-6 w-6 border-2 border-white">
-                    <AvatarFallback className="bg-gray-400 text-white text-xs">
-                      +{participants.length - 5}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="h-6 w-6 rounded-full border-2 border-white bg-gray-400 text-white text-xs flex items-center justify-center">
+                    +{participants.length - 5}
+                  </div>
                 )}
               </div>
               <div className="ml-auto text-xs text-gray-500">
@@ -324,13 +379,13 @@ export const CommentsModal = ({
                         }`}
                       >
                         {customerMessage && (
-                          <Avatar className="h-8 w-8 flex-shrink-0 border-2 border-white shadow-sm">
-                            <AvatarFallback
-                              className={`text-white ${userGradient}`}
-                            >
-                              {getInitials(comment.author?.displayName)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            avatarUrl={comment.author?.avatarUrl}
+                            size={32}
+                            className="flex-shrink-0 border-2 border-white shadow-sm"
+                            fallbackClassName={userGradient}
+                            initials={getInitials(comment.author?.displayName)}
+                          />
                         )}
                         <div
                           className={`max-w-[70%] space-y-1 p-3 rounded-2xl shadow-md ${
@@ -359,11 +414,13 @@ export const CommentsModal = ({
                           </div>
                         </div>
                         {!customerMessage && (
-                          <Avatar className="h-8 w-8 flex-shrink-0 border-2 border-white shadow-sm">
-                            <AvatarFallback className="text-white bg-gradient-to-r from-blue-500 to-indigo-600">
-                              {getInitials(comment.author?.displayName)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            avatarUrl={comment.author?.avatarUrl}
+                            size={32}
+                            className="flex-shrink-0 border-2 border-white shadow-sm"
+                            fallbackClassName="bg-gradient-to-r from-blue-500 to-indigo-600"
+                            initials={getInitials(comment.author?.displayName)}
+                          />
                         )}
                       </div>
                     );
@@ -415,13 +472,38 @@ export const CommentsBadge = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    // Debug the comments structure when badge component mounts
+    console.log(
+      `[Debug] CommentsBadge loaded with ${comments.length} comments:`,
+      comments,
+    );
+
+    // Log avatar URLs for each comment author
+    comments.forEach((comment, idx) => {
+      console.log(`[Debug] Comment #${idx} author data:`, {
+        id: comment.id,
+        authorId: comment.authorId,
+        authorName: comment.author?.displayName,
+        avatarUrl: comment.author?.avatarUrl,
+      });
+    });
+  }, [comments]);
+
   return (
     <>
       <Button
         variant="ghost"
         size="sm"
         className="px-2 h-8 hover:bg-gray-100 hover:text-blue-600 transition-colors flex items-center gap-1"
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          console.log("[Debug] Opening comments modal with data:", {
+            comments,
+            taskId,
+            taskTitle,
+          });
+          setIsOpen(true);
+        }}
       >
         <MessageSquare className="h-3 w-3" />
         <span className="bg-blue-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">

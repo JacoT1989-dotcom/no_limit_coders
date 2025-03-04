@@ -55,6 +55,7 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                     lastName: true,
                     email: true,
                     displayName: true,
+                    avatarUrl: true, // Add this line
                   },
                 },
               },
@@ -81,6 +82,7 @@ export async function getCustomerProjects(): Promise<GetCustomerProjectsResponse
                   select: {
                     id: true,
                     displayName: true,
+                    avatarUrl: true, // Add this line
                   },
                 },
               },

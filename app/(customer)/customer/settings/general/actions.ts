@@ -135,9 +135,7 @@ export async function updateAddress(
 }
 
 // Update avatar and background images
-export async function updateImages(
-  formData: FormData,
-): Promise<{
+export async function updateImages(formData: FormData): Promise<{
   success?: boolean;
   error?: string;
   avatarUrl?: string;
@@ -321,10 +319,7 @@ export async function getCurrentUserData() {
   try {
     const { user } = await validateRequest();
 
-    if (
-      !user ||
-      (user.role !== UserRole.CUSTOMER && user.role !== UserRole.PROCUSTOMER)
-    ) {
+    if (!user) {
       return null;
     }
 
