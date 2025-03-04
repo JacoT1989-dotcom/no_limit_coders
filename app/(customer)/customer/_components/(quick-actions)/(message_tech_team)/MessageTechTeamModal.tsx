@@ -165,10 +165,12 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur-xl border border-border shadow-2xl dark:bg-card">
+      <DialogContent className="sm:max-w-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl">
         <div className="text-left space-y-2 pb-4">
-          <h2 className="text-xl font-semibold">Message Tech Team</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+            Message Tech Team
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Send a message to our technical team for support or assistance. Your
             conversation will become active on the Conversation Topics as soon
             as an Admin responded to your conversation-topic invite.
@@ -182,19 +184,21 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Subject
+                    </FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input
                           placeholder="Brief description of your issue"
-                          className="w-full pl-10"
+                          className="w-full pl-10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 dark:placeholder:text-slate-400"
                           disabled={isSubmitting}
                           {...field}
                         />
                       </FormControl>
-                      <MessageSquare className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <MessageSquare className="absolute left-3 top-2.5 h-5 w-5 text-slate-400 dark:text-slate-500" />
                     </div>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -205,7 +209,9 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                   name="messageType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Message Type</FormLabel>
+                      <FormLabel className="text-slate-900 dark:text-slate-100">
+                        Message Type
+                      </FormLabel>
                       <div className="relative">
                         <FormControl>
                           <Select
@@ -213,11 +219,11 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                             onValueChange={field.onChange}
                             value={field.value}
                           >
-                            <SelectTrigger className="w-full pl-10">
-                              <FileText className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                            <SelectTrigger className="w-full pl-10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
+                              <FileText className="absolute left-3 top-2.5 h-5 w-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                               {MESSAGE_TYPE_OPTIONS.map((type) => (
                                 <SelectItem key={type.value} value={type.value}>
                                   {type.display}
@@ -227,7 +233,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                           </Select>
                         </FormControl>
                       </div>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -237,7 +243,9 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel className="text-slate-900 dark:text-slate-100">
+                        Category
+                      </FormLabel>
                       <div className="relative">
                         <FormControl>
                           <Select
@@ -245,11 +253,11 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                             onValueChange={field.onChange}
                             value={field.value}
                           >
-                            <SelectTrigger className="w-full pl-10">
-                              <Code className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                            <SelectTrigger className="w-full pl-10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
+                              <Code className="absolute left-3 top-2.5 h-5 w-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                               {CATEGORY_OPTIONS.map((cat) => (
                                 <SelectItem key={cat.value} value={cat.value}>
                                   {cat.display}
@@ -259,7 +267,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                           </Select>
                         </FormControl>
                       </div>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -270,7 +278,9 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Priority</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Priority
+                    </FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Select
@@ -278,11 +288,11 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                           onValueChange={field.onChange}
                           value={field.value}
                         >
-                          <SelectTrigger className="w-full pl-10">
-                            <Users className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+                          <SelectTrigger className="w-full pl-10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
+                            <Users className="absolute left-3 top-2.5 h-5 w-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700">
                             {PRIORITY_OPTIONS.map((pri) => (
                               <SelectItem key={pri.value} value={pri.value}>
                                 {pri.display}
@@ -292,7 +302,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                         </Select>
                       </FormControl>
                     </div>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -302,16 +312,18 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                 name="message"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Message
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your issue or request in detail..."
-                        className="min-h-[150px] resize-none"
+                        className="min-h-[150px] resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 dark:placeholder:text-slate-400"
                         disabled={isSubmitting}
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -321,7 +333,9 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                 name="attachments"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Attachments</FormLabel>
+                    <FormLabel className="text-slate-900 dark:text-slate-100">
+                      Attachments
+                    </FormLabel>
                     <div className="space-y-2">
                       {attachments.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
@@ -329,7 +343,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                             <Badge
                               key={attachment.id}
                               variant="secondary"
-                              className="flex items-center gap-1 px-2 py-1"
+                              className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white"
                             >
                               <Paperclip className="h-3 w-3" />
                               <span className="max-w-[150px] truncate">
@@ -338,7 +352,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => removeAttachment(attachment.id)}
-                                className="ml-1 hover:text-destructive"
+                                className="ml-1 hover:text-red-500 dark:hover:text-red-400"
                                 disabled={isSubmitting}
                                 aria-label={`Remove ${attachment.file.name}`}
                               >
@@ -362,7 +376,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                         </FormControl>
                         <Button
                           type="button"
-                          className="w-full"
+                          className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
                           variant="secondary"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={isSubmitting}
@@ -371,7 +385,7 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                           Attach Files
                         </Button>
                       </div>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </div>
                   </FormItem>
                 )}
@@ -384,12 +398,13 @@ const MessageTechTeamModal: React.FC<MessageTechTeamModalProps> = ({
                 variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
+                className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
