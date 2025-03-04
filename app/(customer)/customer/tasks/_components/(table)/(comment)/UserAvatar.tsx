@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 
 interface UserAvatarProps {
@@ -19,36 +19,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   initials = "UN",
 }) => {
   const [imgError, setImgError] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  // Log component initialization
-  useEffect(() => {
-    console.log("[UserAvatar] Component initialized with:", {
-      avatarUrl,
-      size,
-      initials,
-      hasAvatarUrl: !!avatarUrl,
-    });
-  }, [avatarUrl, size, initials]);
-
-  // Reset error state when avatarUrl changes
-  useEffect(() => {
-    console.log("[UserAvatar] avatarUrl changed:", {
-      avatarUrl,
-      type: typeof avatarUrl,
-      length: avatarUrl?.length,
-    });
-
-    // Reset error state when avatarUrl changes
-    setImgError(false);
-
-    // Only set loading to true if we have a valid URL string
-    if (typeof avatarUrl === "string" && avatarUrl.trim() !== "") {
-      setLoading(true);
-    } else {
-      setLoading(false);
-    }
-  }, [avatarUrl]);
+  const [loading, setLoading] = useState<boolean>(!!avatarUrl);
 
   const handleImageError = (): void => {
     console.error("[UserAvatar] Image failed to load:", avatarUrl);

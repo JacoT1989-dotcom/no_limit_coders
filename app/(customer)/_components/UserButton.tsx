@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Check, LogOutIcon, Monitor, Moon, Sun, UserIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import UserAvatar from "./UserAvatar";
 import { useSession } from "../SessionProvider";
@@ -28,16 +28,13 @@ interface UserButtonProps {
 }
 
 export default function UserButton({ className }: UserButtonProps) {
-  const { user } = useSession();
+  const { user, isRefreshing } = useSession();
   const { theme, setTheme } = useTheme();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [avatarKey, setAvatarKey] = useState(Date.now());
 
-  // Force re-render of avatar when URL changes
-  useEffect(() => {
-    setAvatarKey(Date.now());
-  }, [user?.avatarUrl]);
+  // Remove the state and effect for avatar key - not needed anymore
+  // as we'll rely on React's re-rendering when user data changes
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,7 +59,12 @@ export default function UserButton({ className }: UserButtonProps) {
           className={cn("flex-none rounded-full", className)}
           aria-label="User menu"
         >
-          <UserAvatar key={avatarKey} avatarUrl={user?.avatarUrl} size={40} />
+          <UserAvatar
+            avatarUrl={user?.avatarUrl}
+            size={40}
+            // Use user.id as key to force re-render when user changes
+            key={`avatar-${user?.id}-${user?.avatarUrl}`}
+          />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

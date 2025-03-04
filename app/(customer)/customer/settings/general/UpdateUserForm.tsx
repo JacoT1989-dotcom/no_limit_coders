@@ -21,6 +21,7 @@ import { PersonalInfoSection } from "./PersonalInfoSection";
 import { AddressSection } from "./AddressSection";
 import { ImageUploadSection } from "./ImageUploadSection";
 import { PasswordSection } from "./PasswordSection";
+import { useSession } from "@/app/(customer)/SessionProvider";
 
 interface UpdateUserFormProps {
   initialUserData: UserData;
@@ -32,6 +33,7 @@ export default function UpdateUserForm({
   const [userData, setUserData] = useState<UserData>(initialUserData);
   const [activeTab, setActiveTab] = useState("personal");
   const [refreshing, setRefreshing] = useState(false);
+  const { refreshUserData } = useSession();
 
   // Event handler for when any section is successfully updated
   const handleUpdateSuccess = async () => {
@@ -40,7 +42,9 @@ export default function UpdateUserForm({
       const refreshedData = await getCurrentUserData();
       if (refreshedData) {
         setUserData(refreshedData as UserData);
-        toast.success("Profile data refreshed");
+
+        // Also refresh the session context to update navbar
+        await refreshUserData();
       }
     } catch (error) {
       console.error("Failed to refresh user data:", error);
