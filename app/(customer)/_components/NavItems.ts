@@ -28,7 +28,7 @@ export const navigation: NavItem[] = [
     label: "Social Feeds",
     icon: FileText,
     links: [
-      { name: "Latest News", href: "/customer/notify-tech-team" },
+      { name: "Latest News in Tech", href: "/customer/notify-tech-team" },
       { name: "Tech Team Feed", href: "/customer/tech-team-feed" },
     ],
   },
