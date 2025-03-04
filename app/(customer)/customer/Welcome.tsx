@@ -62,7 +62,7 @@ const WelcomePage = () => {
   return (
     <div className="space-y-16 max-w-7xl mx-auto px-4 py-8">
       {/* Hero Section - With Cloud Animation */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-900 to-red-400 border border-red-500/20 shadow-xl slide-up hero-animation">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-700 to-red-400 border border-red-500/20 shadow-xl slide-up hero-animation">
         {/* Cloud animation layers - multiple clouds from both directions */}
         <div className="cloud cloud1"></div>
         <div className="cloud cloud2"></div>
