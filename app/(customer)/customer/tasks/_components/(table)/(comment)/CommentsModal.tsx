@@ -55,31 +55,6 @@ export const CommentsModal = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // When modal opens, log the comment data structure
-  useEffect(() => {
-    if (isOpen && comments.length > 0) {
-      console.log("[Debug] Comments structure sample:", {
-        firstComment: comments[0],
-        lastComment: comments[comments.length - 1],
-        commentsCount: comments.length,
-      });
-
-      // Deep log each comment's author avatarUrl field to troubleshoot
-      comments.forEach((comment, idx) => {
-        console.log(`[Debug] Comment #${idx} author data:`, {
-          commentId: comment.id,
-          authorId: comment.authorId,
-          hasAuthor: !!comment.author,
-          authorObj: comment.author,
-          avatarUrlType: comment.author
-            ? typeof comment.author.avatarUrl
-            : "N/A",
-          avatarUrl: comment.author?.avatarUrl,
-        });
-      });
-    }
-  }, [isOpen, comments]);
-
   // Improved auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
     if (!scrollAreaRef.current) return;
@@ -100,12 +75,6 @@ export const CommentsModal = ({
   // Scroll when modal opens or comments change
   useEffect(() => {
     if (isOpen) {
-      // Debug comment data structure when modal opens
-      console.log(
-        `[Debug] Modal opened with ${comments.length} comments:`,
-        comments,
-      );
-
       // Multiple attempts to scroll, as content might take time to render
       scrollToBottom();
 
@@ -221,14 +190,6 @@ export const CommentsModal = ({
         toast.error(response.error || "Failed to add comment");
         return;
       }
-
-      // Log the response data to help with debugging
-      console.log("[Debug] New comment created:", {
-        success: response.success,
-        commentData: response.data,
-        hasAvatar: response.data?.author?.avatarUrl !== undefined,
-        avatarUrl: response.data?.author?.avatarUrl,
-      });
 
       setNewComment("");
       onCommentAdded(); // This will refresh the comments
@@ -472,24 +433,6 @@ export const CommentsBadge = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    // Debug the comments structure when badge component mounts
-    console.log(
-      `[Debug] CommentsBadge loaded with ${comments.length} comments:`,
-      comments,
-    );
-
-    // Log avatar URLs for each comment author
-    comments.forEach((comment, idx) => {
-      console.log(`[Debug] Comment #${idx} author data:`, {
-        id: comment.id,
-        authorId: comment.authorId,
-        authorName: comment.author?.displayName,
-        avatarUrl: comment.author?.avatarUrl,
-      });
-    });
-  }, [comments]);
-
   return (
     <>
       <Button
@@ -497,11 +440,6 @@ export const CommentsBadge = ({
         size="sm"
         className="px-2 h-8 hover:bg-gray-100 hover:text-blue-600 transition-colors flex items-center gap-1"
         onClick={() => {
-          console.log("[Debug] Opening comments modal with data:", {
-            comments,
-            taskId,
-            taskTitle,
-          });
           setIsOpen(true);
         }}
       >
